@@ -4,7 +4,6 @@
   </a>
   <h3>Personalized learning, from first lesson to verified certificate.</h3>
   <p>Explore courses, follow your progress, test what you know, and share a certificate others can verify.</p>
-  <p><a href="https://github.com/killashaw8"><img alt="GitHub profile: killashaw8" src="https://img.shields.io/badge/GitHub-killashaw8-181717?style=for-the-badge&logo=github&logoColor=white"></a></p>
   <p>
     <a href="https://github.com/aaronkr-2026-2/cbnu-soft-eng-software-engineering-project-group-19"><img alt="GitHub repository" src="https://img.shields.io/badge/GitHub-StudyFlow_AI-181717?style=for-the-badge&logo=github&logoColor=white"></a>
     <a href="https://fastapi.tiangolo.com/"><img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-API-009688?style=for-the-badge&logo=fastapi&logoColor=white"></a>
