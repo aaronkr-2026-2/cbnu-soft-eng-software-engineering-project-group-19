@@ -12,3 +12,10 @@
 **What I kept as-is:** The project description, course milestones, local setup instructions, and deployment caveats.
 **What I changed or rejected, and why:** Added a reusable SVG wordmark and redesigned the root README with clickable badges linking to the project and official technology documentation. Kept the current local-only deployment status visible.
 **Something the AI got wrong that I had to catch:** No additional student-caught error has been reported for this update; add any you noticed before submission.
+
+## GitHub profile link — 2026-11-06
+**Tool(s) used:** ChatGPT/Codex; GitHub API read-only profile lookup.
+**What I asked for:** Match the referenced Group 1 README style and link the requested `killashaw8` nickname.
+**What I kept as-is:** The StudyFlow logo, technology links, project description, documentation map, and setup instructions.
+**What I changed or rejected, and why:** Added a GitHub-branded badge linking the `killashaw8` profile, after confirming that GitHub account exists.
+**Something the AI got wrong that I had to catch:** No student-caught error was reported for this edit; add one if you noticed an issue.
