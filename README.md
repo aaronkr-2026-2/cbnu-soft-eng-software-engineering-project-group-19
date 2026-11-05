@@ -1,33 +1,78 @@
-# StudyFlow AI
+<div align="center">
+  <a href="https://github.com/aaronkr-2026-2/cbnu-soft-eng-software-engineering-project-group-19">
+    <img src="docs/assets/studyflow-logo.svg" alt="StudyFlow AI — learn at your pace" width="410">
+  </a>
+  <h3>Personalized learning, from first lesson to verified certificate.</h3>
+  <p>Explore courses, follow your progress, test what you know, and share a certificate others can verify.</p>
+  <p>
+    <a href="https://github.com/aaronkr-2026-2/cbnu-soft-eng-software-engineering-project-group-19"><img alt="GitHub repository" src="https://img.shields.io/badge/GitHub-StudyFlow_AI-181717?style=for-the-badge&logo=github&logoColor=white"></a>
+    <a href="https://fastapi.tiangolo.com/"><img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-API-009688?style=for-the-badge&logo=fastapi&logoColor=white"></a>
+    <a href="https://www.postgresql.org/"><img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=for-the-badge&logo=postgresql&logoColor=white"></a>
+  </p>
+</div>
 
-StudyFlow AI is a multilingual learning platform where learners can discover courses, enroll, study lessons, track progress, take lesson quizzes and a course final exam, and receive a verifiable completion certificate. The interface supports Uzbek, English, Russian, and Korean.
+<p align="center">
+  <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white"></a>
+  <a href="https://fastapi.tiangolo.com/"><img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white"></a>
+  <a href="https://www.postgresql.org/"><img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white"></a>
+  <a href="https://www.sqlalchemy.org/"><img alt="SQLAlchemy" src="https://img.shields.io/badge/SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white"></a>
+  <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript"><img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black"></a>
+  <a href="https://developer.mozilla.org/en-US/docs/Web/HTML"><img alt="HTML5" src="https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white"></a>
+  <a href="https://developer.mozilla.org/en-US/docs/Web/CSS"><img alt="CSS3" src="https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white"></a>
+</p>
 
-## Product vision
+---
 
-For independent learners who need a clear path from choosing a course to proving what they learned, StudyFlow AI provides structured lessons, progress tracking, knowledge checks, and verifiable certificates in four languages. Unlike a static course list, it connects learning activity with a final assessment and a public certificate verification page.
+## ✨ About StudyFlow AI
 
-## Current product
+StudyFlow AI is a multilingual learning platform for independent learners, course authors, and certificate verifiers. Learners can move through a course at their own pace, while authors can publish lessons and assessments and organizations can verify certificates without creating an account.
 
-- Account registration and login, course catalog, enrollment, lessons, and progress tracking.
-- Course recommendations and personal study plans.
-- Course authoring, lesson quizzes, final exams, and course analytics.
-- Learner profile editing and four-language interface.
-- Unique certificate verification codes and public verification page.
-- Device passkey verification before final exam submission and first certificate issuance.
+**Product vision:** Give every learner a clear route from choosing a course to demonstrating what they learned, in a language that works for them.
 
-This repository is the working course project. No public cloud deployment URL is recorded here yet. The Week 7 cloud deployment milestone must be confirmed and documented separately before claiming it is complete.
+### What you can do
 
-## Technology
+| 🎓 Learn | 🧑‍🏫 Create | 🏅 Verify |
+|:--|:--|:--|
+| Browse and preview courses, enroll, follow lessons, and track progress. | Create courses, lessons, and quizzes; publish content and review course analytics. | Take lesson quizzes and a final exam, earn a uniquely coded certificate, and let anyone check it publicly. |
 
-- Backend: Python, FastAPI, SQLAlchemy, Alembic, PostgreSQL.
-- Frontend: plain HTML, CSS, and JavaScript served by FastAPI.
-- Authentication: JWT-based account authentication; WebAuthn passkeys for step-up verification.
+- **Four interface languages:** Uzbek, English, Russian, and Korean.
+- **Personal learning tools:** recommendations, weekly study plans, and a learner dashboard.
+- **Extra account security:** device passkeys before submitting a final exam or issuing a certificate.
 
-## Run locally
+## 🧭 Project map
 
-Requirements: Python 3.11 or newer and a local PostgreSQL server with a database named `studyflow_db`.
+| Resource | What it covers |
+|:--|:--|
+| [Product vision and pitch](docs/vision-and-pitch.md) | Idea, intended users, product vision, and chosen stack |
+| [Personas and user stories](docs/personas-and-user-stories.md) | Retrospective personas, user stories, and acceptance criteria |
+| [Agile process](docs/agile-process.md) | Lightweight planning, review, and retrospective workflow |
+| [Architecture and critique](docs/architecture-and-critique.md) | Current design diagram, strengths, and risks |
+| [Decomposition review](docs/decomposition-review.md) | Week 9 decision on whether microservices fit |
+| [AI collaboration log](AI_LOG.md) | AI assistance and project decisions to review |
 
-```sh
+## 🏗️ Architecture
+
+StudyFlow AI currently uses a **modular monolith**: one FastAPI application serves the web interface and feature-focused API routes. PostgreSQL stores the learning data; Alembic manages schema migrations.
+
+```text
+Browser (HTML · CSS · JavaScript)
+              │
+              ▼
+        FastAPI application
+       ├── Accounts & passkeys
+       ├── Courses & lessons
+       ├── Quizzes & certificates
+       └── Plans, reviews & analytics
+              │
+              ▼
+          PostgreSQL
+```
+
+## 🚀 Run locally
+
+**You’ll need:** Python 3.11+ and PostgreSQL, with a local database named `studyflow_db`.
+
+```bash
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
@@ -35,28 +80,36 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Set a private `SECRET_KEY` in `backend/.env`. Start PostgreSQL and create the `studyflow_db` database, then run the migrations and server:
+Set a private `SECRET_KEY` in `backend/.env`, start PostgreSQL, and create the database:
 
-```sh
+```bash
+createdb studyflow_db
 alembic upgrade head
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Open <http://127.0.0.1:8000/app>. API documentation is available at <http://127.0.0.1:8000/docs>.
+Open the app at **[http://127.0.0.1:8000/app](http://127.0.0.1:8000/app)** or the API docs at **[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)**.
 
-The current database connection is configured in `backend/app/database.py` for local PostgreSQL. Review and externalize this setting before deploying to a cloud database. For passkeys, set `WEBAUTHN_RP_ID` and `WEBAUTHN_ORIGIN` to the deployed domain and HTTPS origin on the production host.
+> Passkeys are configured for localhost during development. Before production, set `WEBAUTHN_RP_ID` and `WEBAUTHN_ORIGIN` to the deployed domain and HTTPS origin. The database URL is currently set in `backend/app/database.py`; externalize it before cloud deployment.
 
-## Course milestones through Week 9
+## 🌱 Course milestones
 
-- Week 2: idea and stack are documented; add the actual team roster/roles before submission.
-- Week 3: working MVP and product vision are described; attach a public demo URL when deployed.
-- Week 4: retrospective personas and user stories are in `docs/personas-and-user-stories.md`.
-- Week 5: the proposed lightweight process is in `docs/agile-process.md`; it is explicitly a retrofit, not a claim of earlier Scrum practice.
-- Week 6: architecture and design critique are in `docs/architecture-and-critique.md`.
-- Week 7: cloud redeployment is not evidenced by this repository; add host, URL, deployment date, and verification before marking complete.
-- Week 8: midterm review checkpoint.
-- Week 9: decomposition decision is in `docs/decomposition-review.md`.
+This repository contains the project work through **Week 9** of the course schedule.
 
-## Project documentation
+- **Weeks 2–3:** idea, technology stack, working MVP, and product vision.
+- **Week 4:** retrospective personas and user stories.
+- **Week 5:** lightweight Agile process retrofit.
+- **Week 6:** architecture diagram and design critique.
+- **Week 7:** cloud deployment details still need to be added; no public deployment URL is recorded yet.
+- **Week 8:** midterm review checkpoint.
+- **Week 9:** modular-monolith vs. microservices discussion.
 
-See `docs/` for the milestone artifacts. `AI_LOG.md` records AI assistance and remaining items that need the student's own confirmation. The project should only be submitted after reviewing the code and documentation and filling in personal/team details.
+## 🌐 Current status
+
+The project runs locally. Team member names and roles, a public cloud URL, and real user research were not present in the project files; add verified details when available.
+
+---
+
+<div align="center">
+  <sub>Built for the Advanced Software Engineering semester project · StudyFlow AI</sub>
+</div>
