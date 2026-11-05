@@ -19,3 +19,10 @@
 **What I kept as-is:** The StudyFlow logo, clickable technology badges, documentation links, and project overview.
 **What I changed or rejected, and why:** Removed the individual profile badge that had been added by mistake; the reference was for styling only.
 **Something the AI got wrong that I had to catch:** Codex mistook a username visible in the reference context for a requested profile link. The user clarified that it was only an example; the badge was removed.
+
+## README restructuring — 2026-11-06
+**Tool(s) used:** ChatGPT/Codex.
+**What I asked for:** Restructure the project README to follow the organization and level of detail of the Group 1 reference.
+**What I kept as-is:** StudyFlow's logo, technology badges, and verified product and setup information.
+**What I changed or rejected, and why:** Reorganized the README around features, quick start, environment, API, development, architecture, feature-specific guides, deployment, limitations, and course records. Kept the cloud demo status explicit because no public deployment URL is available.
+**Something the AI got wrong that I had to catch:** The prior version emphasized visual styling but did not mirror the reference README's overall structure.
