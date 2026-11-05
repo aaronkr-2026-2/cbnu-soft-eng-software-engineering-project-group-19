@@ -26,3 +26,10 @@
 **What I kept as-is:** StudyFlow's logo, technology badges, and verified product and setup information.
 **What I changed or rejected, and why:** Reorganized the README around features, quick start, environment, API, development, architecture, feature-specific guides, deployment, limitations, and course records. Kept the cloud demo status explicit because no public deployment URL is available.
 **Something the AI got wrong that I had to catch:** The prior version emphasized visual styling but did not mirror the reference README's overall structure.
+
+## Detailed project README — 2026-11-06
+**Tool(s) used:** ChatGPT/Codex.
+**What I asked for:** Expand the StudyFlow project README to match the detail and organization of the Group 1 reference while documenting this project's own implementation.
+**What I kept as-is:** Existing setup, environment, architecture, project milestones, limitations, and feature summary.
+**What I changed or rejected, and why:** Added the complete route catalog, request examples, learner/course-author/verifier workflows, and a database model overview based on the current FastAPI OpenAPI schema and Pydantic models. Did not invent a live deployment or automated test suite.
+**Something the AI got wrong that I had to catch:** The previously listed personal project repository link no longer resolves; this update is made in the active Classroom project repository.
