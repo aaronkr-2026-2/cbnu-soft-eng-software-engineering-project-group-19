@@ -25,7 +25,15 @@ from app.core.schemes.user import (
     UserResponse,
     UserUpdate,
 )
-from app.core.security import ALGORITHM, SECRET_KEY, create_access_token, create_password_reset_token, hash_password, verify_password
+from app.core.security import (
+    ALGORITHM,
+    DUMMY_PASSWORD_HASH,
+    SECRET_KEY,
+    create_access_token,
+    create_password_reset_token,
+    hash_password,
+    verify_password,
+)
 from app.database import get_db
 from app.models import User
 
@@ -87,7 +95,9 @@ def login(
 ) -> Token:
     enforce_rate_limit(request, scope="login", max_attempts=20, window_seconds=900)
     user = db.query(User).filter(User.email == user_data.email).first()
-    if user is None or not verify_password(user_data.password, user.hashed_password):
+    stored_hash = user.hashed_password if user is not None else DUMMY_PASSWORD_HASH
+    password_matches = verify_password(user_data.password, stored_hash)
+    if user is None or not password_matches:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",

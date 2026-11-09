@@ -1,4 +1,5 @@
 import os
+import secrets
 from datetime import datetime, timedelta, timezone
 
 import jwt
@@ -23,6 +24,7 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 password_hash = PasswordHash.recommended()
+DUMMY_PASSWORD_HASH = password_hash.hash(secrets.token_urlsafe(32))
 
 
 def hash_password(password: str) -> str:
