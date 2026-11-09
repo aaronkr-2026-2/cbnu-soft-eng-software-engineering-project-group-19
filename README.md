@@ -76,23 +76,28 @@ cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env
+test -f .env || cp .env.example .env
 ```
 
-Set a strong, private `SECRET_KEY` in `backend/.env`. Start PostgreSQL and create the database:
+Keep any existing `backend/.env` so its secret and SMTP settings are not overwritten. Replace the example `SECRET_KEY` with a strong private value. Start the PostgreSQL service first; then create the database once (skip this if it already exists):
 
 ```bash
 createdb studyflow_db
 ```
 
-Run migrations and start the backend from `backend/`:
+Run the migration from `backend/`:
 
 ```bash
 alembic upgrade head
+```
+
+Start the backend as a separate command, still from `backend/`:
+
+```bash
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Open the [StudyFlow AI web app](http://127.0.0.1:8000/app), [API docs](http://127.0.0.1:8000/docs), or [health check](http://127.0.0.1:8000/health).
+Use `localhost` consistently because local passkey settings expect that hostname; `127.0.0.1` is treated as a different site origin. Open the [StudyFlow AI web app](http://localhost:8000/app), [API docs](http://localhost:8000/docs), or [health check](http://localhost:8000/health).
 
 ## Environment configuration
 
@@ -108,7 +113,7 @@ Open the [StudyFlow AI web app](http://127.0.0.1:8000/app), [API docs](http://12
 | `AI_MODEL` | Model used for AI recommendations and quiz generation | `gpt-4o-mini` |
 | `AI_BASE_URL` | OpenAI-compatible API base URL | Defaults to `https://api.openai.com/v1` |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM` | Sends expiring password-reset links by email | Required for forgot-password requests |
-| `FRONTEND_BASE_URL` | Base URL used in password-reset links | `http://127.0.0.1:8000/app` locally |
+| `FRONTEND_BASE_URL` | Base URL used in password-reset links | `http://localhost:8000/app` locally |
 | `DATABASE_URL` | PostgreSQL connection | `postgresql+psycopg://localhost/studyflow_db` locally; set the provider URL in production |
 
 AI quiz generation sends the selected lesson text and extracted text from its PDF to the configured AI API after an author clicks **Generate quiz with AI**. Course recommendations send the learner's search topic, quiz-derived level, and course IDs/titles/subjects/levels after the learner submits a search. Audio/video files and account identifiers are not sent. Add a transcript to lesson text to use video/audio material for quiz generation. API usage may incur provider charges. Keep the key in the untracked `.env` file and never commit it.
@@ -123,11 +128,11 @@ With the local server running:
 
 | URL | Purpose |
 |---|---|
-| [`/docs`](http://127.0.0.1:8000/docs) | Interactive Swagger UI |
-| [`/openapi.json`](http://127.0.0.1:8000/openapi.json) | OpenAPI schema |
-| [`/health`](http://127.0.0.1:8000/health) | Basic health check |
-| [`/app`](http://127.0.0.1:8000/app) | Web application |
-| [`/app/verify.html`](http://127.0.0.1:8000/app/verify.html) | Public certificate verification page |
+| [`/docs`](http://localhost:8000/docs) | Interactive Swagger UI |
+| [`/openapi.json`](http://localhost:8000/openapi.json) | OpenAPI schema |
+| [`/health`](http://localhost:8000/health) | Basic health check |
+| [`/app`](http://localhost:8000/app) | Web application |
+| [`/app/verify.html`](http://localhost:8000/app/verify.html) | Public certificate verification page |
 
 Protected routes require the JWT access token returned by `/auth/login`. Use **Authorize** in Swagger and enter the bearer token.
 
@@ -233,18 +238,18 @@ A quiz has one or more questions. Each question has 2–8 answer choices, a zero
 
 ## Example API calls
 
-These examples use `http://127.0.0.1:8000`. Replace the sample values and UUIDs with values returned by your API. Keep real passwords and tokens out of source control.
+These examples use `http://localhost:8000`. Replace the sample values and UUIDs with values returned by your API. Keep real passwords and tokens out of source control.
 
 ### Register and sign in
 
 ```bash
-curl -X POST http://127.0.0.1:8000/auth/register \
+curl -X POST http://localhost:8000/auth/register \
   -H 'Content-Type: application/json' \
   -d '{"email":"learner@example.com","full_name":"Example Learner","password":"use-a-private-password","preferred_language":"en","account_type":"learner"}'
 ```
 
 ```bash
-curl -X POST http://127.0.0.1:8000/auth/login \
+curl -X POST http://localhost:8000/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"learner@example.com","password":"use-a-private-password","account_type":"learner"}'
 ```
@@ -258,7 +263,7 @@ Learners and authors use separate portals: `/app/learner-login.html` and `/app/a
 Create a course as an authenticated course author:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/courses \
+curl -X POST http://localhost:8000/courses \
   -H 'Authorization: Bearer <access_token>' \
   -H 'Content-Type: application/json' \
   -d '{"title":"Introduction to Python","description":"A beginner course","language":"en","level":"beginner"}'
@@ -449,7 +454,7 @@ Enrolled learners can submit or update a 1–5 star review after completing a co
 
 ## Deployment
 
-The repository includes a Docker image, Docker Compose setup, and a Render Blueprint. Docker Compose has been validated by CI. A free Render PostgreSQL database was provisioned, but the web service has not been deployed because Render cannot currently access the GitHub repository. No public app URL is available. The database is on Render's 30-day free plan, so it is temporary and must not be treated as permanent storage. See [deployment status and next steps](docs/deployment.md).
+The repository includes a Docker image, Docker Compose setup, and a Render Blueprint. Docker Compose has been validated by CI. GitHub currently hosts the project source code; GitHub Pages is not enabled, so the repository URL is not a working app URL. A free Render PostgreSQL database exists, but no Render web service has been created and no public app URL is available. The database is on Render's 30-day free plan, so it is temporary and must not be treated as permanent storage. See [deployment status and next steps](docs/deployment.md).
 
 For a local container run, install Docker Desktop, then from the repository root:
 
