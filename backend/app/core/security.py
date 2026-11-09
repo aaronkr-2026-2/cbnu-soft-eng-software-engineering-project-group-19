@@ -71,6 +71,22 @@ def create_lesson_resource_token(course_id: str, lesson_id: str, resource_key: s
     )
 
 
+def create_lesson_material_token(course_id: str, lesson_id: str, material_id: str, resource_key: str) -> str:
+    expires = datetime.now(timezone.utc) + timedelta(hours=2)
+    return jwt.encode(
+        {
+            "typ": "lesson_material",
+            "course_id": course_id,
+            "lesson_id": lesson_id,
+            "material_id": material_id,
+            "resource_key": resource_key,
+            "exp": expires,
+        },
+        SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+
+
 def create_lesson_banner_token(course_id: str, lesson_id: str, banner_key: str) -> str:
     expires = datetime.now(timezone.utc) + timedelta(hours=2)
     return jwt.encode(

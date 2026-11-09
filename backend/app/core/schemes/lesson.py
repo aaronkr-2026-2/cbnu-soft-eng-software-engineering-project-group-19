@@ -80,6 +80,15 @@ class LessonUpdate(BaseModel):
         return self
 
 
+class LessonMaterialResponse(BaseModel):
+    id: str
+    title: str
+    resource_type: Literal["pdf", "audio"]
+    resource_url: str
+    resource_mime_type: str
+    position: int
+
+
 class LessonResponse(BaseModel):
     id: str
     course_id: str
@@ -94,3 +103,4 @@ class LessonResponse(BaseModel):
     translated: bool = False
     position: int
     module_id: str | None = None
+    materials: list[LessonMaterialResponse] = Field(default_factory=list)

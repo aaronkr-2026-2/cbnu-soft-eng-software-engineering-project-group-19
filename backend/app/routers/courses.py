@@ -28,7 +28,7 @@ from app.core.schemes.course import (
 )
 from app.database import get_db
 from app.core.security import ALGORITHM, SECRET_KEY, create_course_banner_token
-from app.models import Course, CourseModule, CourseModuleTranslation, CourseReview, CourseTranslation, Enrollment, Lesson, LessonTranslation, User
+from app.models import Course, CourseModule, CourseModuleTranslation, CourseReview, CourseTranslation, Enrollment, Lesson, LessonMaterial, LessonTranslation, User
 
 router = APIRouter(prefix="/courses", tags=["Courses"])
 RESOURCE_DIR = Path(__file__).resolve().parents[2] / "storage" / "course-materials"
@@ -502,6 +502,11 @@ def delete_course(
     resource_keys = [
         row[0] for row in db.query(Lesson.resource_key).filter(Lesson.course_id == course.id, Lesson.resource_key.is_not(None)).all()
     ]
+    resource_keys.extend(
+        row[0] for row in db.query(LessonMaterial.resource_key)
+        .join(Lesson, LessonMaterial.lesson_id == Lesson.id)
+        .filter(Lesson.course_id == course.id).all()
+    )
     banner_keys = [
         row[0] for row in db.query(Lesson.banner_key).filter(Lesson.course_id == course.id, Lesson.banner_key.is_not(None)).all()
     ]

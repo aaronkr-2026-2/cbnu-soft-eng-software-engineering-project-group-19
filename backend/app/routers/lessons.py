@@ -14,10 +14,10 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_user, require_author
 from app.core.ai import AIConfigurationError, AIProviderError, generate_lesson_banner
 from app.core.localization import get_lesson_translation
-from app.core.schemes.lesson import LessonCreate, LessonResponse, LessonUpdate
-from app.core.security import ALGORITHM, SECRET_KEY, create_lesson_banner_token, create_lesson_resource_token
+from app.core.schemes.lesson import LessonCreate, LessonMaterialResponse, LessonResponse, LessonUpdate
+from app.core.security import ALGORITHM, SECRET_KEY, create_lesson_banner_token, create_lesson_material_token, create_lesson_resource_token
 from app.database import get_db
-from app.models import Course, CourseModule, Enrollment, Lesson, LessonTranslation, User, VideoWatchProgress
+from app.models import Course, CourseModule, Enrollment, Lesson, LessonMaterial, LessonTranslation, User, VideoWatchProgress
 
 router = APIRouter(prefix="/courses/{course_id}/lessons", tags=["Lessons"])
 RESOURCE_DIR = Path(__file__).resolve().parents[2] / "storage" / "course-materials"
@@ -119,6 +119,20 @@ def to_response(
         translated=translation is not None,
         position=lesson.position,
         module_id=str(lesson.module_id) if lesson.module_id else None,
+        materials=[
+            LessonMaterialResponse(
+                id=str(material.id),
+                title=material.title,
+                resource_type=material.resource_type,
+                resource_url=(
+                    f"/courses/{lesson.course_id}/lessons/{lesson.id}/materials/{material.id}/file?token="
+                    f"{create_lesson_material_token(str(lesson.course_id), str(lesson.id), str(material.id), material.resource_key)}"
+                ),
+                resource_mime_type=material.resource_mime_type,
+                position=material.position,
+            )
+            for material in lesson.materials
+        ],
     )
 
 
@@ -320,6 +334,155 @@ async def upload_lesson_resource(
     return to_response(lesson, course)
 
 
+@router.post("/{lesson_id}/materials", response_model=LessonMaterialResponse, status_code=status.HTTP_201_CREATED)
+async def add_lesson_material(
+    course_id: uuid.UUID,
+    lesson_id: uuid.UUID,
+    request: Request,
+    title: str = Query(min_length=1, max_length=200),
+    position: int | None = Query(default=None, ge=1),
+    current_user: User = Depends(require_author),
+    db: Session = Depends(get_db),
+) -> LessonMaterialResponse:
+    course = get_owned_course(course_id, current_user.id, db)
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id, Lesson.course_id == course.id).first()
+    if lesson is None:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+    content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    if content_type not in {"application/pdf", "audio/mpeg", "audio/mp4", "audio/wav", "audio/ogg", "audio/webm"}:
+        raise HTTPException(status_code=415, detail="Additional materials support PDF and audio files")
+    content_length = request.headers.get("content-length")
+    if content_length and content_length.isdigit() and int(content_length) > MAX_RESOURCE_BYTES:
+        raise HTTPException(status_code=413, detail="Resource must be 150 MB or smaller")
+    RESOURCE_DIR.mkdir(parents=True, exist_ok=True)
+    stored_bytes = sum(item.stat().st_size for item in RESOURCE_DIR.iterdir() if item.is_file() and item.suffix != ".upload")
+    if stored_bytes >= MAX_TOTAL_RESOURCE_BYTES:
+        raise HTTPException(status_code=413, detail="Course material storage limit reached")
+    temporary_path = RESOURCE_DIR / f"{uuid.uuid4().hex}.upload"
+    size = 0
+    header = bytearray()
+    try:
+        with temporary_path.open("wb") as output:
+            async for chunk in request.stream():
+                size += len(chunk)
+                if size > MAX_RESOURCE_BYTES or stored_bytes + size > MAX_TOTAL_RESOURCE_BYTES:
+                    raise HTTPException(status_code=413, detail="Course material exceeds the storage limit")
+                if len(header) < 32:
+                    header.extend(chunk[:32 - len(header)])
+                output.write(chunk)
+        if size == 0 or not has_expected_signature(content_type, bytes(header)):
+            raise HTTPException(status_code=415, detail="The uploaded file does not match its selected type")
+        kind, extension = RESOURCE_TYPES[content_type]
+        key = f"{uuid.uuid4().hex}{extension}"
+        destination = RESOURCE_DIR / key
+        temporary_path.replace(destination)
+        materials = list(db.query(LessonMaterial).filter_by(lesson_id=lesson.id).order_by(LessonMaterial.position).all())
+        insert_at = min(position or len(materials) + 1, len(materials) + 1)
+        materials.insert(insert_at - 1, LessonMaterial(
+            lesson_id=lesson.id, title=title.strip(), resource_type=kind, resource_key=key,
+            resource_mime_type=content_type, position=insert_at,
+        ))
+        for index, material in enumerate(materials, start=1):
+            material.position = index
+            db.add(material)
+        try:
+            db.commit()
+            created = materials[insert_at - 1]
+        except Exception:
+            db.rollback()
+            destination.unlink(missing_ok=True)
+            raise
+    except Exception:
+        temporary_path.unlink(missing_ok=True)
+        raise
+    token = create_lesson_material_token(str(course_id), str(lesson_id), str(created.id), created.resource_key)
+    return LessonMaterialResponse(
+        id=str(created.id), title=created.title, resource_type=created.resource_type,
+        resource_url=f"/courses/{course_id}/lessons/{lesson_id}/materials/{created.id}/file?token={token}",
+        resource_mime_type=created.resource_mime_type, position=created.position,
+    )
+
+
+@router.put("/{lesson_id}/materials/{material_id}/position", response_model=LessonMaterialResponse)
+def reorder_lesson_material(
+    course_id: uuid.UUID,
+    lesson_id: uuid.UUID,
+    material_id: uuid.UUID,
+    position: int = Query(ge=1),
+    current_user: User = Depends(require_author),
+    db: Session = Depends(get_db),
+) -> LessonMaterialResponse:
+    course = get_owned_course(course_id, current_user.id, db)
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id, Lesson.course_id == course.id).first()
+    if lesson is None:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+    materials = list(db.query(LessonMaterial).filter_by(lesson_id=lesson.id).order_by(LessonMaterial.position).all())
+    selected = next((item for item in materials if item.id == material_id), None)
+    if selected is None:
+        raise HTTPException(status_code=404, detail="Lesson material not found")
+    materials.remove(selected)
+    materials.insert(min(position, len(materials) + 1) - 1, selected)
+    for index, item in enumerate(materials, start=1):
+        item.position = index
+    db.commit()
+    token = create_lesson_material_token(str(course_id), str(lesson_id), str(selected.id), selected.resource_key)
+    return LessonMaterialResponse(
+        id=str(selected.id), title=selected.title, resource_type=selected.resource_type,
+        resource_url=f"/courses/{course_id}/lessons/{lesson_id}/materials/{selected.id}/file?token={token}",
+        resource_mime_type=selected.resource_mime_type, position=selected.position,
+    )
+
+
+@router.delete("/{lesson_id}/materials/{material_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_lesson_material(
+    course_id: uuid.UUID,
+    lesson_id: uuid.UUID,
+    material_id: uuid.UUID,
+    current_user: User = Depends(require_author),
+    db: Session = Depends(get_db),
+) -> None:
+    course = get_owned_course(course_id, current_user.id, db)
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id, Lesson.course_id == course.id).first()
+    if lesson is None:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+    material = db.query(LessonMaterial).filter_by(id=material_id, lesson_id=lesson.id).first()
+    if material is None:
+        raise HTTPException(status_code=404, detail="Lesson material not found")
+    key = material.resource_key
+    db.delete(material)
+    db.flush()
+    for index, item in enumerate(db.query(LessonMaterial).filter_by(lesson_id=lesson.id).order_by(LessonMaterial.position).all(), start=1):
+        item.position = index
+    db.commit()
+    (RESOURCE_DIR / Path(key).name).unlink(missing_ok=True)
+
+
+@router.get("/{lesson_id}/materials/{material_id}/file")
+def read_lesson_material(
+    course_id: uuid.UUID,
+    lesson_id: uuid.UUID,
+    material_id: uuid.UUID,
+    token: str,
+    db: Session = Depends(get_db),
+) -> FileResponse:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except jwt.InvalidTokenError as error:
+        raise HTTPException(status_code=401, detail="Material link expired or invalid") from error
+    material = db.query(LessonMaterial).filter_by(id=material_id, lesson_id=lesson_id).first()
+    if (
+        material is None or payload.get("typ") != "lesson_material"
+        or payload.get("course_id") != str(course_id) or payload.get("lesson_id") != str(lesson_id)
+        or payload.get("material_id") != str(material_id) or payload.get("resource_key") != material.resource_key
+    ):
+        raise HTTPException(status_code=404, detail="Course material not found")
+    resource_path = (RESOURCE_DIR / Path(material.resource_key).name).resolve()
+    if resource_path.parent != RESOURCE_DIR.resolve() or not resource_path.is_file():
+        raise HTTPException(status_code=404, detail="Course material not found")
+    return FileResponse(resource_path, media_type=material.resource_mime_type,
+                        headers={"Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff"})
+
+
 @router.get("/{lesson_id}/resource")
 def read_lesson_resource(
     course_id: uuid.UUID,
@@ -513,9 +676,12 @@ def delete_lesson(
 
     old_resource_key = lesson.resource_key
     old_banner_key = lesson.banner_key
+    supplemental_resource_keys = [item.resource_key for item in db.query(LessonMaterial).filter_by(lesson_id=lesson.id).all()]
     db.delete(lesson)
     db.commit()
     if old_resource_key:
         (RESOURCE_DIR / Path(old_resource_key).name).unlink(missing_ok=True)
     if old_banner_key:
         (BANNER_DIR / Path(old_banner_key).name).unlink(missing_ok=True)
+    for resource_key in supplemental_resource_keys:
+        (RESOURCE_DIR / Path(resource_key).name).unlink(missing_ok=True)

@@ -350,6 +350,65 @@ def test_video_lesson_cannot_be_completed_by_seeking_past_end(client):
     assert seek_past_end.status_code == 422
 
 
+def test_ordered_lesson_materials_are_private_managed_and_visible_to_enrolled_learners(client):
+    register(client, "materials-author@example.com", "author")
+    register(client, "materials-outsider@example.com", "author")
+    register(client, "materials-learner@example.com")
+    author_headers = login(client, "materials-author@example.com", "author")
+    outsider_headers = login(client, "materials-outsider@example.com", "author")
+    learner_headers = login(client, "materials-learner@example.com")
+    course = create_course(client, author_headers, "Materials course")
+    course_id = course["id"]
+    lesson_response = client.post(
+        f"/courses/{course_id}/lessons", headers=author_headers,
+        json={"title": "Reading lesson", "content": "Read the notes", "position": 1},
+    )
+    assert lesson_response.status_code == 201, lesson_response.text
+    lesson_id = lesson_response.json()["id"]
+    first = client.post(
+        f"/courses/{course_id}/lessons/{lesson_id}/materials?title=First%20notes",
+        headers={**author_headers, "Content-Type": "application/pdf"},
+        content=b"%PDF-1.4 first notes",
+    )
+    second = client.post(
+        f"/courses/{course_id}/lessons/{lesson_id}/materials?title=Second%20notes",
+        headers={**author_headers, "Content-Type": "application/pdf"},
+        content=b"%PDF-1.4 second notes",
+    )
+    assert first.status_code == 201, first.text
+    assert second.status_code == 201, second.text
+    assert client.post(
+        f"/courses/{course_id}/lessons/{lesson_id}/materials?title=Blocked",
+        headers={**outsider_headers, "Content-Type": "application/pdf"},
+        content=b"%PDF-1.4 blocked",
+    ).status_code == 404
+    assert client.post(f"/courses/{course_id}/publish", headers=author_headers).status_code == 200
+    assert client.post(f"/courses/{course_id}/enroll", headers=learner_headers).status_code == 201
+    learner_lessons = client.get(
+        f"/courses/{course_id}/lessons?language=uz", headers=learner_headers,
+    )
+    assert learner_lessons.status_code == 200, learner_lessons.text
+    materials = learner_lessons.json()[0]["materials"]
+    assert [item["title"] for item in materials] == ["First notes", "Second notes"]
+    downloaded = client.get(materials[0]["resource_url"])
+    assert downloaded.status_code == 200
+    assert downloaded.content == b"%PDF-1.4 first notes"
+
+    reordered = client.put(
+        f"/courses/{course_id}/lessons/{lesson_id}/materials/{second.json()['id']}/position?position=1",
+        headers=author_headers,
+    )
+    assert reordered.status_code == 200, reordered.text
+    assert reordered.json()["position"] == 1
+    removed = client.delete(
+        f"/courses/{course_id}/lessons/{lesson_id}/materials/{second.json()['id']}",
+        headers=author_headers,
+    )
+    assert removed.status_code == 204
+    after_delete = client.get(f"/courses/{course_id}/lessons?language=uz", headers=learner_headers).json()[0]["materials"]
+    assert [(item["title"], item["position"]) for item in after_delete] == [("First notes", 1)]
+
+
 def test_email_password_reset_accepts_new_password_and_rejects_reused_link(client, monkeypatch):
     register(client, "reset-user@example.com")
     sent_messages = []

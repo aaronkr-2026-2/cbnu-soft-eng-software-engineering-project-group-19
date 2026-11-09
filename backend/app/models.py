@@ -3,7 +3,7 @@ from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Float, Integer, JSON, LargeBinary, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
@@ -162,6 +162,25 @@ class Lesson(Base):
         server_default=func.now(),
         nullable=False,
     )
+    materials: Mapped[list["LessonMaterial"]] = relationship(
+        back_populates="lesson", cascade="all, delete-orphan", order_by="LessonMaterial.position"
+    )
+
+
+class LessonMaterial(Base):
+    __tablename__ = "lesson_materials"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    lesson_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("lessons.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    resource_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    resource_key: Mapped[str] = mapped_column(String(80), nullable=False, unique=True)
+    resource_mime_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    lesson: Mapped[Lesson] = relationship(back_populates="materials")
 
 
 class LessonTranslation(Base):

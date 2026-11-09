@@ -185,6 +185,9 @@ The API is served by FastAPI. Unless a route is listed as public, send the acces
 | `DELETE` | `/courses/{course_id}/modules/{module_id}` | Remove a module while keeping its lessons in the course |
 | `PUT` | `/courses/{course_id}/lessons/{lesson_id}/resource` | Upload or replace a PDF, video, or audio resource (150 MB maximum) |
 | `DELETE` | `/courses/{course_id}/lessons/{lesson_id}/resource` | Remove a lesson's uploaded resource |
+| `POST` | `/courses/{course_id}/lessons/{lesson_id}/materials?title=...` | Add an ordered PDF or audio supplement (150 MB maximum) |
+| `PUT` | `/courses/{course_id}/lessons/{lesson_id}/materials/{material_id}/position?position=...` | Reorder a supplement |
+| `DELETE` | `/courses/{course_id}/lessons/{lesson_id}/materials/{material_id}` | Remove a supplement |
 
 Course language must be `uz`, `en`, `ru`, or `ko`; course level must be `beginner`, `intermediate`, or `advanced`. A lesson has a title, notes/text, content type, and positive position number. See the [course authoring guide](docs/course-authoring.md) for the Coursera-inspired module and lesson workflow. Uploaded material is stored locally under `backend/storage/course-materials`; configure private object storage before a production deployment.
 
