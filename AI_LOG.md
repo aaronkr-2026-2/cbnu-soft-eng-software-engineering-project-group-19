@@ -2,6 +2,8 @@
 
 StudyFlow AI is the student's project. The student defined the product, requested the features, made project decisions, and remains responsible for reviewing, understanding, and presenting the work. ChatGPT/Codex was used as an assistant for implementation, documentation, troubleshooting, and checks described below. This log records AI assistance transparently; it does not claim that AI is the project author.
 
+**Student contribution:** During development, the student reviewed AI-assisted code, corrected errors they found, and occasionally ran tests to check that changes worked.
+
 ## Week 2–9 project documentation and repository preparation — 2026-11-06
 **Tool(s) used:** ChatGPT/Codex and command-line Git tools.
 **Student request:** Prepare the existing StudyFlow AI project for the supplied course milestones through Week 9 and the provided GitHub Classroom repository.
