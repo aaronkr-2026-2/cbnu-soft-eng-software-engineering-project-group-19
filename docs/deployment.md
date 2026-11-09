@@ -2,16 +2,16 @@
 
 ## Render deployment
 
-The repository includes a Render Blueprint in `render.yaml`. It provisions the Docker web service, private PostgreSQL connection, and persistent upload disk in Singapore. The app generates its signing key and uses Render's HTTPS hostname for passkeys, links, and redirects.
+The repository includes a Render Blueprint in `render.yaml`. It provisions the Docker web service and private PostgreSQL connection in Singapore. The app generates its signing key and uses Render's HTTPS hostname for passkeys, links, and redirects.
 
-The Blueprint uses paid resources so uploaded files and database records persist. Review Render's current pricing before applying it. Free Render web services do not support persistent disks, and free PostgreSQL expires after 30 days. [Render free service limits](https://render.com/docs/free) [Persistent disks](https://render.com/docs/disks)
+The Blueprint uses only Render's free plans. Free web services sleep when idle, do not support persistent disks, and free PostgreSQL expires after 30 days. Uploaded local files can disappear when the service restarts. This setup is for a temporary demo; keep backups and don't rely on it for permanent learner data. [Render free service limits](https://render.com/docs/free)
 
 To launch after creating a Render account:
 
 1. Connect the GitHub repository that contains this project to Render.
 2. In Render, choose **New → Blueprint** and select that repository's `main` branch.
-3. Review the web service, database, storage disk, and recurring prices before applying the Blueprint.
-4. Enter SMTP credentials and the AI API key in Render's secret prompts. Do not put them in GitHub or `render.yaml`.
+3. Confirm the web service and database both show the free plan before applying the Blueprint.
+4. Enter SMTP credentials in Render's secret prompts if password reset emails are needed. Do not put them in GitHub or `render.yaml`. AI features remain unavailable until an API key is configured.
 5. Wait for the first deploy, then verify `/health`, `/app/`, account login, password reset, course enrollment, and certificates.
 
 The Render free subdomain is enough to start; a custom domain can be connected later. Real paid-course checkout additionally needs production GlobalPay merchant credentials, which are not part of this Blueprint.
