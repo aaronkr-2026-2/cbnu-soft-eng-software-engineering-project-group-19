@@ -20,7 +20,7 @@ Scope: source-code review of the FastAPI backend, SQLAlchemy authorization paths
 
 ## Remaining work and deployment controls
 
-- Add request throttling for login and registration at the application or trusted edge-proxy layer. No rate limiter is currently configured; ensure the proxy's client-IP handling matches the actual deployment topology.
+- Login is limited to 20 requests per IP per 15 minutes, registration to 10, and password-reset requests to 5. The current limiter is process-local, so use a shared store and confirm trusted proxy IP handling before running multiple workers or app instances.
 - Consider moving browser authentication to `HttpOnly`, `Secure`, `SameSite` cookies if the deployment architecture is changed to support them; this requires CSRF protections and coordinated frontend/API changes.
 - Review the deployed host's TLS, secret injection, database access, backups, and proxy headers before calling the service production-ready. This repository review did not inspect a live deployment.
 - Login errors are generic, but missing accounts skip password verification, so response timing may still differ. A dummy-hash verification can reduce this signal; rate limiting should accompany it.

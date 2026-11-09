@@ -2,7 +2,6 @@ import base64
 import binascii
 import os
 import smtplib
-import time
 import uuid
 from email.message import EmailMessage
 from pathlib import Path
@@ -14,6 +13,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
+from app.core.rate_limit import enforce_rate_limit
 from app.core.schemes.user import (
     AvatarUpload,
     PasswordResetConfirm,
@@ -32,7 +32,6 @@ from app.models import User
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 AVATAR_DIR = Path(__file__).resolve().parents[2] / "storage" / "avatars"
 MAX_AVATAR_BYTES = 2 * 1024 * 1024
-_password_reset_attempts: dict[str, list[float]] = {}
 
 
 def to_user_response(user: User) -> UserResponse:
@@ -55,8 +54,10 @@ def to_user_response(user: User) -> UserResponse:
 )
 def register(
     user_data: UserRegister,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> UserResponse:
+    enforce_rate_limit(request, scope="register", max_attempts=10, window_seconds=900)
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
         raise HTTPException(
@@ -81,8 +82,10 @@ def register(
 @router.post("/login", response_model=Token)
 def login(
     user_data: UserLogin,
+    request: Request,
     db: Session = Depends(get_db),
 ) -> Token:
+    enforce_rate_limit(request, scope="login", max_attempts=20, window_seconds=900)
     user = db.query(User).filter(User.email == user_data.email).first()
     if user is None or not verify_password(user_data.password, user.hashed_password):
         raise HTTPException(
@@ -219,13 +222,7 @@ def request_password_reset(
     request: Request,
     db: Session = Depends(get_db),
 ) -> dict[str, str]:
-    client_ip = request.client.host if request.client else "unknown"
-    now = time.monotonic()
-    recent = [attempt for attempt in _password_reset_attempts.get(client_ip, []) if now - attempt < 900]
-    if len(recent) >= 5:
-        raise HTTPException(status_code=429, detail="Too many password reset requests. Try again later.")
-    recent.append(now)
-    _password_reset_attempts[client_ip] = recent
+    enforce_rate_limit(request, scope="password-reset", max_attempts=5, window_seconds=900)
 
     smtp_host = os.getenv("SMTP_HOST")
     smtp_from = os.getenv("SMTP_FROM")
