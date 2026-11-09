@@ -4,6 +4,7 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 from fastapi import HTTPException
 from starlette.requests import Request
+from webauthn.helpers.structs import AuthenticatorTransport
 
 from app.routers import auth as auth_router
 from app.routers import passkeys as passkeys_router
@@ -43,6 +44,12 @@ def test_local_passkeys_require_localhost_origin(monkeypatch):
         passkeys_router._request_webauthn_scope(request_for("http://127.0.0.1:8000"))
     assert error.value.status_code == 400
     assert "http://localhost:8000/app" in error.value.detail
+
+    assert passkeys_router._credential_transports(["internal", "usb", "old-transport"]) == [
+        AuthenticatorTransport.INTERNAL,
+        AuthenticatorTransport.USB,
+    ]
+    assert passkeys_router._credential_transports(None) is None
 
 
 def test_password_change_invalidates_existing_session(client):

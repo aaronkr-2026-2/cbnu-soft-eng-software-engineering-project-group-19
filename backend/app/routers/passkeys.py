@@ -19,6 +19,7 @@ from webauthn.helpers import bytes_to_base64url
 from webauthn.helpers.structs import (
     AuthenticatorAttachment,
     AuthenticatorSelectionCriteria,
+    AuthenticatorTransport,
     PublicKeyCredentialDescriptor,
     ResidentKeyRequirement,
     UserVerificationRequirement,
@@ -52,6 +53,16 @@ def _request_webauthn_scope(request: Request) -> tuple[str, str]:
     if not rp_id or parsed.path or parsed.query or parsed.fragment:
         raise HTTPException(status_code=400, detail="Invalid passkey site origin")
     return rp_id, origin
+
+
+def _credential_transports(values: list[str] | None) -> list[AuthenticatorTransport] | None:
+    transports = []
+    for value in values or []:
+        try:
+            transports.append(AuthenticatorTransport(value))
+        except ValueError:
+            continue
+    return transports or None
 
 
 class RegistrationVerify(BaseModel):
@@ -216,7 +227,7 @@ def authentication_options(
         allow_credentials=[
             PublicKeyCredentialDescriptor(
                 id=base64url_to_bytes(item.credential_id),
-                transports=item.transports,
+                transports=_credential_transports(item.transports),
             )
             for item in credentials
         ],
