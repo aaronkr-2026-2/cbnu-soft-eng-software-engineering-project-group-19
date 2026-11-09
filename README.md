@@ -475,6 +475,6 @@ Before a public deployment, use a managed PostgreSQL database and persistent pri
 | Week 8: midterm | Review checkpoint |
 | Week 9: decomposition | [Microservices discussion](docs/decomposition-review.md) |
 | Week 10: security review | [Security review and follow-up items](docs/security-audit.md) |
-| AI-assisted project work | [AI collaboration log](AI_LOG.md) |
+| Project development and AI assistance | [AI collaboration log](AI_LOG.md) |
 
-The AI collaboration log should be reviewed and completed honestly by the student before each submission.
+StudyFlow AI is the student’s project; the log records how AI assisted. The student should review it for accuracy and add their own contributions and corrections before submission.
