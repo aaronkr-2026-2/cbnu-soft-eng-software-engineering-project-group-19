@@ -28,4 +28,4 @@ Scope: source-code review of the FastAPI backend, SQLAlchemy authorization paths
 
 ## Validation
 
-CI currently runs five backend regression tests, Python syntax, browser JavaScript syntax, and Docker Compose configuration checks. These checks do not replace a full migration-chain review, end-to-end security test, or live production security assessment. The service is not deployed publicly, so no live production security test has been performed.
+CI currently runs eight backend regression tests, applies the full Alembic migration chain to a temporary PostgreSQL service, checks Python and browser JavaScript syntax, and validates Docker Compose configuration. These checks do not replace an end-to-end security test or live production security assessment. The service is not deployed publicly, so no live production security test has been performed.

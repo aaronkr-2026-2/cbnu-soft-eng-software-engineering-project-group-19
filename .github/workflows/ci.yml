@@ -17,6 +17,20 @@ jobs:
   validate:
     name: Validate application and container config
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: studyflow_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d studyflow_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Check out source
         uses: actions/checkout@v7
@@ -37,6 +51,11 @@ jobs:
 
       - name: Run backend regression tests
         run: python -m pytest
+
+      - name: Validate PostgreSQL migration chain
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/studyflow_ci
+        run: cd backend && alembic upgrade head
 
       - name: Check Python syntax
         run: python -m compileall -q backend/app backend/migrations
