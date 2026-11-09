@@ -1,3 +1,4 @@
+import uuid
 from typing import Literal
 from pydantic import field_validator, model_validator
 from urllib.parse import urlparse
@@ -11,6 +12,7 @@ class LessonCreate(BaseModel):
     resource_type: Literal["text", "pdf", "video", "audio"] = "text"
     external_video_url: str | None = Field(default=None, max_length=500)
     position: int = Field(ge=1)
+    module_id: uuid.UUID | None = None
 
     @field_validator("external_video_url")
     @classmethod
@@ -47,6 +49,7 @@ class LessonUpdate(BaseModel):
     resource_type: Literal["text", "pdf", "video", "audio"] | None = None
     position: int | None = Field(default=None, ge=1)
     external_video_url: str | None = Field(default=None, max_length=500)
+    module_id: uuid.UUID | None = None
 
     @field_validator("external_video_url")
     @classmethod
@@ -90,3 +93,4 @@ class LessonResponse(BaseModel):
     content_language: str = "uz"
     translated: bool = False
     position: int
+    module_id: str | None = None

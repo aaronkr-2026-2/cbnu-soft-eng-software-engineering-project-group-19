@@ -17,7 +17,7 @@ from app.core.localization import get_lesson_translation
 from app.core.schemes.lesson import LessonCreate, LessonResponse, LessonUpdate
 from app.core.security import ALGORITHM, SECRET_KEY, create_lesson_banner_token, create_lesson_resource_token
 from app.database import get_db
-from app.models import Course, Enrollment, Lesson, LessonTranslation, User, VideoWatchProgress
+from app.models import Course, CourseModule, Enrollment, Lesson, LessonTranslation, User, VideoWatchProgress
 
 router = APIRouter(prefix="/courses/{course_id}/lessons", tags=["Lessons"])
 RESOURCE_DIR = Path(__file__).resolve().parents[2] / "storage" / "course-materials"
@@ -118,6 +118,7 @@ def to_response(
         content_language=translation.language if translation else (course.language if course else "uz"),
         translated=translation is not None,
         position=lesson.position,
+        module_id=str(lesson.module_id) if lesson.module_id else None,
     )
 
 
@@ -196,8 +197,16 @@ def create_lesson(
     db: Session = Depends(get_db),
 ) -> LessonResponse:
     course = get_owned_course(course_id, current_user.id, db)
+    module = None
+    if lesson_data.module_id:
+        module = db.query(CourseModule).filter(
+            CourseModule.id == lesson_data.module_id, CourseModule.course_id == course.id
+        ).first()
+        if module is None:
+            raise HTTPException(status_code=404, detail="Module not found")
     lesson = Lesson(
         course_id=course.id,
+        module_id=module.id if module else None,
         title=lesson_data.title,
         content=lesson_data.content,
         resource_type=lesson_data.resource_type,
@@ -454,10 +463,16 @@ def update_lesson(
         )
 
     values = lesson_data.model_dump(exclude_unset=True)
+    if "module_id" in values and values["module_id"] is not None:
+        module = db.query(CourseModule).filter(
+            CourseModule.id == values["module_id"], CourseModule.course_id == course.id
+        ).first()
+        if module is None:
+            raise HTTPException(status_code=404, detail="Module not found")
     old_banner_key = lesson.banner_key if {"title", "content"} & values.keys() else None
     db.query(LessonTranslation).filter(LessonTranslation.lesson_id == lesson.id).delete(synchronize_session=False)
     for field, value in values.items():
-        if value is not None or field == "external_video_url":
+        if value is not None or field in {"external_video_url", "module_id"}:
             setattr(lesson, field, value)
     if old_banner_key:
         lesson.banner_key = None

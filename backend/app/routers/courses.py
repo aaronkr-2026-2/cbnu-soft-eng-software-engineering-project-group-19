@@ -12,19 +12,23 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user, require_author
-from app.core.localization import get_course_translation, get_lesson_translation
+from app.core.localization import get_course_translation, get_lesson_translation, get_module_translation
 from app.core.schemes.review import CourseReviewResponse
 from app.core.schemes.course import (
     CourseCatalogResponse,
     CourseCreate,
+    CourseModuleCreate,
+    CourseModuleResponse,
+    CourseModuleUpdate,
     CourseOutlineLesson,
+    CourseOutlineModule,
     CourseOutlineResponse,
     CourseResponse,
     CourseUpdate,
 )
 from app.database import get_db
 from app.core.security import ALGORITHM, SECRET_KEY, create_course_banner_token
-from app.models import Course, CourseReview, CourseTranslation, Enrollment, Lesson, LessonTranslation, User
+from app.models import Course, CourseModule, CourseModuleTranslation, CourseReview, CourseTranslation, Enrollment, Lesson, LessonTranslation, User
 
 router = APIRouter(prefix="/courses", tags=["Courses"])
 RESOURCE_DIR = Path(__file__).resolve().parents[2] / "storage" / "course-materials"
@@ -154,6 +158,7 @@ def get_published_course_outline(
     if course is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Published course not found")
     lessons = db.query(Lesson).filter(Lesson.course_id == course_id).order_by(Lesson.position, Lesson.created_at).all()
+    course_modules = db.query(CourseModule).filter(CourseModule.course_id == course_id).order_by(CourseModule.position, CourseModule.created_at).all()
     review_count, average_rating = db.query(
         func.count(CourseReview.id), func.avg(CourseReview.rating)
     ).filter(CourseReview.course_id == course_id).one()
@@ -167,13 +172,20 @@ def get_published_course_outline(
     )
     course_translation = get_course_translation(course, language, db)
     outline_lessons = []
+    lessons_by_module: dict[uuid.UUID, list[CourseOutlineLesson]] = {module.id: [] for module in course_modules}
+    unassigned_lessons: list[CourseOutlineLesson] = []
     for lesson in lessons:
         lesson_translation = get_lesson_translation(lesson, course, language, db)
-        outline_lessons.append(CourseOutlineLesson(
+        outline_lesson = CourseOutlineLesson(
             title=lesson_translation.title if lesson_translation else lesson.title,
             position=lesson.position,
             banner_url=f"/courses/{course.id}/lessons/{lesson.id}/banner" if lesson.banner_key else None,
-        ))
+        )
+        outline_lessons.append(outline_lesson)
+        if lesson.module_id in lessons_by_module:
+            lessons_by_module[lesson.module_id].append(outline_lesson)
+        else:
+            unassigned_lessons.append(outline_lesson)
     return CourseOutlineResponse(
         id=str(course.id), title=course_translation.title if course_translation else course.title,
         description=course_translation.description if course_translation else course.description,
@@ -183,6 +195,12 @@ def get_published_course_outline(
         translated=course_translation is not None,
         banner_url=course_banner_url(course),
         lessons=outline_lessons,
+        modules=[CourseOutlineModule(
+            title=(get_module_translation(module, course, language, db) or module).title,
+            position=module.position,
+            lessons=lessons_by_module[module.id],
+        ) for module in course_modules],
+        unassigned_lessons=unassigned_lessons,
         average_rating=round(float(average_rating), 1) if average_rating is not None else None,
         review_count=review_count,
         reviews=[CourseReviewResponse(
@@ -227,6 +245,89 @@ def get_owned_course(
             detail="Course not found",
         )
     return course
+
+
+def to_module_response(module: CourseModule) -> CourseModuleResponse:
+    return CourseModuleResponse(
+        id=str(module.id), course_id=str(module.course_id), title=module.title, position=module.position
+    )
+
+
+@router.get("/{course_id}/modules", response_model=list[CourseModuleResponse])
+def list_course_modules(
+    course_id: uuid.UUID,
+    current_user: User = Depends(require_author),
+    db: Session = Depends(get_db),
+) -> list[CourseModuleResponse]:
+    course = get_owned_course(course_id, current_user.id, db)
+    modules = db.query(CourseModule).filter(CourseModule.course_id == course.id).order_by(
+        CourseModule.position, CourseModule.created_at
+    ).all()
+    return [to_module_response(module) for module in modules]
+
+
+@router.post("/{course_id}/modules", response_model=CourseModuleResponse, status_code=status.HTTP_201_CREATED)
+def create_course_module(
+    course_id: uuid.UUID,
+    module_data: CourseModuleCreate,
+    current_user: User = Depends(require_author),
+    db: Session = Depends(get_db),
+) -> CourseModuleResponse:
+    course = get_owned_course(course_id, current_user.id, db)
+    module = CourseModule(course_id=course.id, title=module_data.title.strip(), position=module_data.position)
+    db.add(module)
+    db.commit()
+    db.refresh(module)
+    return to_module_response(module)
+
+
+@router.put("/{course_id}/modules/{module_id}", response_model=CourseModuleResponse)
+def update_course_module(
+    course_id: uuid.UUID,
+    module_id: uuid.UUID,
+    module_data: CourseModuleUpdate,
+    current_user: User = Depends(require_author),
+    db: Session = Depends(get_db),
+) -> CourseModuleResponse:
+    course = get_owned_course(course_id, current_user.id, db)
+    module = db.query(CourseModule).filter(
+        CourseModule.id == module_id, CourseModule.course_id == course.id
+    ).first()
+    if module is None:
+        raise HTTPException(status_code=404, detail="Module not found")
+    for field, value in module_data.model_dump(exclude_unset=True).items():
+        if value is not None:
+            if field == "title" and value.strip() != module.title:
+                db.query(CourseModuleTranslation).filter(
+                    CourseModuleTranslation.module_id == module.id
+                ).delete(synchronize_session=False)
+            setattr(module, field, value.strip() if field == "title" else value)
+    db.commit()
+    db.refresh(module)
+    return to_module_response(module)
+
+
+@router.delete("/{course_id}/modules/{module_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_course_module(
+    course_id: uuid.UUID,
+    module_id: uuid.UUID,
+    current_user: User = Depends(require_author),
+    db: Session = Depends(get_db),
+) -> None:
+    course = get_owned_course(course_id, current_user.id, db)
+    module = db.query(CourseModule).filter(
+        CourseModule.id == module_id, CourseModule.course_id == course.id
+    ).first()
+    if module is None:
+        raise HTTPException(status_code=404, detail="Module not found")
+    db.query(Lesson).filter(Lesson.module_id == module.id).update(
+        {Lesson.module_id: None}, synchronize_session=False
+    )
+    db.query(CourseModuleTranslation).filter(
+        CourseModuleTranslation.module_id == module.id
+    ).delete(synchronize_session=False)
+    db.delete(module)
+    db.commit()
 
 
 @router.post("/{course_id}/publish", response_model=CourseResponse)
@@ -356,13 +457,19 @@ def update_course(
         )
 
     updates = course_data.model_dump(exclude_unset=True)
-    if updates.get("language") and updates["language"] != course.language and db.query(Lesson.id).filter(Lesson.course_id == course.id).first():
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A course language is fixed after its first lesson. Create a new course in the other language so lesson text stays correctly labeled.")
+    has_content = (
+        db.query(Lesson.id).filter(Lesson.course_id == course.id).first()
+        or db.query(CourseModule.id).filter(CourseModule.course_id == course.id).first()
+    )
+    if updates.get("language") and updates["language"] != course.language and has_content:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A course language is fixed after its first module or lesson. Create a new course in the other language so course content stays correctly labeled.")
     if {"title", "description", "language"} & updates.keys():
         db.query(CourseTranslation).filter(CourseTranslation.course_id == course.id).delete(synchronize_session=False)
     if updates.get("language") and updates["language"] != course.language:
         lesson_ids = db.query(Lesson.id).filter(Lesson.course_id == course.id)
         db.query(LessonTranslation).filter(LessonTranslation.lesson_id.in_(lesson_ids)).delete(synchronize_session=False)
+        module_ids = db.query(CourseModule.id).filter(CourseModule.course_id == course.id)
+        db.query(CourseModuleTranslation).filter(CourseModuleTranslation.module_id.in_(module_ids)).delete(synchronize_session=False)
     for field, value in updates.items():
         if value is not None or field == "description":
             setattr(course, field, value)

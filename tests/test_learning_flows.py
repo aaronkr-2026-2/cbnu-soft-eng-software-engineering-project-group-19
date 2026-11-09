@@ -97,6 +97,70 @@ def test_course_ownership_enrollment_payment_and_language_filter(client):
     assert english_course["id"] not in {item["id"] for item in uzbek_catalog}
 
 
+def test_course_modules_group_lessons_and_keep_old_lessons_compatible(client):
+    register(client, "module-author@example.com", "author")
+    register(client, "module-outsider@example.com", "author")
+    author_headers = login(client, "module-author@example.com", "author")
+    outsider_headers = login(client, "module-outsider@example.com", "author")
+    course = create_course(client, author_headers, "Modular Course")
+    course_id = course["id"]
+
+    first_module = client.post(
+        f"/courses/{course_id}/modules",
+        headers=author_headers,
+        json={"title": "Basics", "position": 1},
+    )
+    second_module = client.post(
+        f"/courses/{course_id}/modules",
+        headers=author_headers,
+        json={"title": "Practice", "position": 2},
+    )
+    assert first_module.status_code == 201, first_module.text
+    assert second_module.status_code == 201, second_module.text
+    module_id = second_module.json()["id"]
+    locked_language = client.put(
+        f"/courses/{course_id}", headers=author_headers, json={"language": "en"}
+    )
+    assert locked_language.status_code == 409
+
+    lesson = client.post(
+        f"/courses/{course_id}/lessons",
+        headers=author_headers,
+        json={
+            "title": "First Practice",
+            "content": "Practice content",
+            "position": 1,
+            "module_id": module_id,
+        },
+    )
+    assert lesson.status_code == 201, lesson.text
+    assert lesson.json()["module_id"] == module_id
+
+    forbidden = client.put(
+        f"/courses/{course_id}/modules/{module_id}",
+        headers=outsider_headers,
+        json={"title": "Changed by outsider"},
+    )
+    assert forbidden.status_code == 404
+
+    assert client.post(f"/courses/{course_id}/publish", headers=author_headers).status_code == 200
+    outline = client.get(f"/courses/catalog/{course_id}/outline?language=uz")
+    assert outline.status_code == 200, outline.text
+    assert outline.json()["modules"][1]["title"] == "Practice"
+    assert outline.json()["modules"][1]["lessons"][0]["title"] == "First Practice"
+    assert outline.json()["unassigned_lessons"] == []
+
+    assert client.delete(
+        f"/courses/{course_id}/modules/{module_id}", headers=author_headers
+    ).status_code == 204
+    lessons = client.get(f"/courses/{course_id}/lessons?language=uz", headers=author_headers)
+    assert lessons.status_code == 200, lessons.text
+    assert lessons.json()[0]["module_id"] is None
+    outline_after_delete = client.get(f"/courses/catalog/{course_id}/outline?language=uz")
+    assert outline_after_delete.json()["modules"][0]["title"] == "Basics"
+    assert outline_after_delete.json()["unassigned_lessons"][0]["title"] == "First Practice"
+
+
 def test_final_exam_requires_completed_lessons_and_certificate_is_single(client):
     register(client, "course-author@example.com", "author")
     register(client, "course-learner@example.com")

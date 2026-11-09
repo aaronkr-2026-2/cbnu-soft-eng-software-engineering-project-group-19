@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
-from app.core.ai import AIConfigurationError, AIProviderError, translate_assessment, translate_course, translate_lesson
-from app.models import Course, CourseFinalExam, CourseFinalExamQuestion, CourseTranslation, Lesson, LessonTranslation, Quiz, QuizQuestion
+from app.core.ai import AIConfigurationError, AIProviderError, translate_assessment, translate_course, translate_lesson, translate_module
+from app.models import Course, CourseFinalExam, CourseFinalExamQuestion, CourseModule, CourseModuleTranslation, CourseTranslation, Lesson, LessonTranslation, Quiz, QuizQuestion
 
 
 def get_course_translation(course: Course, language: str, db: Session) -> CourseTranslation | None:
@@ -38,6 +38,26 @@ def get_lesson_translation(lesson: Lesson, course: Course, language: str, db: Se
     except (AIConfigurationError, AIProviderError):
         return None
     translation = LessonTranslation(lesson_id=lesson.id, language=language, **localized)
+    db.add(translation)
+    db.commit()
+    db.refresh(translation)
+    return translation
+
+
+def get_module_translation(module: CourseModule, course: Course, language: str, db: Session) -> CourseModuleTranslation | None:
+    if language == course.language:
+        return None
+    translation = db.query(CourseModuleTranslation).filter(
+        CourseModuleTranslation.module_id == module.id,
+        CourseModuleTranslation.language == language,
+    ).first()
+    if translation:
+        return translation
+    try:
+        translated_title = translate_module(module.title, language)
+    except (AIConfigurationError, AIProviderError):
+        return None
+    translation = CourseModuleTranslation(module_id=module.id, language=language, title=translated_title)
     db.add(translation)
     db.commit()
     db.refresh(translation)

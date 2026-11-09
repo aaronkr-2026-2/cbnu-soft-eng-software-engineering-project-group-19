@@ -56,7 +56,7 @@ The backend uses FastAPI, SQLAlchemy, Alembic, and PostgreSQL. The frontend is a
 - **Course catalog:** Browse and preview published courses and their lesson outlines before enrolling.
 - **Learning progress:** Enroll in courses, read lessons, mark lessons complete, and view course progress.
 - **Personal study tools:** Course recommendations and generated learning plans.
-- **Course authoring:** Create and manage courses and lessons with text, PDF, video, or audio materials, plus lesson quizzes.
+- **Course authoring:** Create courses with ordered modules and lessons. Assign lessons to modules, manage the course outline, and add text, PDF, video, or audio materials and lesson quizzes.
 - **Assessment:** Take lesson quizzes, review prior attempts, and take an author-configured final exam after completing course lessons. The pass mark defaults to 70% and can be changed by the author.
 - **Certificates:** Passing the final exam unlocks a uniquely coded certificate that can be printed or saved as a PDF.
 - **Public certificate checks:** Anyone can verify a certificate code without an account; the result comes from the certificate record in the database.
@@ -66,7 +66,7 @@ The backend uses FastAPI, SQLAlchemy, Alembic, and PostgreSQL. The frontend is a
 
 ## Requirements and quick start
 
-Use Python 3.11 or newer and a local PostgreSQL server. The app currently expects a database named `studyflow_db` at the local PostgreSQL connection configured in `backend/app/database.py`.
+Use Python 3.11 or newer and a local PostgreSQL server. By default, the app connects to the local `studyflow_db` database; set `DATABASE_URL` in `backend/.env` to use a different database.
 
 From the repository root:
 
@@ -173,6 +173,10 @@ The API is served by FastAPI. Unless a route is listed as public, send the acces
 | `GET` | `/courses/{course_id}/lessons` | List a course's lessons |
 | `PUT` | `/courses/{course_id}/lessons/{lesson_id}` | Update an owned lesson |
 | `DELETE` | `/courses/{course_id}/lessons/{lesson_id}` | Delete an owned lesson |
+| `GET` | `/courses/{course_id}/modules` | List modules for an owned course |
+| `POST` | `/courses/{course_id}/modules` | Add a module to an owned course |
+| `PUT` | `/courses/{course_id}/modules/{module_id}` | Rename or reorder a module |
+| `DELETE` | `/courses/{course_id}/modules/{module_id}` | Remove a module while keeping its lessons in the course |
 | `PUT` | `/courses/{course_id}/lessons/{lesson_id}/resource` | Upload or replace a PDF, video, or audio resource (150 MB maximum) |
 | `DELETE` | `/courses/{course_id}/lessons/{lesson_id}/resource` | Remove a lesson's uploaded resource |
 

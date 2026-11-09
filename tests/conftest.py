@@ -10,12 +10,16 @@ os.environ["SECRET_KEY"] = "test-only-secret-key-with-at-least-32-bytes"
 os.environ["DATABASE_URL"] = "sqlite://"
 
 from app.database import Base, get_db  # noqa: E402
+from app.core import rate_limit  # noqa: E402
 from app.main import app  # noqa: E402
 from app.routers import certificates, courses, lessons, quizzes  # noqa: E402
 
 
 @pytest.fixture
 def client(monkeypatch):
+    with rate_limit._lock:
+        rate_limit._attempts.clear()
+        rate_limit._checks = 0
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},

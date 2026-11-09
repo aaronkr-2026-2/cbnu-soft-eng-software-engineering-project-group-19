@@ -58,6 +58,23 @@ def translate_lesson(title: str, content: str, target_language: str) -> dict[str
     return {"title": translated_title[:200], "content": translated_content}
 
 
+def translate_module(title: str, target_language: str) -> str:
+    language_names = {"uz": "Uzbek", "en": "English", "ru": "Russian", "ko": "Korean"}
+    if target_language not in language_names:
+        raise ValueError("Unsupported translation language")
+    result = _chat_completion([
+        {"role": "system", "content": (
+            f"Translate the course module title into {language_names[target_language]}. "
+            "Keep it concise and preserve its meaning. Return JSON with a string field title."
+        )},
+        {"role": "user", "content": json.dumps({"title": title[:200]}, ensure_ascii=False)},
+    ], temperature=0.1)
+    translated_title = result.get("title")
+    if not isinstance(translated_title, str) or not translated_title.strip():
+        raise AIProviderError("AI service returned an incomplete module translation")
+    return translated_title[:200]
+
+
 def translate_course(title: str, description: str | None, category: str, target_language: str) -> dict[str, str | None]:
     language_names = {"uz": "Uzbek", "en": "English", "ru": "Russian", "ko": "Korean"}
     if target_language not in language_names:

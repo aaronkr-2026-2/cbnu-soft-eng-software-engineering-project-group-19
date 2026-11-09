@@ -1,5 +1,5 @@
 from app.core.schemes.review import CourseReviewResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Literal
 
 
@@ -19,6 +19,41 @@ class CourseUpdate(BaseModel):
     price_uzs: int | None = Field(default=None, ge=0, le=1_000_000_000)
     language: Literal["uz", "en", "ru", "ko"] | None = None
     level: Literal["beginner", "intermediate", "advanced"] | None = None
+
+
+class CourseModuleCreate(BaseModel):
+    title: str = Field(min_length=2, max_length=200)
+    position: int = Field(ge=1)
+
+    @field_validator("title")
+    @classmethod
+    def strip_title(cls, value: str) -> str:
+        value = value.strip()
+        if len(value) < 2:
+            raise ValueError("Module title must have at least two non-space characters")
+        return value
+
+
+class CourseModuleUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=2, max_length=200)
+    position: int | None = Field(default=None, ge=1)
+
+    @field_validator("title")
+    @classmethod
+    def strip_title(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        value = value.strip()
+        if len(value) < 2:
+            raise ValueError("Module title must have at least two non-space characters")
+        return value
+
+
+class CourseModuleResponse(BaseModel):
+    id: str
+    course_id: str
+    title: str
+    position: int
 
 
 class CourseResponse(BaseModel):
@@ -54,6 +89,12 @@ class CourseOutlineLesson(BaseModel):
     banner_url: str | None = None
 
 
+class CourseOutlineModule(BaseModel):
+    title: str
+    position: int
+    lessons: list[CourseOutlineLesson]
+
+
 class CourseOutlineResponse(BaseModel):
     id: str
     title: str
@@ -66,6 +107,8 @@ class CourseOutlineResponse(BaseModel):
     translated: bool = False
     banner_url: str | None = None
     lessons: list[CourseOutlineLesson]
+    modules: list[CourseOutlineModule] = Field(default_factory=list)
+    unassigned_lessons: list[CourseOutlineLesson] = Field(default_factory=list)
     average_rating: float | None = None
     review_count: int = 0
     reviews: list[CourseReviewResponse] = Field(default_factory=list)
