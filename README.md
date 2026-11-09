@@ -97,7 +97,7 @@ Start the backend as a separate command, still from `backend/`:
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Use `localhost` consistently because local passkey settings expect that hostname; `127.0.0.1` is treated as a different site origin. Open the [StudyFlow AI web app](http://localhost:8000/app), [API docs](http://localhost:8000/docs), or [health check](http://localhost:8000/health).
+Use `localhost` for local passkeys. If the app is opened through `127.0.0.1`, it redirects to `localhost` because passkey credentials are tied to the site hostname. Open the [StudyFlow AI web app](http://localhost:8000/app), [API docs](http://localhost:8000/docs), or [health check](http://localhost:8000/health).
 
 ## Environment configuration
 

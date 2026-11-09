@@ -34,12 +34,17 @@ from app.database import get_db
 from app.models import PasskeyChallenge, PasskeyCredential, PasskeyProof, User
 
 router = APIRouter(prefix="/auth/passkeys", tags=["Passkeys"])
-LOCAL_WEBAUTHN_ORIGINS = {"http://127.0.0.1:8000", "http://localhost:8000"}
+LOCAL_WEBAUTHN_ORIGINS = {"http://localhost:8000"}
 
 
 def _request_webauthn_scope(request: Request) -> tuple[str, str]:
     origin = (request.headers.get("origin") or str(request.base_url)).rstrip("/")
     configured_origin = WEBAUTHN_ORIGIN.rstrip("/")
+    if origin == "http://127.0.0.1:8000":
+        raise HTTPException(
+            status_code=400,
+            detail="Passkeys require the local hostname. Open http://localhost:8000/app and sign in again.",
+        )
     if origin != configured_origin and origin not in LOCAL_WEBAUTHN_ORIGINS:
         raise HTTPException(status_code=403, detail="This site origin is not enabled for passkeys")
     parsed = urlsplit(origin)

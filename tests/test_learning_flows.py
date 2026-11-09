@@ -1,7 +1,12 @@
 import re
 from urllib.parse import parse_qs, urlparse
 
+import pytest
+from fastapi import HTTPException
+from starlette.requests import Request
+
 from app.routers import auth as auth_router
+from app.routers import passkeys as passkeys_router
 from tests.helpers import login, register
 
 
@@ -19,6 +24,25 @@ def create_course(client, author_headers, title="Intro to Python", price_uzs=0, 
     )
     assert response.status_code == 201, response.text
     return response.json()
+
+
+def test_local_passkeys_require_localhost_origin(monkeypatch):
+    monkeypatch.setattr(passkeys_router, "WEBAUTHN_ORIGIN", "http://localhost:8000")
+
+    def request_for(origin):
+        return Request({
+            "type": "http", "method": "POST", "path": "/auth/passkeys/options",
+            "scheme": "http", "server": ("127.0.0.1", 8000), "client": ("127.0.0.1", 12345),
+            "headers": [(b"origin", origin.encode("ascii"))],
+        })
+
+    assert passkeys_router._request_webauthn_scope(request_for("http://localhost:8000")) == (
+        "localhost", "http://localhost:8000"
+    )
+    with pytest.raises(HTTPException) as error:
+        passkeys_router._request_webauthn_scope(request_for("http://127.0.0.1:8000"))
+    assert error.value.status_code == 400
+    assert "http://localhost:8000/app" in error.value.detail
 
 
 def test_password_change_invalidates_existing_session(client):
