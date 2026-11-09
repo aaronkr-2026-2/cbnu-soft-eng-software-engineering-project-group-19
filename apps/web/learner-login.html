@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f8f4" />
+    <title>O‘quvchi kirishi — StudyFlow AI</title>
+    <link rel="stylesheet" href="/app/style.css" />
+    <link rel="stylesheet" href="/app/portal-auth.css" />
+  </head>
+  <body class="portal-page" data-account-type="learner">
+    <main class="portal-card">
+      <a class="brand" href="/app/"><span class="brand-mark">s</span><span>studyflow<span class="brand-ai">.ai</span></span></a>
+      <label class="portal-language"><span data-copy="language"></span><select id="portalLanguage"><option value="uz">O‘zbekcha</option><option value="en">English</option><option value="ru">Русский</option><option value="ko">한국어</option></select></label>
+      <div class="portal-eyebrow" data-copy="learnerEyebrow"></div>
+      <h1 data-copy="learnerTitle"></h1>
+      <p class="portal-description" data-copy="learnerDescription"></p>
+      <div class="auth-tabs"><button class="active" id="loginTab" type="button" data-copy="login"></button><button id="registerTab" type="button" data-copy="register"></button></div>
+      <form id="portalForm" class="auth-form">
+        <label id="fullNameField" hidden><span data-copy="fullName"></span><input name="full_name" autocomplete="name" minlength="2" maxlength="150" /></label>
+        <label><span data-copy="email"></span><input name="email" type="email" autocomplete="email" required /></label>
+        <label><span data-copy="password"></span><input name="password" type="password" autocomplete="current-password" minlength="8" required /></label>
+        <a id="forgotPasswordLink" class="portal-home" href="/app/reset-password.html"></a>
+        <p class="form-message" id="portalMessage" role="status"></p>
+        <button class="button button-dark auth-submit" type="submit" id="portalSubmit"></button>
+      </form>
+      <p class="portal-switch"><span data-copy="otherRolePrompt"></span> <a href="/app/author-login.html" data-copy="authorPortal"></a></p>
+      <a class="portal-home" href="/app/" data-copy="backHome"></a>
+    </main>
+    <script src="/app/portal-auth.js" defer></script>
+  </body>
+</html>

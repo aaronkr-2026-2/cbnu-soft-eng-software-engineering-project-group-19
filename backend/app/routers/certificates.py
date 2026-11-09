@@ -20,6 +20,8 @@ def to_response(certificate: CourseCertificate) -> CertificateResponse:
         certificate_code=certificate.certificate_code,
         recipient_name=certificate.recipient_name,
         course_title=certificate.course_title,
+        score_percent=certificate.score_percent,
+        achievement_level=certificate.achievement_level,
         issued_at=certificate.issued_at,
     )
 
@@ -71,11 +73,11 @@ def issue_my_certificate(
             status_code=status.HTTP_409_CONFLICT,
             detail="Complete every lesson before requesting a certificate",
         )
-    passed_exam = db.query(FinalExamAttempt.id).filter(
+    passed_exam = db.query(FinalExamAttempt).filter(
         FinalExamAttempt.course_id == course_id,
         FinalExamAttempt.user_id == current_user.id,
         FinalExamAttempt.passed.is_(True),
-    ).first()
+    ).order_by(FinalExamAttempt.score_percent.desc(), FinalExamAttempt.submitted_at.desc()).first()
     if passed_exam is None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -83,12 +85,15 @@ def issue_my_certificate(
         )
 
     consume_passkey_proof(passkey_proof, current_user.id, "certificate", db)
+    achievement_level = "gold" if passed_exam.score_percent >= 90 else "silver" if passed_exam.score_percent >= 80 else "bronze"
     certificate = CourseCertificate(
         user_id=current_user.id,
         course_id=course_id,
         recipient_name=current_user.full_name,
         course_title=course.title,
         certificate_code=f"SF-{secrets.token_hex(16).upper()}",
+        score_percent=passed_exam.score_percent,
+        achievement_level=achievement_level,
     )
     db.add(certificate)
     db.commit()
@@ -134,5 +139,7 @@ def verify_certificate(
         certificate_code=certificate.certificate_code,
         recipient_name=certificate.recipient_name,
         course_title=certificate.course_title,
+        score_percent=certificate.score_percent,
+        achievement_level=certificate.achievement_level,
         issued_at=certificate.issued_at,
     )

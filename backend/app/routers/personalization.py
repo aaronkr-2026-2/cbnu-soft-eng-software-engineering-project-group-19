@@ -2,8 +2,10 @@ import math
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from app.core.ai import AIConfigurationError, AIProviderError, generate_course_recommendations
 from app.core.dependencies import get_current_user
 from app.core.schemes.personalization import (
     CourseRecommendation,
@@ -30,28 +32,28 @@ learning_plans_router = APIRouter(prefix="/learning-plans", tags=["Personalized 
 _LEVELS = ("beginner", "intermediate", "advanced")
 _RECOMMENDATION_REASONS = {
     "uz": {
-        "language": "Profilingizdagi tilga mos",
         "level": "Quiz natijangizga mos daraja",
         "near": "Hozirgi darajangizga yaqin",
         "beginner": "Boshlang‘ich bosqichdan boshlash uchun mos",
+        "interest": "Qiziqishingizga mos mavzu",
     },
     "en": {
-        "language": "Matches your preferred language",
         "level": "Matches the level suggested by your quiz results",
         "near": "Close to your current level",
         "beginner": "A good starting point for beginners",
+        "interest": "Matches your learning interest",
     },
     "ru": {
-        "language": "Соответствует выбранному вами языку",
         "level": "Соответствует уровню по результатам тестов",
         "near": "Близко к вашему текущему уровню",
         "beginner": "Подходит для начала обучения с основ",
+        "interest": "Соответствует вашим интересам",
     },
     "ko": {
-        "language": "선호하는 언어와 일치합니다",
         "level": "퀴즈 결과에 맞는 수준입니다",
         "near": "현재 수준과 가깝습니다",
         "beginner": "기초부터 시작하기에 적합합니다",
+        "interest": "관심 있는 주제와 맞아요",
     },
 }
 _STUDY_GUIDANCE = {
@@ -95,13 +97,15 @@ def learner_profile(user_id: uuid.UUID, db: Session) -> tuple[float | None, str]
     return average, "advanced"
 
 
-def build_reasons(course: Course, language: str, level: str, has_quiz_history: bool) -> tuple[int, list[str]]:
+def build_reasons(course: Course, language: str, level: str, has_quiz_history: bool, interest: str = "", lesson_matches: bool = False) -> tuple[int, list[str]]:
     copy = _RECOMMENDATION_REASONS.get(language, _RECOMMENDATION_REASONS["uz"])
     score = 0
     reasons: list[str] = []
-    if course.language == language:
-        score += 60
-        reasons.append(copy["language"])
+    wanted = {part.casefold() for part in interest.split() if len(part) > 1}
+    course_text = " ".join((course.title or "", course.description or "", course.category or "")).casefold()
+    if wanted and (any(word in course_text for word in wanted) or lesson_matches):
+        score += 80
+        reasons.append(copy["interest"])
     level_distance = abs(_LEVELS.index(course.level) - _LEVELS.index(level))
     if level_distance == 0:
         score += 40
@@ -119,6 +123,7 @@ def build_reasons(course: Course, language: str, level: str, has_quiz_history: b
 @recommendations_router.get("/me", response_model=RecommendationResponse)
 def get_my_recommendations(
     limit: int = Query(default=5, ge=1, le=20),
+    interest: str | None = Query(default=None, min_length=1, max_length=100),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> RecommendationResponse:
@@ -133,20 +138,62 @@ def get_my_recommendations(
         .order_by(Course.created_at.desc())
         .all()
     )
+    matching_course_ids: set[uuid.UUID] = set()
+    if interest:
+        pattern = f"%{interest.strip()}%"
+        matching_course_ids = {
+            row[0] for row in db.query(Lesson.course_id).filter(
+                or_(Lesson.title.ilike(pattern), Lesson.content.ilike(pattern))
+            ).all()
+        }
     candidates: list[tuple[int, Course, list[str]]] = []
     for course in courses:
         if course.id in enrolled_ids:
             continue
         score, reasons = build_reasons(
-            course, current_user.preferred_language, estimated_level, average_score is not None
+            course, current_user.preferred_language, estimated_level, average_score is not None,
+            interest or "", course.id in matching_course_ids,
         )
         candidates.append((score, course, reasons))
     candidates.sort(key=lambda item: (item[0], item[1].created_at), reverse=True)
+
+    ai_powered = False
+    recommended_courses: list[tuple[int, Course, list[str]]] | None = None
+    if interest and candidates:
+        available = [
+            {"course_id": str(course.id), "title": course.title, "subject": course.category, "level": course.level}
+            for _, course, _ in candidates[:30]
+        ]
+        try:
+            result = generate_course_recommendations(
+                interest, estimated_level, current_user.preferred_language, available
+            )
+            course_map = {str(course.id): (score, course, reasons) for score, course, reasons in candidates}
+            selected = []
+            seen = set()
+            ai_items = result.get("recommendations", []) if isinstance(result, dict) else []
+            for item in ai_items if isinstance(ai_items, list) else []:
+                if not isinstance(item, dict):
+                    continue
+                course_id = str(item.get("course_id", ""))
+                if course_id in course_map and course_id not in seen:
+                    score, course, local_reasons = course_map[course_id]
+                    reason = item.get("reason")
+                    selected.append((score, course, [reason] if isinstance(reason, str) and reason.strip() else local_reasons))
+                    seen.add(course_id)
+            if selected:
+                recommended_courses = selected
+                ai_powered = True
+        except (AIConfigurationError, AIProviderError, ValueError, TypeError):
+            pass
+    if recommended_courses is None:
+        recommended_courses = candidates
 
     return RecommendationResponse(
         preferred_language=current_user.preferred_language,
         estimated_level=estimated_level,
         average_quiz_score=average_score,
+        ai_powered=ai_powered,
         recommendations=[
             CourseRecommendation(
                 course_id=course.id,
@@ -157,7 +204,7 @@ def get_my_recommendations(
                 match_score=score,
                 reasons=reasons,
             )
-            for score, course, reasons in candidates[:limit]
+            for score, course, reasons in recommended_courses[:limit]
         ],
     )
 

@@ -51,12 +51,12 @@ The backend uses FastAPI, SQLAlchemy, Alembic, and PostgreSQL. The frontend is a
 
 ## Existing features list
 
-- **Accounts:** Registration, login, JWT bearer tokens, password changes, and authenticated profile endpoints.
+- **Accounts:** Registration, login, JWT bearer tokens, password changes, forgot-password email links, and authenticated profile endpoints.
 - **Four-language UI:** Uzbek, English, Russian, and Korean interface copy.
 - **Course catalog:** Browse and preview published courses and their lesson outlines before enrolling.
 - **Learning progress:** Enroll in courses, read lessons, mark lessons complete, and view course progress.
 - **Personal study tools:** Course recommendations and generated learning plans.
-- **Course authoring:** Create, edit, publish, and unpublish courses; manage lessons and lesson quizzes.
+- **Course authoring:** Create and manage courses and lessons with text, PDF, video, or audio materials, plus lesson quizzes.
 - **Assessment:** Take lesson quizzes, review prior attempts, and take a final exam after completing course lessons. A passing final exam requires 70% or higher.
 - **Certificates:** Passing the final exam unlocks a uniquely coded certificate that can be printed or saved as a PDF.
 - **Public certificate checks:** Anyone can verify a certificate code without an account; the result comes from the certificate record in the database.
@@ -99,13 +99,22 @@ Open the [StudyFlow AI web app](http://127.0.0.1:8000/app), [API docs](http://12
 
 | Setting | Purpose | Local default or requirement |
 |---|---|---|
-| `SECRET_KEY` | Signs JWT access tokens | Required; replace `change-me` with a private random value |
-| `WEBAUTHN_RP_ID` | WebAuthn relying-party domain | `127.0.0.1` locally |
+| `SECRET_KEY` | Signs JWT access tokens | Required; use a private random value of at least 32 bytes |
+| `WEBAUTHN_RP_ID` | WebAuthn relying-party domain | `localhost` locally |
 | `WEBAUTHN_RP_NAME` | Name shown in the device passkey prompt | `StudyFlow AI` |
-| `WEBAUTHN_ORIGIN` | Exact origin accepted for passkey verification | `http://127.0.0.1:8000` locally |
-| Database URL | PostgreSQL connection | Currently hard-coded in `backend/app/database.py` as `postgresql+psycopg://localhost/studyflow_db` |
+| `WEBAUTHN_ORIGIN` | Exact origin accepted for passkey verification | `http://localhost:8000` locally |
+| `AI_API_KEY` | Enables AI course recommendations and author-triggered quiz generation | Optional; add a private OpenAI API key in `backend/.env` |
+| `AI_MODEL` | Model used for AI recommendations and quiz generation | `gpt-4o-mini` |
+| `AI_BASE_URL` | OpenAI-compatible API base URL | Defaults to `https://api.openai.com/v1` |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM` | Sends expiring password-reset links by email | Required for forgot-password requests |
+| `FRONTEND_BASE_URL` | Base URL used in password-reset links | `http://127.0.0.1:8000/app` locally |
+| `DATABASE_URL` | PostgreSQL connection | `postgresql+psycopg://localhost/studyflow_db` locally; set the provider URL in production |
 
-For production, configure the database URL through an environment variable, use HTTPS, and set the WebAuthn relying-party ID and origin to the real domain.
+AI quiz generation sends the selected lesson text and extracted text from its PDF to the configured AI API after an author clicks **Generate quiz with AI**. Course recommendations send the learner's search topic, quiz-derived level, and course IDs/titles/subjects/levels after the learner submits a search. Audio/video files and account identifiers are not sent. Add a transcript to lesson text to use video/audio material for quiz generation. API usage may incur provider charges. Keep the key in the untracked `.env` file and never commit it.
+
+Forgot-password requests need working SMTP settings in `backend/.env`. For Gmail, use `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`, your Gmail address for both `SMTP_USERNAME` and `SMTP_FROM`, and a Google App Password for `SMTP_PASSWORD`. Google requires 2-Step Verification before an App Password can be created; do not use your normal Google password. Reset links expire after 30 minutes and can be used once. A Gmail mailbox and App Password are not included with this repository.
+
+For production, set `DATABASE_URL` to the provider's PostgreSQL URL, use HTTPS, and set the WebAuthn relying-party ID and origin to the real domain.
 
 ## API documentation and status
 
@@ -164,8 +173,10 @@ The API is served by FastAPI. Unless a route is listed as public, send the acces
 | `GET` | `/courses/{course_id}/lessons` | List a course's lessons |
 | `PUT` | `/courses/{course_id}/lessons/{lesson_id}` | Update an owned lesson |
 | `DELETE` | `/courses/{course_id}/lessons/{lesson_id}` | Delete an owned lesson |
+| `PUT` | `/courses/{course_id}/lessons/{lesson_id}/resource` | Upload or replace a PDF, video, or audio resource (150 MB maximum) |
+| `DELETE` | `/courses/{course_id}/lessons/{lesson_id}/resource` | Remove a lesson's uploaded resource |
 
-Course language must be `uz`, `en`, `ru`, or `ko`; course level must be `beginner`, `intermediate`, or `advanced`. A lesson has a title, content, and positive position number.
+Course language must be `uz`, `en`, `ru`, or `ko`; course level must be `beginner`, `intermediate`, or `advanced`. A lesson has a title, notes/text, content type, and positive position number. See the [course authoring guide](docs/course-authoring.md) for the Coursera-inspired module and lesson workflow. Uploaded material is stored locally under `backend/storage/course-materials`; configure private object storage before a production deployment.
 
 ### Learner enrollment and progress routes
 
@@ -216,16 +227,18 @@ These examples use `http://127.0.0.1:8000`. Replace the sample values and UUIDs 
 ```bash
 curl -X POST http://127.0.0.1:8000/auth/register \
   -H 'Content-Type: application/json' \
-  -d '{"email":"learner@example.com","full_name":"Example Learner","password":"use-a-private-password","preferred_language":"en"}'
+  -d '{"email":"learner@example.com","full_name":"Example Learner","password":"use-a-private-password","preferred_language":"en","account_type":"learner"}'
 ```
 
 ```bash
 curl -X POST http://127.0.0.1:8000/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"learner@example.com","password":"use-a-private-password"}'
+  -d '{"email":"learner@example.com","password":"use-a-private-password","account_type":"learner"}'
 ```
 
 The login response contains `access_token` and `token_type`. Use the token as a bearer token for protected routes; Swagger's **Authorize** button can set it for interactive API calls.
+
+Learners and authors use separate portals: `/app/learner-login.html` and `/app/author-login.html`. Registration on each portal creates the corresponding account type. Existing course owners are migrated as authors; other existing accounts remain learners. Course creation and management endpoints enforce the author role on the backend.
 
 ### Create a course, lesson, and quiz
 
@@ -308,7 +321,7 @@ Passkey proof values are short-lived and single-use. Do not log them or store th
 ### Course-author path
 
 1. Create a course with its language and level.
-2. Add lessons in the intended order.
+2. Add lessons in order; each lesson can be text, a PDF reading, a video, or an audio recording.
 3. Add at least one quiz to every lesson used for the final exam.
 4. Preview and publish the course when ready.
 5. Review enrollment, progress, learner ratings, and exam pass statistics.
@@ -414,14 +427,29 @@ Enrolled learners can submit or update a 1–5 star review after completing a co
 
 ## Deployment
 
-The repository currently documents and supports local development. A public cloud deployment URL and host configuration have not been recorded yet, so this project page does not claim a live production site.
+The repository includes a Docker image and a Docker Compose setup for running the web app with PostgreSQL. These files prepare a repeatable deployment; they do not publish the app to a cloud host. No public deployment URL or hosting account is configured yet.
 
-Before deploying, externalize the database URL, configure secrets on the host, apply Alembic migrations, set WebAuthn to the production HTTPS origin, and verify `/health`, authentication, learning flows, and certificate verification. Keep user-uploaded profile images on storage that persists across redeploys.
+For a local container run, install Docker Desktop, then from the repository root:
+
+```bash
+cp .env.compose.example .env
+test -f backend/.env || cp backend/.env.example backend/.env
+```
+
+Set a private random `SECRET_KEY` in `backend/.env` and a long URL-safe `POSTGRES_PASSWORD` in the root `.env`. Add SMTP, AI, and payment credentials there only if those features are being used. Then start the app:
+
+```bash
+docker compose up --build
+```
+
+The container waits for PostgreSQL, applies Alembic migrations, and starts the app at [http://localhost:8000/app](http://localhost:8000/app). Uploaded materials and profile pictures are stored in `backend/storage`; PostgreSQL data uses a named Docker volume. `docker compose down` keeps both. `docker compose down -v` deletes the database volume and all database records.
+
+Before a public deployment, use a managed PostgreSQL database and persistent private object storage for uploads, serve the app over HTTPS, configure `WEBAUTHN_RP_ID` and `WEBAUTHN_ORIGIN` for the final domain, and set `PUBLIC_APP_URL` and `FRONTEND_BASE_URL` to that domain. Configure SMTP, AI, and GlobalPay credentials in the host's secret manager. Back up PostgreSQL and uploaded files, and verify `/health`, account recovery, learner and author access, payments, exams, and certificate verification. See [deployment preparation](docs/deployment.md) for the remaining release steps.
 
 ## Known limitations
 
 - No public cloud deployment is documented yet.
-- Database connection configuration is hard-coded for local PostgreSQL and should be externalized before deployment.
+- Database connection configuration is externalized through `DATABASE_URL`; a production database still needs to be provisioned and configured.
 - No automated test suite or CI workflow is committed yet.
 - Profile image storage and operational monitoring need a persistent production plan.
 - The personas are retrospective product assumptions, not findings from completed interviews.
@@ -438,6 +466,7 @@ Before deploying, externalize the database URL, configure secrets on the host, a
 | Week 7: cloud deployment | Pending; add host, public URL, migration process, and health-check evidence |
 | Week 8: midterm | Review checkpoint |
 | Week 9: decomposition | [Microservices discussion](docs/decomposition-review.md) |
+| Week 10: security review | [Security review and follow-up items](docs/security-audit.md) |
 | AI-assisted project work | [AI collaboration log](AI_LOG.md) |
 
 The AI collaboration log should be reviewed and completed honestly by the student before each submission.

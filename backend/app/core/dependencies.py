@@ -74,4 +74,22 @@ def get_current_user(
 
         )
 
+    if payload.get("ver", 0) != user.token_version:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session expired; please sign in again",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     return user
+
+
+def require_author(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    if current_user.account_type != "author":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Author account required",
+        )
+    return current_user

@@ -7,9 +7,9 @@ from sqlalchemy.orm import Session
 
 from app.models import PasskeyProof
 
-WEBAUTHN_RP_ID = os.getenv("WEBAUTHN_RP_ID", "127.0.0.1")
+WEBAUTHN_RP_ID = os.getenv("WEBAUTHN_RP_ID", "localhost")
 WEBAUTHN_RP_NAME = os.getenv("WEBAUTHN_RP_NAME", "StudyFlow AI")
-WEBAUTHN_ORIGIN = os.getenv("WEBAUTHN_ORIGIN", "http://127.0.0.1:8000")
+WEBAUTHN_ORIGIN = os.getenv("WEBAUTHN_ORIGIN", "http://localhost:8000")
 
 
 def consume_passkey_proof(token: str | None, user_id, purpose: str, db: Session) -> None:

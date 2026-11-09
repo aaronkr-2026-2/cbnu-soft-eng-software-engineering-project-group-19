@@ -1,15 +1,23 @@
 import base64
 import binascii
+import os
+import smtplib
+import time
 import uuid
+from email.message import EmailMessage
 from pathlib import Path
+from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import jwt
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
 from app.core.schemes.user import (
     AvatarUpload,
+    PasswordResetConfirm,
+    PasswordResetRequest,
     Token,
     UserLogin,
     UserPasswordChange,
@@ -17,13 +25,14 @@ from app.core.schemes.user import (
     UserResponse,
     UserUpdate,
 )
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.security import ALGORITHM, SECRET_KEY, create_access_token, create_password_reset_token, hash_password, verify_password
 from app.database import get_db
 from app.models import User
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 AVATAR_DIR = Path(__file__).resolve().parents[2] / "storage" / "avatars"
 MAX_AVATAR_BYTES = 2 * 1024 * 1024
+_password_reset_attempts: dict[str, list[float]] = {}
 
 
 def to_user_response(user: User) -> UserResponse:
@@ -31,6 +40,7 @@ def to_user_response(user: User) -> UserResponse:
         id=str(user.id),
         email=user.email,
         full_name=user.full_name,
+        account_type=user.account_type,
         preferred_language=user.preferred_language,
         age=user.age,
         bio=user.bio,
@@ -57,6 +67,7 @@ def register(
     new_user = User(
         email=user_data.email,
         full_name=user_data.full_name,
+        account_type=user_data.account_type,
         hashed_password=hash_password(user_data.password),
         preferred_language=user_data.preferred_language,
     )
@@ -80,7 +91,13 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    access_token = create_access_token(str(user.id))
+    if user.account_type != user_data.account_type:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This account uses a different sign-in page",
+        )
+
+    access_token = create_access_token(str(user.id), user.token_version)
     return Token(access_token=access_token)
 
 
@@ -191,5 +208,86 @@ def change_password(
         )
 
     current_user.hashed_password = hash_password(password_data.new_password)
+    current_user.token_version += 1
     db.commit()
     return {"message": "Password changed successfully"}
+
+
+@router.post("/password-reset/request")
+def request_password_reset(
+    reset_request: PasswordResetRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> dict[str, str]:
+    client_ip = request.client.host if request.client else "unknown"
+    now = time.monotonic()
+    recent = [attempt for attempt in _password_reset_attempts.get(client_ip, []) if now - attempt < 900]
+    if len(recent) >= 5:
+        raise HTTPException(status_code=429, detail="Too many password reset requests. Try again later.")
+    recent.append(now)
+    _password_reset_attempts[client_ip] = recent
+
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_from = os.getenv("SMTP_FROM")
+    smtp_username = (os.getenv("SMTP_USERNAME") or "").strip()
+    # Google displays App Passwords in groups; remove copy/pasted whitespace.
+    smtp_password = "".join((os.getenv("SMTP_PASSWORD") or "").split())
+    frontend_url = os.getenv("FRONTEND_BASE_URL", "http://127.0.0.1:8000/app").rstrip("/")
+    if not frontend_url.endswith("/app"):
+        frontend_url += "/app"
+    if not smtp_host or not smtp_from or not smtp_username or not smtp_password:
+        raise HTTPException(status_code=503, detail="Password reset email is not configured on this server")
+
+    user = db.query(User).filter(User.email == reset_request.email).first()
+    if user is None:
+        return {"message": "If that email belongs to an account, a reset link has been sent."}
+
+    token = create_password_reset_token(str(user.id), user.token_version)
+    reset_query = urlencode({"token": token, "account_type": user.account_type})
+    reset_url = f"{frontend_url}/reset-password.html?{reset_query}"
+    message = EmailMessage()
+    message["Subject"] = "Reset your StudyFlow AI password"
+    message["From"] = smtp_from
+    message["To"] = user.email
+    message.set_content(
+        "We received a request to reset your StudyFlow AI password. "
+        f"Open this link within 30 minutes: {reset_url}\n\n"
+        "If you did not request this, ignore this email."
+    )
+    try:
+        smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        if smtp_port == 465:
+            with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=10) as smtp:
+                smtp.login(smtp_username, smtp_password)
+                smtp.send_message(message)
+        else:
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as smtp:
+                smtp.starttls()
+                smtp.login(smtp_username, smtp_password)
+                smtp.send_message(message)
+    except (OSError, smtplib.SMTPException, ValueError):
+        raise HTTPException(status_code=503, detail="Unable to send the reset email right now") from None
+    return {"message": "If that email belongs to an account, a reset link has been sent."}
+
+
+@router.post("/password-reset/confirm")
+def confirm_password_reset(
+    reset_data: PasswordResetConfirm,
+    db: Session = Depends(get_db),
+) -> dict[str, str]:
+    try:
+        payload = jwt.decode(reset_data.token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("typ") != "password_reset":
+            raise jwt.InvalidTokenError("Wrong token type")
+        user_id = uuid.UUID(payload["sub"])
+        token_version = payload["ver"]
+    except (jwt.InvalidTokenError, KeyError, TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Reset link is invalid or expired") from None
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None or user.token_version != token_version:
+        raise HTTPException(status_code=400, detail="Reset link is invalid or expired")
+    user.hashed_password = hash_password(reset_data.new_password)
+    user.token_version += 1
+    db.commit()
+    return {"message": "Password updated. You can now sign in with the new password."}

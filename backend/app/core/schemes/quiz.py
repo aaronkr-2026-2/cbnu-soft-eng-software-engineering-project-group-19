@@ -95,6 +95,36 @@ class FinalExamResponse(BaseModel):
     passed: bool = False
 
 
+class FinalExamQuestionCreate(BaseModel):
+    prompt: str = Field(min_length=3, max_length=2000)
+    choices: list[str] = Field(min_length=2, max_length=8)
+    correct_index: int = Field(ge=0)
+
+    @model_validator(mode="after")
+    def validate_correct_choice(self):
+        if self.correct_index >= len(self.choices) or any(not choice.strip() for choice in self.choices):
+            raise ValueError("Choose a valid answer and provide non-empty choices")
+        return self
+
+
+class FinalExamManageUpsert(BaseModel):
+    title: str = Field(min_length=3, max_length=200)
+    passing_score: int = Field(default=70, ge=1, le=100)
+    questions: list[FinalExamQuestionCreate] = Field(min_length=1, max_length=100)
+
+
+class FinalExamManageQuestion(FinalExamQuestionResponse):
+    correct_index: int
+
+
+class FinalExamManageResponse(BaseModel):
+    id: UUID
+    course_id: UUID
+    title: str
+    passing_score: int
+    questions: list[FinalExamManageQuestion]
+
+
 class FinalExamAttemptCreate(BaseModel):
     answers: list[QuizAnswerSubmit] = Field(min_length=1, max_length=250)
 

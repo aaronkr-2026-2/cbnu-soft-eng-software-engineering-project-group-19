@@ -9,6 +9,8 @@ class CertificateResponse(BaseModel):
     certificate_code: str
     recipient_name: str
     course_title: str
+    score_percent: float
+    achievement_level: str
     issued_at: datetime
 
 
@@ -17,4 +19,6 @@ class CertificateVerificationResponse(BaseModel):
     certificate_code: str
     recipient_name: str
     course_title: str
+    score_percent: float
+    achievement_level: str
     issued_at: datetime

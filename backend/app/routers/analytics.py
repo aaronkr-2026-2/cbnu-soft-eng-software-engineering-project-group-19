@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import get_current_user
+from app.core.dependencies import require_author
 from app.core.schemes.analytics import CourseAnalyticsResponse
 from app.database import get_db
 from app.models import Course, CourseReview, Enrollment, FinalExamAttempt, Lesson, LessonProgress, User
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/courses/{course_id}/analytics", tags=["Course Analyt
 @router.get("", response_model=CourseAnalyticsResponse)
 def get_course_analytics(
     course_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_author),
     db: Session = Depends(get_db),
 ) -> CourseAnalyticsResponse:
     course = db.query(Course).filter(Course.id == course_id, Course.owner_id == current_user.id).first()

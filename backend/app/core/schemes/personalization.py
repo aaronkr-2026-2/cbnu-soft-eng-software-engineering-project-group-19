@@ -18,6 +18,7 @@ class RecommendationResponse(BaseModel):
     preferred_language: str
     estimated_level: str
     average_quiz_score: float | None
+    ai_powered: bool = False
     recommendations: list[CourseRecommendation]
 
 

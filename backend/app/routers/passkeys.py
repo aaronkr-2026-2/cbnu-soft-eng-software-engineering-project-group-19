@@ -1,8 +1,9 @@
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Literal
+from urllib.parse import urlsplit
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -26,7 +27,6 @@ from webauthn.helpers.structs import (
 from app.core.dependencies import get_current_user
 from app.core.passkeys import (
     WEBAUTHN_ORIGIN,
-    WEBAUTHN_RP_ID,
     WEBAUTHN_RP_NAME,
     proof_expiry,
 )
@@ -34,6 +34,19 @@ from app.database import get_db
 from app.models import PasskeyChallenge, PasskeyCredential, PasskeyProof, User
 
 router = APIRouter(prefix="/auth/passkeys", tags=["Passkeys"])
+LOCAL_WEBAUTHN_ORIGINS = {"http://127.0.0.1:8000", "http://localhost:8000"}
+
+
+def _request_webauthn_scope(request: Request) -> tuple[str, str]:
+    origin = (request.headers.get("origin") or str(request.base_url)).rstrip("/")
+    configured_origin = WEBAUTHN_ORIGIN.rstrip("/")
+    if origin != configured_origin and origin not in LOCAL_WEBAUTHN_ORIGINS:
+        raise HTTPException(status_code=403, detail="This site origin is not enabled for passkeys")
+    parsed = urlsplit(origin)
+    rp_id = parsed.hostname
+    if not rp_id or parsed.path or parsed.query or parsed.fragment:
+        raise HTTPException(status_code=400, detail="Invalid passkey site origin")
+    return rp_id, origin
 
 
 class RegistrationVerify(BaseModel):
@@ -72,12 +85,14 @@ def _challenge_or_404(challenge_id: uuid.UUID, user_id: uuid.UUID, purpose: str,
 
 @router.get("/me")
 def passkey_status(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
+    rp_id, _ = _request_webauthn_scope(request)
     credentials = (
         db.query(PasskeyCredential)
-        .filter(PasskeyCredential.user_id == current_user.id)
+        .filter(PasskeyCredential.user_id == current_user.id, PasskeyCredential.rp_id == rp_id)
         .order_by(PasskeyCredential.created_at)
         .all()
     )
@@ -92,12 +107,16 @@ def passkey_status(
 
 @router.post("/registration/options")
 def registration_options(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
-    existing = db.query(PasskeyCredential).filter(PasskeyCredential.user_id == current_user.id).all()
+    rp_id, origin = _request_webauthn_scope(request)
+    existing = db.query(PasskeyCredential).filter(
+        PasskeyCredential.user_id == current_user.id, PasskeyCredential.rp_id == rp_id
+    ).all()
     options = generate_registration_options(
-        rp_id=WEBAUTHN_RP_ID,
+        rp_id=rp_id,
         rp_name=WEBAUTHN_RP_NAME,
         user_id=current_user.id.bytes,
         user_name=current_user.email,
@@ -121,6 +140,8 @@ def registration_options(
         user_id=current_user.id,
         challenge=bytes_to_base64url(options.challenge),
         purpose="registration",
+        rp_id=rp_id,
+        origin=origin,
         expires_at=datetime.now(timezone.utc) + timedelta(minutes=5),
     )
     db.add(challenge)
@@ -135,12 +156,14 @@ def verify_registration(
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     challenge = _challenge_or_404(payload.challenge_id, current_user.id, "registration", db)
+    if not challenge.rp_id or not challenge.origin:
+        raise HTTPException(status_code=400, detail="Passkey challenge has no site origin")
     try:
         verification = verify_registration_response(
             credential=payload.credential,
             expected_challenge=base64url_to_bytes(challenge.challenge),
-            expected_rp_id=WEBAUTHN_RP_ID,
-            expected_origin=WEBAUTHN_ORIGIN,
+            expected_rp_id=challenge.rp_id,
+            expected_origin=challenge.origin,
             require_user_verification=True,
         )
     except Exception as error:
@@ -154,6 +177,7 @@ def verify_registration(
         PasskeyCredential(
             user_id=current_user.id,
             credential_id=credential_id,
+            rp_id=challenge.rp_id,
             public_key=verification.credential_public_key,
             sign_count=verification.sign_count,
             transports=transports if isinstance(transports, list) else None,
@@ -172,14 +196,18 @@ def verify_registration(
 @router.post("/authentication/options")
 def authentication_options(
     payload: AuthenticationOptionsRequest,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
-    credentials = db.query(PasskeyCredential).filter(PasskeyCredential.user_id == current_user.id).all()
+    rp_id, origin = _request_webauthn_scope(request)
+    credentials = db.query(PasskeyCredential).filter(
+        PasskeyCredential.user_id == current_user.id, PasskeyCredential.rp_id == rp_id
+    ).all()
     if not credentials:
         raise HTTPException(status_code=status.HTTP_428_PRECONDITION_REQUIRED, detail="Register a passkey before this action")
     options = generate_authentication_options(
-        rp_id=WEBAUTHN_RP_ID,
+        rp_id=rp_id,
         allow_credentials=[
             PublicKeyCredentialDescriptor(
                 id=base64url_to_bytes(item.credential_id),
@@ -198,6 +226,8 @@ def authentication_options(
         user_id=current_user.id,
         challenge=bytes_to_base64url(options.challenge),
         purpose=payload.purpose,
+        rp_id=rp_id,
+        origin=origin,
         expires_at=datetime.now(timezone.utc) + timedelta(minutes=5),
     )
     db.add(challenge)
@@ -225,10 +255,13 @@ def verify_authentication(
     )
     if challenge is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passkey challenge expired or already used")
+    if not challenge.rp_id or not challenge.origin:
+        raise HTTPException(status_code=400, detail="Passkey challenge has no site origin")
     raw_id = payload.credential.get("rawId") or payload.credential.get("id")
     credential = db.query(PasskeyCredential).filter(
         PasskeyCredential.user_id == current_user.id,
         PasskeyCredential.credential_id == raw_id,
+            PasskeyCredential.rp_id == challenge.rp_id,
     ).first()
     if credential is None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This passkey is not registered to your account")
@@ -236,8 +269,8 @@ def verify_authentication(
         verification = verify_authentication_response(
             credential=payload.credential,
             expected_challenge=base64url_to_bytes(challenge.challenge),
-            expected_rp_id=WEBAUTHN_RP_ID,
-            expected_origin=WEBAUTHN_ORIGIN,
+            expected_rp_id=challenge.rp_id,
+            expected_origin=challenge.origin,
             credential_public_key=credential.public_key,
             credential_current_sign_count=credential.sign_count,
             require_user_verification=True,

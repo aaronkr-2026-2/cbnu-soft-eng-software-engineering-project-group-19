@@ -9,6 +9,7 @@ from app.routers.passkeys import router as passkeys_router
 from app.routers.courses import router as courses_router
 from app.routers.lessons import router as lessons_router
 from app.routers.enrollments import router as enrollments_router
+from app.routers.payments import router as payments_router
 from app.routers.progress import router as progress_router
 from app.routers.reviews import router as reviews_router
 from app.routers.quizzes import router as quizzes_router
@@ -31,6 +32,7 @@ app.include_router(courses_router)
 app.include_router(analytics_router)
 app.include_router(lessons_router)
 app.include_router(enrollments_router)
+app.include_router(payments_router)
 app.include_router(progress_router)
 app.include_router(reviews_router)
 app.include_router(quizzes_router)

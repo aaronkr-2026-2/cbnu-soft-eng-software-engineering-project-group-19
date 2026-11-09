@@ -8,12 +8,14 @@ class UserRegister(BaseModel):
     full_name: str = Field(min_length=2, max_length=150)
     password: str = Field(min_length=8, max_length=128)
     preferred_language: Literal["uz", "en", "ru", "ko"] = "uz"
+    account_type: Literal["learner", "author"] = "learner"
 
 
 class UserResponse(BaseModel):
     id: str
     email: EmailStr
     full_name: str
+    account_type: Literal["learner", "author"] = "learner"
     preferred_language: str
     age: int | None = None
     bio: str | None = None
@@ -22,6 +24,7 @@ class UserResponse(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+    account_type: Literal["learner", "author"] = "learner"
 
 
 class Token(BaseModel):
@@ -48,3 +51,12 @@ class UserPasswordChange(BaseModel):
         min_length=8,
         max_length=128,
     )
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    token: str = Field(min_length=20, max_length=4096)
+    new_password: str = Field(min_length=8, max_length=128)

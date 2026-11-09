@@ -5,10 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f7f8f4" />
     <title>StudyFlow AI — Learn at your pace</title>
+    <script>
+      if (location.hostname === "127.0.0.1") {
+        location.replace(`${location.protocol}//localhost${location.port ? `:${location.port}` : ""}${location.pathname}${location.search}${location.hash}`);
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/app/style.css" />
+    <link rel="stylesheet" href="/app/media-content.css" />
   </head>
   <body>
     <header class="topbar">
@@ -18,6 +24,7 @@
         <a href="#how" data-i18n="navHow"></a>
         <a href="#courses" data-i18n="navCourses"></a>
         <a href="/app/verify.html" data-i18n="navVerifyCertificate"></a>
+        <a id="authorPortalNav" href="/app/author-login.html" data-i18n="authorPortalNav"></a>
         <a id="learnerNav" href="#myLearning" data-i18n="learnerMenuNav" hidden></a>
         <a id="instructorNav" href="#myCourses" data-i18n="navInstructor" hidden></a>
       </nav>
@@ -30,7 +37,7 @@
     </header>
 
     <main>
-      <section class="hero">
+      <section class="hero" id="heroSection">
         <div class="hero-copy">
           <div class="eyebrow"><span class="spark">✳</span><span data-i18n="eyebrow"></span></div>
           <h1 data-i18n="heroTitle"></h1>
@@ -68,17 +75,18 @@
 
       <section class="course-section" id="courses">
         <div class="section-heading"><div><div class="section-label"><span class="tiny-star">✳</span><span data-i18n="exploreLabel"></span></div><h2 data-i18n="exploreTitle"></h2></div><button class="button button-outline" id="browseButton" data-i18n="browseCourses"></button></div>
-        <div class="course-filters" role="search">
-          <label><span data-i18n="courseSearchLabel"></span><input id="courseSearch" type="search" maxlength="100" /></label>
-          <label><span data-i18n="filterLanguageLabel"></span><select id="courseLanguageFilter"><option value="" data-i18n="allLanguagesFilter"></option><option value="uz" data-i18n="languageUz"></option><option value="en" data-i18n="languageEn"></option><option value="ru" data-i18n="languageRu"></option><option value="ko" data-i18n="languageKo"></option></select></label>
-          <label><span data-i18n="filterLevelLabel"></span><select id="courseLevelFilter"><option value="" data-i18n="allLevelsFilter"></option><option value="beginner" data-i18n="levelBeginner"></option><option value="intermediate" data-i18n="levelIntermediate"></option><option value="advanced" data-i18n="levelAdvanced"></option></select></label>
-        </div>
+        <div class="course-filters marketplace-search" role="search"><label class="sr-only" for="courseSearch" data-i18n="courseSearchLabel"></label><input id="courseSearch" type="search" maxlength="100" aria-label="Search courses" /><button id="courseSearchButton" type="button" aria-label="Search courses"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.3"></circle><path d="m15.5 15.5 4.2 4.2"></path></svg></button></div>
         <div class="course-grid" id="courseGrid"><div class="course-placeholder" data-i18n="coursesHint"></div></div>
       </section>
       <section class="instructor-studio" id="myCourses" hidden>
         <div class="section-heading dashboard-heading"><div><div class="section-label"><span class="tiny-star">✳</span><span data-i18n="instructorEyebrow"></span></div><h2 data-i18n="instructorTitle"></h2></div></div>
+        <nav class="learner-menu author-menu" aria-label="Author menu">
+          <a href="#ownedCourses" id="authorCoursesMenu" data-i18n="authorCoursesMenu"></a>
+          <a href="#courseCreateForm" data-i18n="createCourseButton"></a>
+          <a href="#courses" data-i18n="navCourses"></a>
+        </nav>
         <form id="courseCreateForm" class="studio-form course-create-form">
-          <label><span data-i18n="courseTitleLabel"></span><input name="title" minlength="3" maxlength="200" required /></label>
+          <label><span data-i18n="courseTitleLabel"></span><input name="title" minlength="3" maxlength="200" required /></label><label><span data-i18n="courseCategoryLabel"></span><input name="category" maxlength="100" required /></label>
           <label><span data-i18n="courseDescriptionLabel"></span><textarea name="description" rows="3"></textarea></label>
           <div class="studio-form-row"><label><span data-i18n="courseLanguageLabel"></span><select name="language"><option value="uz">O‘zbekcha</option><option value="en">English</option><option value="ru">Русский</option><option value="ko">한국어</option></select></label><label><span data-i18n="courseLevelLabel"></span><select name="level"><option value="beginner" data-i18n="levelBeginner"></option><option value="intermediate" data-i18n="levelIntermediate"></option><option value="advanced" data-i18n="levelAdvanced"></option></select></label></div>
           <button class="button button-dark" type="submit" data-i18n="createCourseButton"></button><p class="studio-message" id="courseCreateMessage" role="status"></p>
@@ -117,7 +125,7 @@
           <section class="dashboard-panel"><div class="section-label"><span class="tiny-star">✳</span><span data-i18n="plansTitle"></span></div><div id="planList" class="plan-list"></div></section>
         </div>
       </section>
-      <section class="closing-banner"><div><span class="banner-spark">✳</span><h2 data-i18n="closingTitle"></h2><p data-i18n="closingBody"></p></div><button class="button button-light" id="closingSignup" data-i18n="startToday"></button></section>
+      <section class="closing-banner" id="closingBanner"><div><span class="banner-spark">✳</span><h2 data-i18n="closingTitle"></h2><p data-i18n="closingBody"></p></div><button class="button button-light" id="closingSignup" data-i18n="startToday"></button></section>
     </main>
     <footer><a class="brand" href="/app"><span class="brand-mark">s</span><span>studyflow<span class="brand-ai">.ai</span></span></a><span data-i18n="footerText"></span><span>© 2026 StudyFlow AI</span></footer>
 
@@ -146,6 +154,6 @@
       <div id="certificateBody" class="certificate-paper"></div>
       <div class="certificate-actions"><button id="certificateClose" class="button button-outline" data-i18n="closeCertificate"></button><button id="certificatePrint" class="button button-dark" data-i18n="printCertificate"></button></div>
     </dialog>
-    <script src="/app/app.js" defer></script>
+    <script src="/app/app.js?v=20261108-course-resume-3" defer></script>
   </body>
 </html>

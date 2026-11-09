@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate application and container config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          package-manager-cache: false
+
+      - name: Check Python syntax
+        run: python -m compileall -q backend/app backend/migrations
+
+      - name: Check browser JavaScript syntax
+        run: |
+          node --check apps/web/app.js
+          node --check apps/web/verify.js
+          node --check apps/web/portal-auth.js
+          node --check apps/web/reset-password.js
+
+      - name: Validate Docker Compose configuration
+        run: |
+          cp backend/.env.example backend/.env
+          docker compose --env-file .env.compose.example config --quiet
