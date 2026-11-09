@@ -34,13 +34,13 @@ The application is a modular monolith: one FastAPI process exposes feature-focus
 
 ### Risks and improvement areas
 
-- The database URL is hard-coded in `backend/app/database.py`; deployment configuration should come from environment variables before cloud deployment.
+- The database URL is read from `DATABASE_URL`, with a local development fallback. Production still needs the correct hosted URL and secret configuration.
 - Several feature routers directly share ORM models and a database session. As the app grows, service-layer boundaries and explicit transaction ownership would make behavior easier to test.
 - Serving the frontend from the backend couples frontend and API deployments. This is acceptable now, but the choice should be revisited if independent release cadence becomes important.
 - Passkey relying-party ID and origin must be configured for the real HTTPS domain. Localhost defaults are not production settings.
-- The repository should add automated tests and CI before later course milestones; no test suite was included in the files reviewed for this submission.
+- CI now runs the backend regression suite, Python and browser JavaScript syntax checks, and Docker Compose configuration validation. The suite is useful regression coverage, not a full end-to-end or load test.
 - Operational needs such as backups, logging, monitoring, rate limits, and uploaded-media storage need a deployment-specific plan.
 
 ## Week 7 deployment evidence
 
-No public deployment URL or cloud-host configuration was present in the files reviewed. Add the selected host, URL, environment variables (names only), migration procedure, and a health-check result after deployment. Do not put credentials in this document.
+Render is the selected host and `render.yaml` describes a free-tier deployment. A temporary free PostgreSQL database was provisioned, but no web service or public URL exists yet because Render currently cannot access the GitHub repository. After repository access is fixed, deploy the Blueprint, verify the migration and `/health` endpoint, and record the public URL and results here. Do not put credentials in this document.

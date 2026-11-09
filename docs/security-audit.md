@@ -28,4 +28,4 @@ Scope: source-code review of the FastAPI backend, SQLAlchemy authorization paths
 
 ## Validation
 
-Static checks should confirm the migration chain, Python syntax, JavaScript syntax, and whitespace integrity. The database migration and end-to-end authentication behavior must be exercised in the project's configured development environment before deployment. No live production security test was performed.
+CI currently runs five backend regression tests, Python syntax, browser JavaScript syntax, and Docker Compose configuration checks. These checks do not replace a full migration-chain review, end-to-end security test, or live production security assessment. The service is not deployed publicly, so no live production security test has been performed.

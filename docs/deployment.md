@@ -2,19 +2,21 @@
 
 ## Render deployment
 
-The repository includes a Render Blueprint in `render.yaml`. It provisions the Docker web service and private PostgreSQL connection in Singapore. The app generates its signing key and uses Render's HTTPS hostname for passkeys, links, and redirects.
+The repository includes a Render Blueprint in `render.yaml` for a Docker web service and PostgreSQL in Singapore. The Blueprint has been validated, but the web service is **not deployed** and there is no public app URL yet. A free Render PostgreSQL database was provisioned separately; it is temporary, has a 30-day free-plan expiry, and is not connected to a live app.
 
 The Blueprint uses only Render's free plans. Free web services sleep when idle, do not support persistent disks, and free PostgreSQL expires after 30 days. Uploaded local files can disappear when the service restarts. This setup is for a temporary demo; keep backups and don't rely on it for permanent learner data. [Render free service limits](https://render.com/docs/free)
 
-To launch after creating a Render account:
+### Current blocker and next steps
+
+Render cannot currently fetch the GitHub repository, so it cannot create the Blueprint web service. Restore the Render GitHub integration's access to this repository, then:
 
 1. Connect the GitHub repository that contains this project to Render.
 2. In Render, choose **New → Blueprint** and select that repository's `main` branch.
-3. Confirm the web service and database both show the free plan before applying the Blueprint.
+3. Confirm the web service and database both show the free plan before applying the Blueprint. Do not select a paid plan.
 4. Enter SMTP credentials in Render's secret prompts if password reset emails are needed. Do not put them in GitHub or `render.yaml`. AI features remain unavailable until an API key is configured.
-5. Wait for the first deploy, then verify `/health`, `/app/`, account login, password reset, course enrollment, and certificates.
+5. Wait for the first deploy, then verify `/health`, `/app/`, account login, password reset, course enrollment, and certificates; record the URL and results here.
 
-The Render free subdomain is enough to start; a custom domain can be connected later. Real paid-course checkout additionally needs production GlobalPay merchant credentials, which are not part of this Blueprint.
+The free subdomain is enough for a demo. Real paid-course checkout additionally needs production GlobalPay merchant credentials, which are not part of this Blueprint.
 
 ## What is ready
 
@@ -43,4 +45,4 @@ Keep the two `.env` files private. They are excluded from Git and the Docker bui
 4. Configure SMTP for password recovery, AI credentials for AI features, and production GlobalPay merchant credentials if paid courses will be sold.
 5. Configure scheduled database and file backups, then verify account registration, login, password reset, course enrollment, lesson playback, payment confirmation, final exams, certificates, and `/health` on the deployed site.
 
-The repository does not contain cloud credentials, a domain, a provider configuration, or a production payment merchant account. The Docker setup is therefore a deployment package, not a live public deployment. The container currently runs one Uvicorn process; use a managed platform and shared object storage before scaling to multiple instances.
+No cloud credentials, custom domain, or production payment merchant account are committed to the repository. Keep credentials in the hosting provider's secret settings, never in GitHub. Until the repository connection is fixed and the live checks pass, this remains a deployment package, not a public service. The container currently runs one Uvicorn process; use a managed platform and shared object storage before scaling to multiple instances.

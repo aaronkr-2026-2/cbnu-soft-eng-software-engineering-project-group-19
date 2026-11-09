@@ -13,7 +13,7 @@
 
 StudyFlow AI is a multilingual learning platform for independent learners, course authors, and organizations that verify course certificates. It brings course discovery, structured lessons, progress tracking, assessments, and certificate verification into one learning flow.
 
-**Local demo:** Follow [requirements and quick start](#requirements-and-quick-start). A public cloud deployment URL is not available yet.
+**Local demo:** Follow [requirements and quick start](#requirements-and-quick-start). A public cloud deployment URL is not available yet; see the current [deployment status](docs/deployment.md).
 
 The backend uses FastAPI, SQLAlchemy, Alembic, and PostgreSQL. The frontend is a responsive, dependency-free HTML/CSS/JavaScript app served by FastAPI at `/app`. Learners can use the interface in Uzbek, English, Russian, or Korean.
 
@@ -436,7 +436,7 @@ Enrolled learners can submit or update a 1–5 star review after completing a co
 
 ## Deployment
 
-The repository includes a Docker image and a Docker Compose setup for running the web app with PostgreSQL. These files prepare a repeatable deployment; they do not publish the app to a cloud host. No public deployment URL or hosting account is configured yet.
+The repository includes a Docker image, Docker Compose setup, and a Render Blueprint. Docker Compose has been validated by CI. A free Render PostgreSQL database was provisioned, but the web service has not been deployed because Render cannot currently access the GitHub repository. No public app URL is available. The database is on Render's 30-day free plan, so it is temporary and must not be treated as permanent storage. See [deployment status and next steps](docs/deployment.md).
 
 For a local container run, install Docker Desktop, then from the repository root:
 
@@ -457,8 +457,8 @@ Before a public deployment, use a managed PostgreSQL database and persistent pri
 
 ## Known limitations
 
-- No public cloud deployment is documented yet.
-- Database connection configuration is externalized through `DATABASE_URL`; a production database still needs to be provisioned and configured.
+- No public cloud app deployment or URL is available yet. Render's GitHub repository access must be fixed before creating the web service.
+- `DATABASE_URL` is configurable. A temporary free Render database exists, but it expires after 30 days and is not yet connected to a deployed app.
 - Profile image storage and operational monitoring need a persistent production plan.
 - The personas are retrospective product assumptions, not findings from completed interviews.
 - Team member names and roles were not available in the supplied files and should be added if required for the course submission.
@@ -471,7 +471,7 @@ Before a public deployment, use a managed PostgreSQL database and persistent pri
 | Week 4: personas and stories | [Personas and user stories](docs/personas-and-user-stories.md) |
 | Week 5: Agile/Scrum retrofit | [Lightweight Agile process](docs/agile-process.md) |
 | Week 6: architecture | [Architecture and critique](docs/architecture-and-critique.md) |
-| Week 7: cloud deployment | Pending; add host, public URL, migration process, and health-check evidence |
+| Week 7: cloud deployment | In progress; Render Blueprint and temporary free database are ready, but GitHub access blocks the web service; public URL and live health-check evidence remain |
 | Week 8: midterm | Review checkpoint |
 | Week 9: decomposition | [Microservices discussion](docs/decomposition-review.md) |
 | Week 10: security review | [Security review and follow-up items](docs/security-audit.md) |
