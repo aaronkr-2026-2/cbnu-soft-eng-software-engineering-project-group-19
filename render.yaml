@@ -57,4 +57,3 @@ databases:
     region: singapore
     postgresMajorVersion: "17"
     ipAllowList: []
-    diskSizeGB: 15
