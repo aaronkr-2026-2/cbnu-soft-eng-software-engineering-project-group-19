@@ -1,3 +1,7 @@
+import re
+from urllib.parse import parse_qs, urlparse
+
+from app.routers import auth as auth_router
 from tests.helpers import login, register
 
 
@@ -66,6 +70,12 @@ def test_course_ownership_enrollment_payment_and_language_filter(client):
         json={"title": "Taken over course"},
     )
     assert forbidden_edit.status_code == 404
+    forbidden_lesson = client.post(
+        f"/courses/{course_id}/lessons",
+        headers=other_author_headers,
+        json={"title": "Unauthorized Lesson", "content": "Not owned", "position": 1},
+    )
+    assert forbidden_lesson.status_code == 404
     assert client.post("/courses", headers=learner_headers, json={"title": "No author role"}).status_code == 403
     assert client.post(f"/courses/{course_id}/enroll", headers=learner_headers).status_code == 404
 
@@ -195,3 +205,66 @@ def test_video_lesson_cannot_be_completed_by_seeking_past_end(client):
         json={"position_seconds": 13, "duration_seconds": 10, "ended": True},
     )
     assert seek_past_end.status_code == 422
+
+
+def test_email_password_reset_accepts_new_password_and_rejects_reused_link(client, monkeypatch):
+    register(client, "reset-user@example.com")
+    sent_messages = []
+
+    class FakeSMTP:
+        def __init__(self, *_args, **_kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def starttls(self):
+            return None
+
+        def login(self, *_args):
+            return None
+
+        def send_message(self, message):
+            sent_messages.append(message)
+
+    monkeypatch.setenv("SMTP_HOST", "smtp.example.com")
+    monkeypatch.setenv("SMTP_PORT", "587")
+    monkeypatch.setenv("SMTP_USERNAME", "studyflow@example.com")
+    monkeypatch.setenv("SMTP_PASSWORD", "test-app-password")
+    monkeypatch.setenv("SMTP_FROM", "studyflow@example.com")
+    monkeypatch.setattr(auth_router.smtplib, "SMTP", FakeSMTP)
+
+    request = client.post(
+        "/auth/password-reset/request",
+        json={"email": "reset-user@example.com"},
+    )
+    assert request.status_code == 200, request.text
+    assert len(sent_messages) == 1
+
+    reset_url = re.search(r"https?://\S+", sent_messages[0].get_content()).group(0)
+    reset_token = parse_qs(urlparse(reset_url).query)["token"][0]
+    reset = client.post(
+        "/auth/password-reset/confirm",
+        json={"token": reset_token, "new_password": "reset-password-43"},
+    )
+    assert reset.status_code == 200, reset.text
+
+    old_password = client.post(
+        "/auth/login",
+        json={"email": "reset-user@example.com", "password": "correct-horse-42"},
+    )
+    new_password = client.post(
+        "/auth/login",
+        json={"email": "reset-user@example.com", "password": "reset-password-43"},
+    )
+    assert old_password.status_code == 401
+    assert new_password.status_code == 200
+
+    reused_link = client.post(
+        "/auth/password-reset/confirm",
+        json={"token": reset_token, "new_password": "another-password-44"},
+    )
+    assert reused_link.status_code == 400
