@@ -232,7 +232,9 @@ def request_password_reset(
     smtp_username = (os.getenv("SMTP_USERNAME") or "").strip()
     # Google displays App Passwords in groups; remove copy/pasted whitespace.
     smtp_password = "".join((os.getenv("SMTP_PASSWORD") or "").split())
-    frontend_url = os.getenv("FRONTEND_BASE_URL", "http://127.0.0.1:8000/app").rstrip("/")
+    render_url = os.getenv("RENDER_EXTERNAL_URL")
+    default_frontend_url = f"{render_url}/app" if render_url else "http://127.0.0.1:8000/app"
+    frontend_url = (os.getenv("FRONTEND_BASE_URL") or default_frontend_url).rstrip("/")
     if not frontend_url.endswith("/app"):
         frontend_url += "/app"
     if not smtp_host or not smtp_from or not smtp_username or not smtp_password:

@@ -102,7 +102,11 @@ def create_course_checkout(
     if db.query(Enrollment.id).filter(Enrollment.user_id == current_user.id, Enrollment.course_id == course.id).first():
         raise HTTPException(status_code=409, detail="Already enrolled in this course")
 
-    app_url = os.getenv("PUBLIC_APP_URL", "http://localhost:8000").strip().rstrip("/")
+    app_url = (
+        os.getenv("PUBLIC_APP_URL")
+        or os.getenv("RENDER_EXTERNAL_URL")
+        or "http://localhost:8000"
+    ).strip().rstrip("/")
     if not app_url.startswith("https://") and "localhost" not in app_url and "127.0.0.1" not in app_url:
         raise HTTPException(status_code=503, detail="PUBLIC_APP_URL must use HTTPS")
     payment_id = uuid.uuid4()
