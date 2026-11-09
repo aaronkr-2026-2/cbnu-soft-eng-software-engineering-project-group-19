@@ -57,7 +57,7 @@ The backend uses FastAPI, SQLAlchemy, Alembic, and PostgreSQL. The frontend is a
 - **Learning progress:** Enroll in courses, read lessons, mark lessons complete, and view course progress.
 - **Personal study tools:** Course recommendations and generated learning plans.
 - **Course authoring:** Create and manage courses and lessons with text, PDF, video, or audio materials, plus lesson quizzes.
-- **Assessment:** Take lesson quizzes, review prior attempts, and take a final exam after completing course lessons. A passing final exam requires 70% or higher.
+- **Assessment:** Take lesson quizzes, review prior attempts, and take an author-configured final exam after completing course lessons. The pass mark defaults to 70% and can be changed by the author.
 - **Certificates:** Passing the final exam unlocks a uniquely coded certificate that can be printed or saved as a PDF.
 - **Public certificate checks:** Anyone can verify a certificate code without an account; the result comes from the certificate record in the database.
 - **Step-up security:** Device passkeys are required before final-exam submission and first certificate issuance. The device may use a PIN, fingerprint, or face verification; the site does not receive biometric data or learn which device method was used.
@@ -205,7 +205,7 @@ A review rating is an integer from 1 to 5; an optional comment may contain up to
 | `GET` | `/courses/{course_id}/final-exam` | Read the course final exam |
 | `POST` | `/courses/{course_id}/final-exam/attempts` | Submit a final-exam attempt |
 
-A quiz has one or more questions. Each question has 2–8 answer choices, a zero-based `correct_index`, and a point value. Learner-facing quiz responses omit correct answers; the owner-only management route includes them. The final exam draws questions from the course's lesson quizzes and uses a fixed 70% pass mark.
+A quiz has one or more questions. Each question has 2–8 answer choices, a zero-based `correct_index`, and a point value. Learner-facing quiz responses omit correct answers; the owner-only management route includes them. Authors configure the final exam's questions and pass mark separately from lesson quizzes. Learners must complete every lesson before opening it; the default pass mark is 70%.
 
 ### Certificate, recommendations, and study-plan routes
 
@@ -301,7 +301,7 @@ The attempt response reports the score, earned points, and whether the quiz pass
 3. Read `/courses/{course_id}/final-exam` to get the exam questions.
 4. Request and verify a fresh passkey assertion with purpose `final_exam`.
 5. Submit answers to `/courses/{course_id}/final-exam/attempts` with the returned proof in the `X-Passkey-Proof` header.
-6. If the score is at least 70%, request a fresh passkey proof with purpose `certificate` and send it to `POST /courses/{course_id}/certificate`.
+6. If the score meets the course's configured passing score, request a fresh passkey proof with purpose `certificate` and send it to `POST /courses/{course_id}/certificate`.
 7. Print or save the certificate; share the verification code or public link with an organization.
 
 Passkey proof values are short-lived and single-use. Do not log them or store them in the repository.
@@ -356,21 +356,30 @@ Alembic migrations in `backend/migrations/versions/` create and evolve this sche
 
 ## Development and testing
 
-Frontend JavaScript syntax can be checked with Node.js:
+Install the development test dependencies from the repository root:
 
 ```bash
+python -m pip install -r backend/requirements-dev.txt
+```
+
+Run the API regression tests against a temporary SQLite database:
+
+```bash
+python -m pytest -q
+```
+
+The tests cover login and password reset, author ownership, course language and payment access, lesson completion, final exams, certificate issuance, and video skip protection. CI runs these tests and also checks Python and JavaScript syntax and Docker Compose configuration.
+
+To run the syntax checks locally:
+
+```bash
+python -m compileall -q backend/app backend/migrations
 node --check apps/web/app.js
 node --check apps/web/verify.js
+node --check apps/web/portal-auth.js
+node --check apps/web/reset-password.js
+docker compose --env-file .env.compose.example config --quiet
 ```
-
-Python application and migration modules can be syntax-checked with:
-
-```bash
-cd backend
-python -m compileall -q app migrations
-```
-
-There is not yet a committed automated test suite or continuous-integration workflow. The checks above verify syntax only; they do not replace API or browser acceptance tests.
 
 ## Architecture
 
@@ -413,7 +422,7 @@ Course authors manage their courses and lessons through authenticated endpoints 
 
 ## Quizzes and final exams
 
-Authors can attach multi-question quizzes to lessons. Learners can submit quiz attempts and review their own results. After required lessons are completed, the final exam assembles questions from lesson quizzes. A pass mark of 70% is required for certificate eligibility, and the final-exam submission requires a fresh passkey verification proof.
+Authors can attach multi-question quizzes to lessons and configure a separate final exam. Learners can submit quiz attempts and review their own results. After every lesson is completed, learners can take the final exam. Its pass mark is configured by the author and defaults to 70%; a fresh passkey verification proof is required to submit the exam and request a certificate.
 
 ## Certificates and public verification
 
@@ -450,7 +459,6 @@ Before a public deployment, use a managed PostgreSQL database and persistent pri
 
 - No public cloud deployment is documented yet.
 - Database connection configuration is externalized through `DATABASE_URL`; a production database still needs to be provisioned and configured.
-- No automated test suite or CI workflow is committed yet.
 - Profile image storage and operational monitoring need a persistent production plan.
 - The personas are retrospective product assumptions, not findings from completed interviews.
 - Team member names and roles were not available in the supplied files and should be added if required for the course submission.
