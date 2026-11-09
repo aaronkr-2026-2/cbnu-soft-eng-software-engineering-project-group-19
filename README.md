@@ -56,7 +56,8 @@ The backend uses FastAPI, SQLAlchemy, Alembic, and PostgreSQL. The frontend is a
 - **Course catalog:** Browse and preview published courses and their lesson outlines before enrolling.
 - **Learning progress:** Enroll in courses, read lessons, mark lessons complete, and view course progress.
 - **Personal study tools:** Course recommendations and generated learning plans.
-- **Course authoring:** Create courses with ordered modules and lessons. Assign lessons to modules, manage the course outline, and add text, PDF, video, or audio materials and lesson quizzes.
+- **Course authoring:** Create courses with ordered modules and lessons. Assign lessons to modules, manage the course outline, and add lesson materials, quizzes, and written assignments.
+- **Assignments:** Learners submit written work for enrolled courses; authors review submissions, give feedback, and award points.
 - **Assessment:** Take lesson quizzes, review prior attempts, and take an author-configured final exam after completing course lessons. The pass mark defaults to 70% and can be changed by the author.
 - **Certificates:** Passing the final exam unlocks a uniquely coded certificate that can be printed or saved as a PDF.
 - **Public certificate checks:** Anyone can verify a certificate code without an account; the result comes from the certificate record in the database.
@@ -173,6 +174,11 @@ The API is served by FastAPI. Unless a route is listed as public, send the acces
 | `GET` | `/courses/{course_id}/lessons` | List a course's lessons |
 | `PUT` | `/courses/{course_id}/lessons/{lesson_id}` | Update an owned lesson |
 | `DELETE` | `/courses/{course_id}/lessons/{lesson_id}` | Delete an owned lesson |
+| `GET` | `/courses/{course_id}/lessons/{lesson_id}/assignment` | Read a lesson assignment and your submission |
+| `PUT` | `/courses/{course_id}/lessons/{lesson_id}/assignment` | Create or update an owned lesson assignment |
+| `POST` | `/courses/{course_id}/lessons/{lesson_id}/assignment/submissions` | Submit or resubmit written work |
+| `GET` | `/courses/{course_id}/lessons/{lesson_id}/assignment/submissions` | List submissions for an owned course |
+| `PUT` | `/courses/{course_id}/lessons/{lesson_id}/assignment/submissions/{submission_id}` | Grade an assignment and leave feedback |
 | `GET` | `/courses/{course_id}/modules` | List modules for an owned course |
 | `POST` | `/courses/{course_id}/modules` | Add a module to an owned course |
 | `PUT` | `/courses/{course_id}/modules/{module_id}` | Rename or reorder a module |

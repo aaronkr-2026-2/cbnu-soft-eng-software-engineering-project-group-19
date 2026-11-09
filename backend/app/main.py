@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.routers.analytics import router as analytics_router
+from app.routers.assignments import router as assignments_router
 from app.routers.auth import router as auth_router
 from app.routers.passkeys import router as passkeys_router
 from app.routers.courses import router as courses_router
@@ -27,6 +28,7 @@ app = FastAPI(
 )
 
 app.include_router(auth_router)
+app.include_router(assignments_router)
 app.include_router(passkeys_router)
 app.include_router(courses_router)
 app.include_router(analytics_router)

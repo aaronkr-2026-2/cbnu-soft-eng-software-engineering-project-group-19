@@ -179,6 +179,52 @@ class LessonTranslation(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
+class LessonAssignment(Base):
+    __tablename__ = "lesson_assignments"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    lesson_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("lessons.id", ondelete="CASCADE"), nullable=False, unique=True
+    )
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    instructions: Mapped[str] = mapped_column(Text, nullable=False)
+    max_score: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class AssignmentTranslation(Base):
+    __tablename__ = "assignment_translations"
+    __table_args__ = (UniqueConstraint("assignment_id", "language", name="uq_assignment_translation_language"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    assignment_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("lesson_assignments.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    language: Mapped[str] = mapped_column(String(5), nullable=False)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    instructions: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class AssignmentSubmission(Base):
+    __tablename__ = "assignment_submissions"
+    __table_args__ = (UniqueConstraint("assignment_id", "user_id", name="uq_assignment_submission_user"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    assignment_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("lesson_assignments.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    answer: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(16), default="submitted", nullable=False)
+    score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
+    submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    graded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class Enrollment(Base):
     __tablename__ = "enrollments"
     __table_args__ = (

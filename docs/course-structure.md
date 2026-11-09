@@ -15,6 +15,6 @@ Keep course metadata such as title, owner, language, level, price, and publicati
 
 ## Current implementation
 
-StudyFlow stores `Course`, `CourseModule`, `Lesson`, quizzes and attempts, final exams, enrollments, and lesson progress separately. Authors can add, rename, reorder, and remove course modules and assign lessons to them. Existing lessons keep working without a module, and deleting a module leaves its lessons in the course as unassigned lessons. Module titles are translated and cached when the AI translation service is configured. A lesson still holds its text and one optional uploaded resource directly on its row; multiple ordered learning materials and assignments remain future schema work.
+StudyFlow stores `Course`, `CourseModule`, `Lesson`, lesson assignments and submissions, quizzes and attempts, final exams, enrollments, and lesson progress separately. Authors can add, rename, reorder, and remove course modules and assign lessons to them. Existing lessons keep working without a module, and deleting a module leaves its lessons in the course as unassigned lessons. Module and assignment text translations are cached when the AI translation service is configured. Learners can submit written work; course authors can review, score, and leave feedback. A lesson still holds its text and one optional uploaded resource directly on its row; multiple ordered learning materials remain future schema work.
 
 The module migration adds nullable lesson links, so existing lesson IDs, quizzes, and progress records remain intact.

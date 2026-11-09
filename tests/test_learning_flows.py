@@ -161,6 +161,85 @@ def test_course_modules_group_lessons_and_keep_old_lessons_compatible(client):
     assert outline_after_delete.json()["unassigned_lessons"][0]["title"] == "First Practice"
 
 
+def test_lesson_assignment_submission_and_author_grading(client):
+    register(client, "assignment-author@example.com", "author")
+    register(client, "assignment-learner@example.com")
+    register(client, "assignment-outsider@example.com")
+    author_headers = login(client, "assignment-author@example.com", "author")
+    learner_headers = login(client, "assignment-learner@example.com")
+    outsider_headers = login(client, "assignment-outsider@example.com")
+    course = create_course(client, author_headers, "Assignment Course")
+    course_id = course["id"]
+    lesson = client.post(
+        f"/courses/{course_id}/lessons",
+        headers=author_headers,
+        json={"title": "Build a function", "content": "Write a small function.", "position": 1},
+    )
+    assert lesson.status_code == 201, lesson.text
+    lesson_id = lesson.json()["id"]
+
+    assignment_response = client.put(
+        f"/courses/{course_id}/lessons/{lesson_id}/assignment",
+        headers=author_headers,
+        json={"title": "Function task", "instructions": "Write a function and explain it.", "max_score": 100},
+    )
+    assert assignment_response.status_code == 200, assignment_response.text
+    assert client.post(f"/courses/{course_id}/publish", headers=author_headers).status_code == 200
+    assert client.post(f"/courses/{course_id}/enroll", headers=learner_headers).status_code == 201
+
+    hidden = client.get(
+        f"/courses/{course_id}/lessons/{lesson_id}/assignment", headers=outsider_headers
+    )
+    assert hidden.status_code == 404
+    assignment = client.get(
+        f"/courses/{course_id}/lessons/{lesson_id}/assignment?language=uz", headers=learner_headers
+    )
+    assert assignment.status_code == 200, assignment.text
+    assert assignment.json()["my_submission"] is None
+
+    submission = client.post(
+        f"/courses/{course_id}/lessons/{lesson_id}/assignment/submissions",
+        headers=learner_headers,
+        json={"answer": "def greet(name): return f'Hello {name}'"},
+    )
+    assert submission.status_code == 200, submission.text
+    submission_id = submission.json()["id"]
+    assert submission.json()["status"] == "submitted"
+
+    too_high = client.put(
+        f"/courses/{course_id}/lessons/{lesson_id}/assignment/submissions/{submission_id}",
+        headers=author_headers,
+        json={"score": 101, "feedback": "Great"},
+    )
+    assert too_high.status_code == 422
+    graded = client.put(
+        f"/courses/{course_id}/lessons/{lesson_id}/assignment/submissions/{submission_id}",
+        headers=author_headers,
+        json={"score": 90, "feedback": "Good explanation"},
+    )
+    assert graded.status_code == 200, graded.text
+    assert graded.json()["learner_name"] == "Assignment-Learner"
+
+    learner_view = client.get(
+        f"/courses/{course_id}/lessons/{lesson_id}/assignment", headers=learner_headers
+    ).json()
+    assert learner_view["my_submission"]["status"] == "graded"
+    assert learner_view["my_submission"]["score"] == 90
+    assert learner_view["my_submission"]["feedback"] == "Good explanation"
+
+    resubmitted = client.post(
+        f"/courses/{course_id}/lessons/{lesson_id}/assignment/submissions",
+        headers=learner_headers,
+        json={"answer": "Improved function with a detailed explanation."},
+    )
+    assert resubmitted.status_code == 200, resubmitted.text
+    updated_view = client.get(
+        f"/courses/{course_id}/lessons/{lesson_id}/assignment", headers=learner_headers
+    ).json()["my_submission"]
+    assert updated_view["status"] == "submitted"
+    assert updated_view["score"] is None
+
+
 def test_final_exam_requires_completed_lessons_and_certificate_is_single(client):
     register(client, "course-author@example.com", "author")
     register(client, "course-learner@example.com")
