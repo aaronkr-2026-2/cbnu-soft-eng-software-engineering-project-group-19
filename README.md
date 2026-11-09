@@ -477,4 +477,4 @@ Before a public deployment, use a managed PostgreSQL database and persistent pri
 | Week 10: security review | [Security review and follow-up items](docs/security-audit.md) |
 | Project development and AI assistance | [AI collaboration log](AI_LOG.md) |
 
-StudyFlow AI is the student’s project; the log records how AI assisted. The student should review it for accuracy and add their own contributions and corrections before submission.
+StudyFlow AI is the student’s project and the student wrote its code. The log records that Codex occasionally helped fix errors and run tests. The student should review it for accuracy before submission.
