@@ -496,3 +496,4 @@ Before a public deployment, use a managed PostgreSQL database and persistent pri
 | Project development and AI assistance | [AI collaboration log](AI_LOG.md) |
 
 StudyFlow AI is the student’s project and the student wrote its code. The log records that Codex occasionally helped fix errors and run tests. The student should review it for accuracy before submission.
+# StadyFlow
