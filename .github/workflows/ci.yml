@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate application and container config
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: studyflow_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d studyflow_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          package-manager-cache: false
+
+      - name: Install Python test dependencies
+        run: python -m pip install -r backend/requirements-dev.txt
+
+      - name: Run backend regression tests
+        run: python -m pytest
+
+      - name: Validate PostgreSQL migration chain
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/studyflow_ci
+        run: cd backend && alembic upgrade head
+
+      - name: Check Python syntax
+        run: python -m compileall -q backend/app backend/migrations
+
+      - name: Check browser JavaScript syntax
+        run: |
+          node --check apps/web/app.js
+          node --check apps/web/verify.js
+          node --check apps/web/portal-auth.js
+          node --check apps/web/reset-password.js
+
+      - name: Validate Docker Compose configuration
+        run: |
+          cp backend/.env.example backend/.env
+          docker compose --env-file .env.compose.example config --quiet

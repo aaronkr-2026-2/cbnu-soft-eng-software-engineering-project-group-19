@@ -1,14 +1,5 @@
-# AI_LOG.md
+# AI Collaboration Log
 
-Every time you update your project, please make a note of what you did in the `AI_LOG.md` file, according to the following template.
+StudyFlow AI is my project. I wrote the project code, developed its features, and made the main project decisions.
 
----
-
-## [Milestone name] — [Date]
-**Tool(s) used:**
-**What I asked for:**
-**What I kept as-is:**
-**What I changed or rejected, and why:**
-**Something the AI got wrong that I had to catch:**
-
----
+During development, I occasionally used ChatGPT/Codex to help understand errors, suggest or make corrections to some bugs, and run tests. I reviewed the results and decided which changes to use. AI was a support tool; I remained responsible for the project and its final work.

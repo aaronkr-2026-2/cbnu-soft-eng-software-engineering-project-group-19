@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f8f4" />
+    <title>StudyFlow AI — Learn at your pace</title>
+    <script>
+      if (location.hostname === "127.0.0.1") {
+        location.replace(`${location.protocol}//localhost${location.port ? `:${location.port}` : ""}${location.pathname}${location.search}${location.hash}`);
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="/app/media-content.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/app" aria-label="StudyFlow AI"><span class="brand-mark">s</span><span>studyflow<span class="brand-ai">.ai</span></span></a>
+      <button type="button" id="mobileNavToggle" class="mobile-nav-toggle" aria-expanded="false" aria-controls="mainNav" data-i18n="menuButton"></button>
+      <nav id="mainNav" class="nav-links" aria-label="Main navigation">
+        <a href="#how" data-i18n="navHow"></a>
+        <a href="#courses" data-i18n="navCourses"></a>
+        <a href="/app/verify.html" data-i18n="navVerifyCertificate"></a>
+        <a id="authorPortalNav" href="/app/author-login.html" data-i18n="authorPortalNav"></a>
+        <a id="learnerNav" href="#myLearning" data-i18n="learnerMenuNav" hidden></a>
+        <a id="instructorNav" href="#myCourses" data-i18n="navInstructor" hidden></a>
+      </nav>
+      <div class="top-actions">
+        <label class="language-picker"><span class="sr-only" data-i18n="languageLabel"></span><span aria-hidden="true">◎</span><select id="language" aria-label="Language"><option value="uz">O‘zbekcha</option><option value="en">English</option><option value="ru">Русский</option><option value="ko">한국어</option></select></label>
+        <button class="button button-quiet" id="loginButton" data-i18n="login"></button>
+        <button class="button button-dark button-small" id="signupButton" data-i18n="getStarted"></button>
+        <button class="button button-outline button-small" id="logoutButton" data-i18n="logout" hidden></button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" id="heroSection">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="spark">✳</span><span data-i18n="eyebrow"></span></div>
+          <h1 data-i18n="heroTitle"></h1>
+          <p class="hero-description" data-i18n="heroBody"></p>
+          <div class="hero-actions"><button class="button button-dark" id="heroSignup" data-i18n="startLearning"></button><a class="text-link" href="#how"><span data-i18n="seeHow"></span><span aria-hidden="true">↗</span></a></div>
+          <div class="learner-note"><div class="avatar-stack" aria-hidden="true"><span></span><span></span><span></span><span></span></div><span data-i18n="learnerNote"></span></div>
+        </div>
+        <div class="hero-art" aria-label="Personal learning dashboard illustration">
+          <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div>
+          <div class="art-sun"><span>✳</span></div>
+          <div class="floating-note note-top"><span class="note-icon lavender">◷</span><span><b data-i18n="dailyGoal"></b><small data-i18n="dailyGoalValue"></small></span><span class="note-check">✓</span></div>
+          <div class="learning-card">
+            <div class="card-kicker"><span class="live-dot"></span><span data-i18n="yourJourney"></span><span class="more">···</span></div>
+            <div class="card-title" data-i18n="learningPath"></div>
+            <div class="path-row"><div class="path-icon peach">Aa</div><div class="path-info"><b data-i18n="courseOne"></b><small data-i18n="courseOneMeta"></small></div><span class="path-arrow">↗</span></div>
+            <div class="path-row"><div class="path-icon mint">⌘</div><div class="path-info"><b data-i18n="courseTwo"></b><small data-i18n="courseTwoMeta"></small></div><span class="path-arrow">↗</span></div>
+            <div class="progress-label"><span data-i18n="weeklyProgress"></span><b>72%</b></div><div class="progress-track"><span></span></div>
+            <div class="week-days"><span data-weekday="0"></span><span data-weekday="1"></span><span data-weekday="2"></span><span class="today" data-weekday="3"></span><span data-weekday="4"></span><span data-weekday="5"></span><span data-weekday="6"></span></div>
+          </div>
+          <div class="floating-note note-bottom"><span class="streak-icon">✦</span><span><b data-i18n="streakValue"></b><small data-i18n="streakLabel"></small></span></div>
+          <span class="art-star star-left">✳</span><span class="art-star star-right">✦</span>
+        </div>
+        <div class="hero-bottom"><span data-i18n="builtFor"></span><div><span>◉</span> <span data-i18n="selfPaced"></span></div><div><span>✳</span> <span data-i18n="personalized"></span></div><div><span>↗</span> <span data-i18n="fourLanguages"></span></div></div>
+      </section>
+
+      <section class="intro-section" id="how">
+        <div class="section-label"><span class="tiny-star">✳</span><span data-i18n="whyStudyflow"></span></div>
+        <div class="intro-grid"><h2 data-i18n="introTitle"></h2><p data-i18n="introBody"></p></div>
+        <div class="feature-grid">
+          <article class="feature-card"><span class="feature-icon feature-lime">✳</span><h3 data-i18n="featureOneTitle"></h3><p data-i18n="featureOneBody"></p></article>
+          <article class="feature-card"><span class="feature-icon feature-lilac">⌁</span><h3 data-i18n="featureTwoTitle"></h3><p data-i18n="featureTwoBody"></p></article>
+          <article class="feature-card"><span class="feature-icon feature-peach">↗</span><h3 data-i18n="featureThreeTitle"></h3><p data-i18n="featureThreeBody"></p></article>
+        </div>
+      </section>
+
+      <section class="course-section" id="courses">
+        <div class="section-heading"><div><div class="section-label"><span class="tiny-star">✳</span><span data-i18n="exploreLabel"></span></div><h2 data-i18n="exploreTitle"></h2></div><button class="button button-outline" id="browseButton" data-i18n="browseCourses"></button></div>
+        <div class="course-filters marketplace-search" role="search"><label class="sr-only" for="courseSearch" data-i18n="courseSearchLabel"></label><input id="courseSearch" type="search" maxlength="100" aria-label="Search courses" /><button id="courseSearchButton" type="button" aria-label="Search courses"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.3"></circle><path d="m15.5 15.5 4.2 4.2"></path></svg></button></div>
+        <div class="course-grid" id="courseGrid"><div class="course-placeholder" data-i18n="coursesHint"></div></div>
+      </section>
+      <section class="instructor-studio" id="myCourses" hidden>
+        <div class="section-heading dashboard-heading"><div><div class="section-label"><span class="tiny-star">✳</span><span data-i18n="instructorEyebrow"></span></div><h2 data-i18n="instructorTitle"></h2></div></div>
+        <nav class="learner-menu author-menu" aria-label="Author menu">
+          <a href="#ownedCourses" id="authorCoursesMenu" data-i18n="authorCoursesMenu"></a>
+          <a href="#courseCreateForm" data-i18n="createCourseButton"></a>
+          <a href="#courses" data-i18n="navCourses"></a>
+        </nav>
+        <form id="courseCreateForm" class="studio-form course-create-form">
+          <label><span data-i18n="courseTitleLabel"></span><input name="title" minlength="3" maxlength="200" required /></label><label><span data-i18n="courseCategoryLabel"></span><input name="category" maxlength="100" required /></label>
+          <label><span data-i18n="courseDescriptionLabel"></span><textarea name="description" rows="3"></textarea></label>
+          <div class="studio-form-row"><label><span data-i18n="courseLanguageLabel"></span><select name="language"><option value="uz">O‘zbekcha</option><option value="en">English</option><option value="ru">Русский</option><option value="ko">한국어</option></select></label><label><span data-i18n="courseLevelLabel"></span><select name="level"><option value="beginner" data-i18n="levelBeginner"></option><option value="intermediate" data-i18n="levelIntermediate"></option><option value="advanced" data-i18n="levelAdvanced"></option></select></label></div>
+          <button class="button button-dark" type="submit" data-i18n="createCourseButton"></button><p class="studio-message" id="courseCreateMessage" role="status"></p>
+        </form>
+        <div id="ownedCourses" class="owned-course-list"></div>
+      </section>
+      <section class="learner-dashboard" id="myLearning" hidden>
+        <div class="section-heading dashboard-heading"><div><div class="section-label"><span class="tiny-star">✳</span><span data-i18n="dashboardEyebrow"></span></div><h2 data-i18n="dashboardTitle"></h2></div></div>
+        <nav class="learner-menu" aria-label="Learning menu">
+          <a href="#enrolledCourses" data-i18n="myCoursesAndLessons"></a>
+          <a href="#completedCourses" data-i18n="completedCoursesMenu"></a>
+          <a href="#myCertificates" data-i18n="myCertificatesMenu"></a>
+          <a href="#myProfile" data-i18n="profileMenu"></a>
+          <a href="#courses" data-i18n="availableCoursesMenu"></a>
+        </nav>
+        <section class="learner-profile learner-content-section" id="myProfile">
+          <h3 data-i18n="profileTitle"></h3>
+          <div class="profile-photo-row">
+            <div class="profile-avatar-frame"><img id="profileAvatar" alt="" hidden /><span id="profileInitials" aria-hidden="true"></span></div>
+            <div class="profile-photo-controls"><label><span data-i18n="profilePhotoLabel"></span><input id="profilePhotoInput" type="file" accept="image/jpeg,image/png,image/webp" /></label><small data-i18n="profilePhotoHint"></small></div>
+          </div>
+          <div class="passkey-panel"><div><b data-i18n="passkeyTitle"></b><p id="passkeyStatus" data-i18n="passkeyLoading"></p><small data-i18n="passkeyPrivacy"></small></div><button id="registerPasskeyButton" class="button button-outline" type="button" data-i18n="passkeyRegister"></button></div>
+          <form id="profileForm" class="profile-form">
+            <label><span data-i18n="profileNameLabel"></span><input name="full_name" minlength="2" maxlength="150" required /></label>
+            <label><span data-i18n="profileAgeLabel"></span><input name="age" type="number" min="5" max="120" /></label>
+            <label class="profile-bio-field"><span data-i18n="profileBioLabel"></span><textarea name="bio" rows="3" maxlength="500"></textarea></label>
+            <button class="button button-dark" type="submit" data-i18n="saveProfileButton"></button><p id="profileMessage" class="studio-form-message" role="status"></p>
+          </form>
+        </section>
+        <div id="learningOverview" class="learning-overview" aria-live="polite"></div>
+        <section class="learner-content-section" id="enrolledCoursesSection"><h3 data-i18n="myCoursesAndLessons"></h3><div id="enrolledCourses" class="enrolled-grid"></div></section>
+        <section class="learner-content-section" id="completedCourses"><h3 data-i18n="completedCoursesTitle"></h3><div id="completedCourseList" class="learner-collection"></div></section>
+        <section class="learner-content-section" id="myCertificates"><h3 data-i18n="myCertificatesTitle"></h3><div id="myCertificateList" class="learner-collection"></div></section>
+        <div class="dashboard-lower">
+          <section class="dashboard-panel"><div class="section-label"><span class="tiny-star">✳</span><span data-i18n="recommendationsTitle"></span></div><div id="recommendationList" class="recommendation-list"></div></section>
+          <section class="dashboard-panel"><div class="section-label"><span class="tiny-star">✳</span><span data-i18n="plansTitle"></span></div><div id="planList" class="plan-list"></div></section>
+        </div>
+      </section>
+      <section class="closing-banner" id="closingBanner"><div><span class="banner-spark">✳</span><h2 data-i18n="closingTitle"></h2><p data-i18n="closingBody"></p></div><button class="button button-light" id="closingSignup" data-i18n="startToday"></button></section>
+    </main>
+    <footer><a class="brand" href="/app"><span class="brand-mark">s</span><span>studyflow<span class="brand-ai">.ai</span></span></a><span data-i18n="footerText"></span><span>© 2026 StudyFlow AI</span></footer>
+
+    <dialog id="courseDetailsDialog" class="course-details-dialog">
+      <form method="dialog" class="course-details-close"><button id="courseDetailsClose" class="dialog-close" aria-label="Close">×</button></form>
+      <div id="courseDetailsBody" class="course-details-body"></div>
+    </dialog>
+    <dialog id="authDialog" class="auth-dialog">
+      <form method="dialog"><button class="dialog-close" aria-label="Close">×</button></form>
+      <div class="auth-brand"><span class="brand-mark">s</span><span>studyflow<span class="brand-ai">.ai</span></span></div>
+      <div class="auth-tabs"><button class="active" id="registerTab" data-i18n="register"></button><button id="loginTab" data-i18n="login"></button></div>
+      <h2 id="authTitle"></h2><p class="auth-subtitle" id="authSubtitle"></p>
+      <form id="authForm" class="auth-form">
+        <label id="nameField"><span data-i18n="fullName"></span><input name="full_name" autocomplete="name" minlength="2" required /></label>
+        <label><span data-i18n="email"></span><input name="email" type="email" autocomplete="email" required /></label>
+        <label><span data-i18n="password"></span><input name="password" type="password" autocomplete="new-password" minlength="8" required /></label>
+        <p class="form-message" id="formMessage" role="status"></p>
+        <button class="button button-dark auth-submit" type="submit" id="authSubmit"></button>
+      </form>
+    </dialog>
+    <dialog id="finalExamDialog" class="exam-dialog" aria-label="Final exam">
+      <form method="dialog" class="exam-close-form"><button id="finalExamClose" class="dialog-close" aria-label="Close">×</button></form>
+      <div id="finalExamBody" class="final-exam-body"></div>
+    </dialog>
+    <dialog id="certificateDialog" class="certificate-dialog" aria-label="Course certificate">
+      <div id="certificateBody" class="certificate-paper"></div>
+      <div class="certificate-actions"><button id="certificateClose" class="button button-outline" data-i18n="closeCertificate"></button><button id="certificatePrint" class="button button-dark" data-i18n="printCertificate"></button></div>
+    </dialog>
+    <script src="/app/app.js?v=20261108-course-resume-3" defer></script>
+  </body>
+</html>

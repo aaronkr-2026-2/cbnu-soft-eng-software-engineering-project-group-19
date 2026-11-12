@@ -1,0 +1,16 @@
+.portal-page{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 15% 12%,#e9efd9 0,transparent 34%),var(--paper)}
+.portal-card{position:relative;width:min(460px,100%);padding:36px;border:1px solid var(--line);border-radius:20px;background:var(--white);box-shadow:0 22px 70px rgba(36,46,29,.09)}
+.portal-language{display:flex;align-items:center;gap:8px;margin:28px 0 30px;color:var(--muted);font-size:12px}
+.portal-language select{padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:white}
+.portal-eyebrow{color:#698046;font-size:11px;font-weight:800;letter-spacing:1.3px}
+.portal-card h1{margin:10px 0;font:750 clamp(28px,7vw,38px)/1.12 var(--display);letter-spacing:-1.5px}
+.portal-description{min-height:42px;color:var(--muted);font-size:14px;line-height:1.65}
+.portal-card .auth-tabs{margin-top:24px}
+.portal-card .auth-form{margin-top:22px}
+.portal-switch,.portal-home{display:block;margin:20px 0 0;text-align:center;color:var(--muted);font-size:12px}
+.portal-switch a,.portal-home{color:#526b32;font-weight:700}
+.portal-home{margin-top:24px}
+.author-menu{margin:20px 0 28px}
+.author-menu a{scroll-margin-top:100px}
+#resetRequestForm[hidden],#resetConfirmForm[hidden]{display:none!important}
+@media(max-width:520px){.portal-page{padding:14px}.portal-card{padding:26px 22px}}
