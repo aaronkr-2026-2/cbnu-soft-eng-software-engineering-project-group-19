@@ -335,6 +335,21 @@ def test_final_exam_requires_completed_lessons_and_certificate_is_single(client)
     assert attempt.json()["passed"] is True
     assert attempt.json()["score_percent"] == 100
 
+    incorrect_attempt = client.post(
+        f"/courses/{course_id}/final-exam/attempts",
+        headers=learner_headers,
+        json={
+            "answers": [
+                {"question_id": question_ids[0], "selected_index": 0},
+                {"question_id": question_ids[1], "selected_index": 1},
+            ]
+        },
+    )
+    assert incorrect_attempt.status_code == 201, incorrect_attempt.text
+    assert incorrect_attempt.json()["correct_count"] == 0
+    assert incorrect_attempt.json()["score_percent"] == 0
+    assert incorrect_attempt.json()["passed"] is False
+
     certificate_url = f"/courses/{course_id}/certificate"
     first_certificate = client.post(certificate_url, headers=learner_headers)
     second_certificate = client.post(certificate_url, headers=learner_headers)
