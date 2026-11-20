@@ -33,3 +33,5 @@ class VideoWatchResponse(BaseModel):
     completion_percent: float
     can_complete: bool
     item_count: int = 1
+    resume_item_index: int | None = None
+    resume_position_seconds: float = 0

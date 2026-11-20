@@ -1,6 +1,7 @@
 import hashlib
 import json
 import re
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 from xml.etree import ElementTree
 from urllib.parse import parse_qs, urlparse
@@ -18,6 +19,7 @@ from app.routers import auth as auth_router
 from app.routers import courses as courses_router
 from app.routers import lessons as lessons_router
 from app.routers import passkeys as passkeys_router
+from app.routers import progress as progress_router
 from tests.helpers import login, register
 
 
@@ -674,6 +676,75 @@ def test_video_lesson_cannot_be_completed_by_seeking_past_end(client):
         json={"position_seconds": 13, "duration_seconds": 10, "ended": True},
     )
     assert seek_past_end.status_code == 422
+
+
+def test_video_resume_reports_first_unfinished_item_and_contiguous_position(client, monkeypatch):
+    register(client, "resume-author@example.com", "author")
+    register(client, "resume-learner@example.com")
+    author = login(client, "resume-author@example.com", "author")
+    learner = login(client, "resume-learner@example.com")
+    course_id = create_course(client, author, "Playlist Course")["id"]
+    course_url = f"/courses/{course_id}"
+    lesson = client.post(
+        f"{course_url}/lessons",
+        headers=author,
+        json={
+            "title": "Playlist lesson",
+            "content": "Watch both playlist items",
+            "resource_type": "video",
+            "external_video_url": "https://www.youtube.com/playlist?list=PL123456789",
+            "position": 1,
+        },
+    )
+    assert lesson.status_code == 201, lesson.text
+    assert client.post(f"{course_url}/publish", headers=author).status_code == 200
+    assert client.post(f"{course_url}/enroll", headers=learner).status_code == 201
+    lesson_url = f"{course_url}/progress/lessons/{lesson.json()['id']}"
+    video_url = f"{lesson_url}/video-watch"
+    timestamp = datetime(2026, 11, 21, tzinfo=timezone.utc)
+
+    class PlaybackClock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return timestamp.astimezone(tz) if tz else timestamp.replace(tzinfo=None)
+
+    monkeypatch.setattr(progress_router, "datetime", PlaybackClock)
+
+    def report(index, position, elapsed=0, ended=False):
+        nonlocal timestamp
+        timestamp += timedelta(seconds=elapsed)
+        response = client.post(
+            video_url,
+            headers=learner,
+            json={
+                "item_index": index,
+                "item_count": 2,
+                "position_seconds": position,
+                "duration_seconds": 10,
+                "ended": ended,
+            },
+        )
+        assert response.status_code == 200, response.text
+        return response.json()
+
+    assert report(0, 0)["resume_item_index"] == 0
+    before_second_item = report(0, 10, elapsed=10, ended=True)
+    assert before_second_item["resume_item_index"] == 1
+    assert before_second_item["resume_position_seconds"] == 0
+    report(1, 0)
+    report(1, 4, elapsed=4)
+    skipped = report(1, 10, ended=True)
+    assert skipped["can_complete"] is False
+    reopened = client.get(video_url, headers=learner).json()
+    assert reopened["furthest_position_seconds"] == 10
+    assert reopened["resume_item_index"] == 1
+    assert reopened["resume_position_seconds"] == 4
+
+    report(1, 4)
+    finished = report(1, 10, elapsed=6, ended=True)
+    assert finished["resume_item_index"] is None
+    assert finished["can_complete"] is True
+    assert client.post(f"{lesson_url}/complete", headers=learner).status_code == 200
 
 
 def test_ordered_lesson_materials_are_private_managed_and_visible_to_enrolled_learners(client):

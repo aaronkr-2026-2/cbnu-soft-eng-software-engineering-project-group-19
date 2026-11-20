@@ -104,11 +104,14 @@ def video_watch_response(
             and float(item.get("last_position_seconds", 0)) >= duration - tolerance
         )
 
-    can_complete = item_count > 0 and all(
-        item_finished(items.get(str(index), {})) for index in range(item_count)
+    resume_item = next(
+        (index for index in range(item_count) if not item_finished(items.get(str(index), {}))),
+        None,
     )
+    can_complete = item_count > 0 and resume_item is None
     selected_item = items.get(str(item_index), {})
     furthest = _contiguous_position(selected_item) if selected_item else 0.0
+    resume_position = _contiguous_position(items.get(str(resume_item), {}))
     return VideoWatchResponse(
         watched_seconds=total_watched,
         duration_seconds=total_duration,
@@ -116,6 +119,8 @@ def video_watch_response(
         completion_percent=min(100.0, percent),
         can_complete=can_complete,
         item_count=item_count,
+        resume_item_index=resume_item,
+        resume_position_seconds=resume_position,
     )
 
 
