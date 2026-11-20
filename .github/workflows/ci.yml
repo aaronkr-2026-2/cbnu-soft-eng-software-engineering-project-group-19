@@ -2,7 +2,6 @@ name: CI
 
 on:
   push:
-    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -48,6 +47,16 @@ jobs:
 
       - name: Install Python test dependencies
         run: python -m pip install -r backend/requirements-dev.txt
+
+      - name: Install frontend tooling
+        run: npm ci
+
+      - name: Enforce formatting and lint
+        run: |
+          git ls-files -z -- '*.py' | xargs -0 ruff format --check
+          git ls-files -z -- '*.py' | xargs -0 ruff check
+          npm run format:check
+          npm run lint
 
       - name: Run backend regression tests
         run: python -m pytest
