@@ -7,7 +7,7 @@ from typing import Literal
 
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user, require_author
@@ -661,7 +661,9 @@ def read_lesson_banner(
     if lesson is None or not lesson.banner_key:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson banner not found")
     course = db.query(Course).filter(Course.id == course_id).first()
-    if course is None or not course.is_published:
+    if course is None:
+        raise HTTPException(status_code=404, detail="Lesson banner not found")
+    if not course.is_published:
         try:
             payload = jwt.decode(token or "", SECRET_KEY, algorithms=[ALGORITHM])
         except jwt.InvalidTokenError:
@@ -679,7 +681,16 @@ def read_lesson_banner(
             )
     path = BANNER_DIR / Path(lesson.banner_key).name
     if not path.is_file():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson banner not found")
+        return Response(
+            render_lesson_topic_banner(course, lesson),
+            media_type="image/svg+xml",
+            headers={
+                "Cache-Control": "public, max-age=300"
+                if course.is_published
+                else "private, no-store",
+                "X-Content-Type-Options": "nosniff",
+            },
+        )
     media_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
     return FileResponse(
         path,

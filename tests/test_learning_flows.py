@@ -16,6 +16,7 @@ from webauthn.helpers.structs import AuthenticatorTransport
 
 from app.routers import auth as auth_router
 from app.routers import courses as courses_router
+from app.routers import lessons as lessons_router
 from app.routers import passkeys as passkeys_router
 from tests.helpers import login, register
 
@@ -331,6 +332,42 @@ def test_missing_course_banner_is_regenerated_without_exposing_draft(client, mon
     assert cover.status_code == 200
     assert cover.headers["content-type"] == "image/svg+xml"
     assert any(node.text == "R&D" for node in ElementTree.fromstring(cover.content))
+    assert not list(tmp_path.iterdir())
+
+
+def test_missing_lesson_banner_uses_topic_art_and_keeps_draft_private(
+    client, monkeypatch, tmp_path
+):
+    monkeypatch.setattr(lessons_router, "BANNER_DIR", tmp_path)
+    email = "lesson-banner-author@example.com"
+    register(client, email, "author")
+    headers = login(client, email, "author")
+    course_id = create_course(client, headers)["id"]
+    lesson = client.post(
+        f"/courses/{course_id}/lessons",
+        headers=headers,
+        json={"title": "HTML & CSS", "content": "Build a semantic web page", "position": 1},
+    )
+    assert lesson.status_code == 201, lesson.text
+    path = f"/courses/{course_id}/lessons/{lesson.json()['id']}/banner"
+    image = b"\x89PNG\r\n\x1a\nexample"
+    upload = client.put(path, headers={**headers, "Content-Type": "image/png"}, content=image)
+    assert upload.status_code == 200, upload.text
+    draft_url = upload.json()["banner_url"]
+    assert client.get(draft_url).content == image
+    next(tmp_path.iterdir()).unlink()
+
+    assert client.get(path).status_code == 404
+    private_cover = client.get(draft_url)
+    assert private_cover.status_code == 200
+    assert private_cover.headers["cache-control"] == "private, no-store"
+    assert ElementTree.fromstring(private_cover.content).attrib["aria-label"] == "HTML & CSS"
+
+    assert client.post(f"/courses/{course_id}/publish", headers=headers).status_code == 200
+    public_cover = client.get(path)
+    assert public_cover.status_code == 200
+    assert public_cover.headers["content-type"] == "image/svg+xml"
+    assert public_cover.content == private_cover.content
     assert not list(tmp_path.iterdir())
 
 
