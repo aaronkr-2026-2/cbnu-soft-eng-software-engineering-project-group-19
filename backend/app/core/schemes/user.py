@@ -21,6 +21,7 @@ class UserResponse(BaseModel):
     bio: str | None = None
     avatar_url: str | None = None
 
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
@@ -30,6 +31,7 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
 
 class UserUpdate(BaseModel):
     full_name: str | None = Field(
@@ -42,8 +44,10 @@ class UserUpdate(BaseModel):
     age: int | None = Field(default=None, ge=5, le=120)
     bio: str | None = Field(default=None, max_length=500)
 
+
 class AvatarUpload(BaseModel):
     data_url: str = Field(min_length=40, max_length=2_800_000)
+
 
 class UserPasswordChange(BaseModel):
     current_password: str

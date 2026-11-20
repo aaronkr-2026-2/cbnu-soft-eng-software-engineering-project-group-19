@@ -21,7 +21,9 @@ def upgrade() -> None:
         sa.Column("resource_key", sa.String(length=80), nullable=False),
         sa.Column("resource_mime_type", sa.String(length=100), nullable=False),
         sa.Column("position", sa.Integer(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.ForeignKeyConstraint(["lesson_id"], ["lessons.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("resource_key"),

@@ -7,7 +7,15 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import require_author
 from app.core.schemes.analytics import CourseAnalyticsResponse
 from app.database import get_db
-from app.models import Course, CourseReview, Enrollment, FinalExamAttempt, Lesson, LessonProgress, User
+from app.models import (
+    Course,
+    CourseReview,
+    Enrollment,
+    FinalExamAttempt,
+    Lesson,
+    LessonProgress,
+    User,
+)
 
 router = APIRouter(prefix="/courses/{course_id}/analytics", tags=["Course Analytics"])
 
@@ -18,11 +26,16 @@ def get_course_analytics(
     current_user: User = Depends(require_author),
     db: Session = Depends(get_db),
 ) -> CourseAnalyticsResponse:
-    course = db.query(Course).filter(Course.id == course_id, Course.owner_id == current_user.id).first()
+    course = (
+        db.query(Course).filter(Course.id == course_id, Course.owner_id == current_user.id).first()
+    )
     if course is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
 
-    enrollment_ids = [row[0] for row in db.query(Enrollment.user_id).filter(Enrollment.course_id == course_id).all()]
+    enrollment_ids = [
+        row[0]
+        for row in db.query(Enrollment.user_id).filter(Enrollment.course_id == course_id).all()
+    ]
     enrollment_count = len(enrollment_ids)
     lesson_count = db.query(Lesson.id).filter(Lesson.course_id == course_id).count()
     completed_learners = 0
@@ -34,14 +47,23 @@ def get_course_analytics(
             .group_by(LessonProgress.user_id)
             .all()
         )
-        completed_learners = sum(1 for _, completed_count in completion_rows if completed_count == lesson_count)
+        completed_learners = sum(
+            1 for _, completed_count in completion_rows if completed_count == lesson_count
+        )
 
-    review_count, average_rating = db.query(
-        func.count(CourseReview.id), func.avg(CourseReview.rating)
-    ).filter(CourseReview.course_id == course_id).one()
-    exam_attempts, exam_passes = db.query(
-        func.count(FinalExamAttempt.id), func.count(FinalExamAttempt.id).filter(FinalExamAttempt.passed.is_(True))
-    ).filter(FinalExamAttempt.course_id == course_id).one()
+    review_count, average_rating = (
+        db.query(func.count(CourseReview.id), func.avg(CourseReview.rating))
+        .filter(CourseReview.course_id == course_id)
+        .one()
+    )
+    exam_attempts, exam_passes = (
+        db.query(
+            func.count(FinalExamAttempt.id),
+            func.count(FinalExamAttempt.id).filter(FinalExamAttempt.passed.is_(True)),
+        )
+        .filter(FinalExamAttempt.course_id == course_id)
+        .one()
+    )
     exam_attempts = exam_attempts or 0
     exam_passes = exam_passes or 0
 
@@ -50,7 +72,9 @@ def get_course_analytics(
         course_title=course.title,
         enrollment_count=enrollment_count,
         completed_learners=completed_learners,
-        completion_rate=round(completed_learners / enrollment_count * 100, 1) if enrollment_count else 0.0,
+        completion_rate=round(completed_learners / enrollment_count * 100, 1)
+        if enrollment_count
+        else 0.0,
         average_rating=round(float(average_rating), 1) if average_rating is not None else None,
         review_count=review_count or 0,
         final_exam_attempts=exam_attempts,

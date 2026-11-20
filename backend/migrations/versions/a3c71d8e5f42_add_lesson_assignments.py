@@ -19,7 +19,9 @@ def upgrade() -> None:
         sa.Column("title", sa.String(length=200), nullable=False),
         sa.Column("instructions", sa.Text(), nullable=False),
         sa.Column("max_score", sa.Integer(), server_default="100", nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.ForeignKeyConstraint(["lesson_id"], ["lessons.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("lesson_id"),
@@ -33,14 +35,18 @@ def upgrade() -> None:
         sa.Column("status", sa.String(length=16), server_default="submitted", nullable=False),
         sa.Column("score", sa.Integer(), nullable=True),
         sa.Column("feedback", sa.Text(), nullable=True),
-        sa.Column("submitted_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "submitted_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.Column("graded_at", sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(["assignment_id"], ["lesson_assignments.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("assignment_id", "user_id", name="uq_assignment_submission_user"),
     )
-    op.create_index("ix_assignment_submissions_assignment_id", "assignment_submissions", ["assignment_id"])
+    op.create_index(
+        "ix_assignment_submissions_assignment_id", "assignment_submissions", ["assignment_id"]
+    )
     op.create_index("ix_assignment_submissions_user_id", "assignment_submissions", ["user_id"])
     op.create_table(
         "assignment_translations",
@@ -49,12 +55,16 @@ def upgrade() -> None:
         sa.Column("language", sa.String(length=5), nullable=False),
         sa.Column("title", sa.String(length=200), nullable=False),
         sa.Column("instructions", sa.Text(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.ForeignKeyConstraint(["assignment_id"], ["lesson_assignments.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("assignment_id", "language", name="uq_assignment_translation_language"),
     )
-    op.create_index("ix_assignment_translations_assignment_id", "assignment_translations", ["assignment_id"])
+    op.create_index(
+        "ix_assignment_translations_assignment_id", "assignment_translations", ["assignment_id"]
+    )
 
 
 def downgrade() -> None:

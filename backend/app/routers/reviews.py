@@ -15,11 +15,15 @@ def require_enrollment(course_id: uuid.UUID, user_id: uuid.UUID, db: Session) ->
     course = db.query(Course).filter(Course.id == course_id).first()
     if course is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
-    enrollment = db.query(Enrollment.id).filter(
-        Enrollment.course_id == course_id, Enrollment.user_id == user_id
-    ).first()
+    enrollment = (
+        db.query(Enrollment.id)
+        .filter(Enrollment.course_id == course_id, Enrollment.user_id == user_id)
+        .first()
+    )
     if enrollment is None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Enroll in the course to review it")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Enroll in the course to review it"
+        )
     return course
 
 
@@ -30,12 +34,16 @@ def get_my_course_review(
     db: Session = Depends(get_db),
 ) -> MyCourseReviewResponse:
     require_enrollment(course_id, current_user.id, db)
-    review = db.query(CourseReview).filter(
-        CourseReview.course_id == course_id, CourseReview.user_id == current_user.id
-    ).first()
+    review = (
+        db.query(CourseReview)
+        .filter(CourseReview.course_id == course_id, CourseReview.user_id == current_user.id)
+        .first()
+    )
     if review is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Review not found")
-    return MyCourseReviewResponse(id=review.id, rating=review.rating, comment=review.comment, updated_at=review.updated_at)
+    return MyCourseReviewResponse(
+        id=review.id, rating=review.rating, comment=review.comment, updated_at=review.updated_at
+    )
 
 
 @router.put("/me", response_model=MyCourseReviewResponse)
@@ -48,23 +56,39 @@ def upsert_my_course_review(
     course = require_enrollment(course_id, current_user.id, db)
     lesson_ids = [row[0] for row in db.query(Lesson.id).filter(Lesson.course_id == course.id).all()]
     if not lesson_ids:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Complete the course lessons before reviewing")
-    completed_count = db.query(LessonProgress.id).filter(
-        LessonProgress.user_id == current_user.id, LessonProgress.lesson_id.in_(lesson_ids)
-    ).count()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Complete the course lessons before reviewing",
+        )
+    completed_count = (
+        db.query(LessonProgress.id)
+        .filter(LessonProgress.user_id == current_user.id, LessonProgress.lesson_id.in_(lesson_ids))
+        .count()
+    )
     if completed_count != len(lesson_ids):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Complete every lesson before reviewing the course")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Complete every lesson before reviewing the course",
+        )
 
-    review = db.query(CourseReview).filter(
-        CourseReview.course_id == course_id, CourseReview.user_id == current_user.id
-    ).first()
-    comment = review_data.comment.strip() if review_data.comment and review_data.comment.strip() else None
+    review = (
+        db.query(CourseReview)
+        .filter(CourseReview.course_id == course_id, CourseReview.user_id == current_user.id)
+        .first()
+    )
+    comment = (
+        review_data.comment.strip() if review_data.comment and review_data.comment.strip() else None
+    )
     if review is None:
-        review = CourseReview(user_id=current_user.id, course_id=course_id, rating=review_data.rating, comment=comment)
+        review = CourseReview(
+            user_id=current_user.id, course_id=course_id, rating=review_data.rating, comment=comment
+        )
         db.add(review)
     else:
         review.rating = review_data.rating
         review.comment = comment
     db.commit()
     db.refresh(review)
-    return MyCourseReviewResponse(id=review.id, rating=review.rating, comment=review.comment, updated_at=review.updated_at)
+    return MyCourseReviewResponse(
+        id=review.id, rating=review.rating, comment=review.comment, updated_at=review.updated_at
+    )

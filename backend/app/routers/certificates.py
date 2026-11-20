@@ -8,7 +8,15 @@ from app.core.dependencies import get_current_user
 from app.core.passkeys import consume_passkey_proof
 from app.core.schemes.certificate import CertificateResponse, CertificateVerificationResponse
 from app.database import get_db
-from app.models import Course, CourseCertificate, Enrollment, FinalExamAttempt, Lesson, LessonProgress, User
+from app.models import (
+    Course,
+    CourseCertificate,
+    Enrollment,
+    FinalExamAttempt,
+    Lesson,
+    LessonProgress,
+    User,
+)
 
 router = APIRouter(prefix="/courses/{course_id}/certificate", tags=["Certificates"])
 public_router = APIRouter(tags=["Certificates"])
@@ -36,7 +44,9 @@ def require_enrollment(course_id: uuid.UUID, user_id: uuid.UUID, db: Session) ->
         .first()
     )
     if enrollment is None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Enroll in the course first")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Enroll in the course first"
+        )
     return course
 
 
@@ -50,7 +60,9 @@ def issue_my_certificate(
     course = require_enrollment(course_id, current_user.id, db)
     existing = (
         db.query(CourseCertificate)
-        .filter(CourseCertificate.course_id == course_id, CourseCertificate.user_id == current_user.id)
+        .filter(
+            CourseCertificate.course_id == course_id, CourseCertificate.user_id == current_user.id
+        )
         .first()
     )
     if existing is not None:
@@ -73,11 +85,16 @@ def issue_my_certificate(
             status_code=status.HTTP_409_CONFLICT,
             detail="Complete every lesson before requesting a certificate",
         )
-    passed_exam = db.query(FinalExamAttempt).filter(
-        FinalExamAttempt.course_id == course_id,
-        FinalExamAttempt.user_id == current_user.id,
-        FinalExamAttempt.passed.is_(True),
-    ).order_by(FinalExamAttempt.score_percent.desc(), FinalExamAttempt.submitted_at.desc()).first()
+    passed_exam = (
+        db.query(FinalExamAttempt)
+        .filter(
+            FinalExamAttempt.course_id == course_id,
+            FinalExamAttempt.user_id == current_user.id,
+            FinalExamAttempt.passed.is_(True),
+        )
+        .order_by(FinalExamAttempt.score_percent.desc(), FinalExamAttempt.submitted_at.desc())
+        .first()
+    )
     if passed_exam is None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -85,7 +102,13 @@ def issue_my_certificate(
         )
 
     consume_passkey_proof(passkey_proof, current_user.id, "certificate", db)
-    achievement_level = "gold" if passed_exam.score_percent >= 90 else "silver" if passed_exam.score_percent >= 80 else "bronze"
+    achievement_level = (
+        "gold"
+        if passed_exam.score_percent >= 90
+        else "silver"
+        if passed_exam.score_percent >= 80
+        else "bronze"
+    )
     certificate = CourseCertificate(
         user_id=current_user.id,
         course_id=course_id,
@@ -110,11 +133,15 @@ def get_my_certificate(
     require_enrollment(course_id, current_user.id, db)
     certificate = (
         db.query(CourseCertificate)
-        .filter(CourseCertificate.course_id == course_id, CourseCertificate.user_id == current_user.id)
+        .filter(
+            CourseCertificate.course_id == course_id, CourseCertificate.user_id == current_user.id
+        )
         .first()
     )
     if certificate is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Certificate has not been issued")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Certificate has not been issued"
+        )
     return to_response(certificate)
 
 

@@ -11,10 +11,21 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("courses", sa.Column("category", sa.String(length=100), nullable=False, server_default="General"))
+    op.add_column(
+        "courses",
+        sa.Column("category", sa.String(length=100), nullable=False, server_default="General"),
+    )
     op.alter_column("courses", "category", server_default=None)
-    op.add_column("course_certificates", sa.Column("score_percent", sa.Float(), nullable=False, server_default="0"))
-    op.add_column("course_certificates", sa.Column("achievement_level", sa.String(length=20), nullable=False, server_default="bronze"))
+    op.add_column(
+        "course_certificates",
+        sa.Column("score_percent", sa.Float(), nullable=False, server_default="0"),
+    )
+    op.add_column(
+        "course_certificates",
+        sa.Column(
+            "achievement_level", sa.String(length=20), nullable=False, server_default="bronze"
+        ),
+    )
     op.execute(
         "UPDATE course_certificates AS cert SET score_percent = attempts.score_percent "
         "FROM (SELECT course_id, user_id, MAX(score_percent) AS score_percent "
@@ -47,11 +58,15 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("exam_id", "position", name="uq_final_exam_questions_position"),
     )
-    op.create_index("ix_course_final_exam_questions_exam_id", "course_final_exam_questions", ["exam_id"])
+    op.create_index(
+        "ix_course_final_exam_questions_exam_id", "course_final_exam_questions", ["exam_id"]
+    )
 
 
 def downgrade() -> None:
-    op.drop_index("ix_course_final_exam_questions_exam_id", table_name="course_final_exam_questions")
+    op.drop_index(
+        "ix_course_final_exam_questions_exam_id", table_name="course_final_exam_questions"
+    )
     op.drop_table("course_final_exam_questions")
     op.drop_table("course_final_exams")
     op.drop_column("course_certificates", "achievement_level")

@@ -4,6 +4,7 @@ Revision ID: c1a4b9e72d30
 Revises: 9f84d2c16a30
 Create Date: 2026-11-06
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -16,8 +17,20 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.alter_column("course_certificates", "certificate_code", type_=sa.String(length=40), existing_type=sa.String(length=32), nullable=False)
+    op.alter_column(
+        "course_certificates",
+        "certificate_code",
+        type_=sa.String(length=40),
+        existing_type=sa.String(length=32),
+        nullable=False,
+    )
 
 
 def downgrade() -> None:
-    op.alter_column("course_certificates", "certificate_code", type_=sa.String(length=32), existing_type=sa.String(length=40), nullable=False)
+    op.alter_column(
+        "course_certificates",
+        "certificate_code",
+        type_=sa.String(length=32),
+        existing_type=sa.String(length=40),
+        nullable=False,
+    )

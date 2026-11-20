@@ -27,7 +27,7 @@ from app.models import (
 )
 
 recommendations_router = APIRouter(prefix="/recommendations", tags=["Personalized Learning"])
-learning_plans_router = APIRouter(prefix="/learning-plans", tags=["Personalized Learning"] )
+learning_plans_router = APIRouter(prefix="/learning-plans", tags=["Personalized Learning"])
 
 _LEVELS = ("beginner", "intermediate", "advanced")
 _RECOMMENDATION_REASONS = {
@@ -97,12 +97,21 @@ def learner_profile(user_id: uuid.UUID, db: Session) -> tuple[float | None, str]
     return average, "advanced"
 
 
-def build_reasons(course: Course, language: str, level: str, has_quiz_history: bool, interest: str = "", lesson_matches: bool = False) -> tuple[int, list[str]]:
+def build_reasons(
+    course: Course,
+    language: str,
+    level: str,
+    has_quiz_history: bool,
+    interest: str = "",
+    lesson_matches: bool = False,
+) -> tuple[int, list[str]]:
     copy = _RECOMMENDATION_REASONS.get(language, _RECOMMENDATION_REASONS["uz"])
     score = 0
     reasons: list[str] = []
     wanted = {part.casefold() for part in interest.split() if len(part) > 1}
-    course_text = " ".join((course.title or "", course.description or "", course.category or "")).casefold()
+    course_text = " ".join(
+        (course.title or "", course.description or "", course.category or "")
+    ).casefold()
     if wanted and (any(word in course_text for word in wanted) or lesson_matches):
         score += 80
         reasons.append(copy["interest"])
@@ -130,7 +139,9 @@ def get_my_recommendations(
     average_score, estimated_level = learner_profile(current_user.id, db)
     enrolled_ids = {
         row[0]
-        for row in db.query(Enrollment.course_id).filter(Enrollment.user_id == current_user.id).all()
+        for row in db.query(Enrollment.course_id)
+        .filter(Enrollment.user_id == current_user.id)
+        .all()
     }
     courses = (
         db.query(Course)
@@ -142,17 +153,22 @@ def get_my_recommendations(
     if interest:
         pattern = f"%{interest.strip()}%"
         matching_course_ids = {
-            row[0] for row in db.query(Lesson.course_id).filter(
-                or_(Lesson.title.ilike(pattern), Lesson.content.ilike(pattern))
-            ).all()
+            row[0]
+            for row in db.query(Lesson.course_id)
+            .filter(or_(Lesson.title.ilike(pattern), Lesson.content.ilike(pattern)))
+            .all()
         }
     candidates: list[tuple[int, Course, list[str]]] = []
     for course in courses:
         if course.id in enrolled_ids:
             continue
         score, reasons = build_reasons(
-            course, current_user.preferred_language, estimated_level, average_score is not None,
-            interest or "", course.id in matching_course_ids,
+            course,
+            current_user.preferred_language,
+            estimated_level,
+            average_score is not None,
+            interest or "",
+            course.id in matching_course_ids,
         )
         candidates.append((score, course, reasons))
     candidates.sort(key=lambda item: (item[0], item[1].created_at), reverse=True)
@@ -161,14 +177,21 @@ def get_my_recommendations(
     recommended_courses: list[tuple[int, Course, list[str]]] | None = None
     if interest and candidates:
         available = [
-            {"course_id": str(course.id), "title": course.title, "subject": course.category, "level": course.level}
+            {
+                "course_id": str(course.id),
+                "title": course.title,
+                "subject": course.category,
+                "level": course.level,
+            }
             for _, course, _ in candidates[:30]
         ]
         try:
             result = generate_course_recommendations(
                 interest, estimated_level, current_user.preferred_language, available
             )
-            course_map = {str(course.id): (score, course, reasons) for score, course, reasons in candidates}
+            course_map = {
+                str(course.id): (score, course, reasons) for score, course, reasons in candidates
+            }
             selected = []
             seen = set()
             ai_items = result.get("recommendations", []) if isinstance(result, dict) else []
@@ -179,7 +202,15 @@ def get_my_recommendations(
                 if course_id in course_map and course_id not in seen:
                     score, course, local_reasons = course_map[course_id]
                     reason = item.get("reason")
-                    selected.append((score, course, [reason] if isinstance(reason, str) and reason.strip() else local_reasons))
+                    selected.append(
+                        (
+                            score,
+                            course,
+                            [reason]
+                            if isinstance(reason, str) and reason.strip()
+                            else local_reasons,
+                        )
+                    )
                     seen.add(course_id)
             if selected:
                 recommended_courses = selected
@@ -231,7 +262,9 @@ def to_plan_response(plan: LearningPlan, course: Course, db: Session) -> Learnin
     )
 
 
-@learning_plans_router.post("/generate", response_model=LearningPlanResponse, status_code=status.HTTP_201_CREATED)
+@learning_plans_router.post(
+    "/generate", response_model=LearningPlanResponse, status_code=status.HTTP_201_CREATED
+)
 def generate_learning_plan(
     request: LearningPlanGenerate,
     current_user: User = Depends(get_current_user),
@@ -243,14 +276,18 @@ def generate_learning_plan(
         .first()
     )
     if course is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Published course not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Published course not found"
+        )
     enrollment = (
         db.query(Enrollment.id)
         .filter(Enrollment.course_id == course.id, Enrollment.user_id == current_user.id)
         .first()
     )
     if enrollment is None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Enroll in the course to generate a plan")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Enroll in the course to generate a plan"
+        )
 
     lessons = (
         db.query(Lesson)
@@ -259,7 +296,9 @@ def generate_learning_plan(
         .all()
     )
     if not lessons:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Course has no lessons yet")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Course has no lessons yet"
+        )
     completed_ids = {
         row[0]
         for row in (
@@ -286,9 +325,7 @@ def generate_learning_plan(
                 "lesson_title": lesson.title,
                 "session_minutes": request.session_minutes,
                 "quiz_available": has_quiz,
-                "guidance": guidance_with_quiz
-                if has_quiz
-                else guidance_without_quiz,
+                "guidance": guidance_with_quiz if has_quiz else guidance_without_quiz,
             }
         )
     estimated_weeks = math.ceil(len(items) / request.weekly_study_days) if items else 0
@@ -298,9 +335,7 @@ def generate_learning_plan(
         weekly_study_days=request.weekly_study_days,
         session_minutes=request.session_minutes,
         estimated_weeks=estimated_weeks,
-        plan_data=[
-            {**item, "lesson_id": str(item["lesson_id"])} for item in items
-        ],
+        plan_data=[{**item, "lesson_id": str(item["lesson_id"])} for item in items],
     )
     db.add(plan)
     db.commit()

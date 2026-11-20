@@ -1,16 +1,40 @@
 from sqlalchemy.orm import Session
 
-from app.core.ai import AIConfigurationError, AIProviderError, translate_assessment, translate_course, translate_lesson, translate_module
-from app.models import AssignmentTranslation, Course, CourseFinalExam, CourseFinalExamQuestion, CourseModule, CourseModuleTranslation, CourseTranslation, Lesson, LessonAssignment, LessonTranslation, Quiz, QuizQuestion
+from app.core.ai import (
+    AIConfigurationError,
+    AIProviderError,
+    translate_assessment,
+    translate_course,
+    translate_lesson,
+    translate_module,
+)
+from app.models import (
+    AssignmentTranslation,
+    Course,
+    CourseFinalExam,
+    CourseFinalExamQuestion,
+    CourseModule,
+    CourseModuleTranslation,
+    CourseTranslation,
+    Lesson,
+    LessonAssignment,
+    LessonTranslation,
+    Quiz,
+    QuizQuestion,
+)
 
 
 def get_course_translation(course: Course, language: str, db: Session) -> CourseTranslation | None:
     if language == course.language:
         return None
-    translation = db.query(CourseTranslation).filter(
-        CourseTranslation.course_id == course.id,
-        CourseTranslation.language == language,
-    ).first()
+    translation = (
+        db.query(CourseTranslation)
+        .filter(
+            CourseTranslation.course_id == course.id,
+            CourseTranslation.language == language,
+        )
+        .first()
+    )
     if translation:
         return translation
     try:
@@ -24,13 +48,19 @@ def get_course_translation(course: Course, language: str, db: Session) -> Course
     return translation
 
 
-def get_lesson_translation(lesson: Lesson, course: Course, language: str, db: Session) -> LessonTranslation | None:
+def get_lesson_translation(
+    lesson: Lesson, course: Course, language: str, db: Session
+) -> LessonTranslation | None:
     if language == course.language:
         return None
-    translation = db.query(LessonTranslation).filter(
-        LessonTranslation.lesson_id == lesson.id,
-        LessonTranslation.language == language,
-    ).first()
+    translation = (
+        db.query(LessonTranslation)
+        .filter(
+            LessonTranslation.lesson_id == lesson.id,
+            LessonTranslation.language == language,
+        )
+        .first()
+    )
     if translation:
         return translation
     try:
@@ -44,42 +74,27 @@ def get_lesson_translation(lesson: Lesson, course: Course, language: str, db: Se
     return translation
 
 
-def get_module_translation(module: CourseModule, course: Course, language: str, db: Session) -> CourseModuleTranslation | None:
+def get_module_translation(
+    module: CourseModule, course: Course, language: str, db: Session
+) -> CourseModuleTranslation | None:
     if language == course.language:
         return None
-    translation = db.query(CourseModuleTranslation).filter(
-        CourseModuleTranslation.module_id == module.id,
-        CourseModuleTranslation.language == language,
-    ).first()
+    translation = (
+        db.query(CourseModuleTranslation)
+        .filter(
+            CourseModuleTranslation.module_id == module.id,
+            CourseModuleTranslation.language == language,
+        )
+        .first()
+    )
     if translation:
         return translation
     try:
         translated_title = translate_module(module.title, language)
     except (AIConfigurationError, AIProviderError):
         return None
-    translation = CourseModuleTranslation(module_id=module.id, language=language, title=translated_title)
-    db.add(translation)
-    db.commit()
-    db.refresh(translation)
-    return translation
-
-
-def get_assignment_translation(assignment: LessonAssignment, course: Course, language: str, db: Session) -> AssignmentTranslation | None:
-    if language == course.language:
-        return None
-    translation = db.query(AssignmentTranslation).filter(
-        AssignmentTranslation.assignment_id == assignment.id,
-        AssignmentTranslation.language == language,
-    ).first()
-    if translation:
-        return translation
-    try:
-        localized = translate_lesson(assignment.title, assignment.instructions, language)
-    except (AIConfigurationError, AIProviderError):
-        return None
-    translation = AssignmentTranslation(
-        assignment_id=assignment.id, language=language,
-        title=localized["title"], instructions=localized["content"],
+    translation = CourseModuleTranslation(
+        module_id=module.id, language=language, title=translated_title
     )
     db.add(translation)
     db.commit()
@@ -87,7 +102,45 @@ def get_assignment_translation(assignment: LessonAssignment, course: Course, lan
     return translation
 
 
-def get_quiz_content_translation(lesson: Lesson, course: Course, quiz: Quiz, questions: list[QuizQuestion], language: str, db: Session) -> dict | None:
+def get_assignment_translation(
+    assignment: LessonAssignment, course: Course, language: str, db: Session
+) -> AssignmentTranslation | None:
+    if language == course.language:
+        return None
+    translation = (
+        db.query(AssignmentTranslation)
+        .filter(
+            AssignmentTranslation.assignment_id == assignment.id,
+            AssignmentTranslation.language == language,
+        )
+        .first()
+    )
+    if translation:
+        return translation
+    try:
+        localized = translate_lesson(assignment.title, assignment.instructions, language)
+    except (AIConfigurationError, AIProviderError):
+        return None
+    translation = AssignmentTranslation(
+        assignment_id=assignment.id,
+        language=language,
+        title=localized["title"],
+        instructions=localized["content"],
+    )
+    db.add(translation)
+    db.commit()
+    db.refresh(translation)
+    return translation
+
+
+def get_quiz_content_translation(
+    lesson: Lesson,
+    course: Course,
+    quiz: Quiz,
+    questions: list[QuizQuestion],
+    language: str,
+    db: Session,
+) -> dict | None:
     if language == course.language:
         return None
     translation = get_lesson_translation(lesson, course, language, db)
@@ -96,7 +149,9 @@ def get_quiz_content_translation(lesson: Lesson, course: Course, quiz: Quiz, que
     if translation.quiz_content:
         return translation.quiz_content
     try:
-        localized = translate_assessment(quiz.title, [{"prompt": q.prompt, "choices": q.choices} for q in questions], language)
+        localized = translate_assessment(
+            quiz.title, [{"prompt": q.prompt, "choices": q.choices} for q in questions], language
+        )
     except (AIConfigurationError, AIProviderError):
         return None
     translation.quiz_content = localized
@@ -104,7 +159,13 @@ def get_quiz_content_translation(lesson: Lesson, course: Course, quiz: Quiz, que
     return localized
 
 
-def get_final_exam_content_translation(course: Course, exam: CourseFinalExam, questions: list[CourseFinalExamQuestion], language: str, db: Session) -> dict | None:
+def get_final_exam_content_translation(
+    course: Course,
+    exam: CourseFinalExam,
+    questions: list[CourseFinalExamQuestion],
+    language: str,
+    db: Session,
+) -> dict | None:
     if language == course.language:
         return None
     translation = get_course_translation(course, language, db)
@@ -113,7 +174,9 @@ def get_final_exam_content_translation(course: Course, exam: CourseFinalExam, qu
     if translation.final_exam_content:
         return translation.final_exam_content
     try:
-        localized = translate_assessment(exam.title, [{"prompt": q.prompt, "choices": q.choices} for q in questions], language)
+        localized = translate_assessment(
+            exam.title, [{"prompt": q.prompt, "choices": q.choices} for q in questions], language
+        )
     except (AIConfigurationError, AIProviderError):
         return None
     translation.final_exam_content = localized

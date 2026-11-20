@@ -1,7 +1,17 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, Integer, JSON, LargeBinary, String, UniqueConstraint, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Float,
+    Integer,
+    JSON,
+    LargeBinary,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -44,6 +54,8 @@ class User(Base):
         server_default=func.now(),
         nullable=False,
     )
+
+
 from sqlalchemy import ForeignKey, Text
 
 
@@ -56,20 +68,29 @@ class CourseModule(Base):
     )
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     position: Mapped[int] = mapped_column(Integer, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
 
 class CourseModuleTranslation(Base):
     __tablename__ = "course_module_translations"
-    __table_args__ = (UniqueConstraint("module_id", "language", name="uq_course_module_translation_language"),)
+    __table_args__ = (
+        UniqueConstraint("module_id", "language", name="uq_course_module_translation_language"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     module_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("course_modules.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("course_modules.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     language: Mapped[str] = mapped_column(String(5), nullable=False)
     title: Mapped[str] = mapped_column(String(200), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
 
 class Course(Base):
@@ -119,7 +140,9 @@ class Course(Base):
 
 class CourseTranslation(Base):
     __tablename__ = "course_translations"
-    __table_args__ = (UniqueConstraint("course_id", "language", name="uq_course_translation_language"),)
+    __table_args__ = (
+        UniqueConstraint("course_id", "language", name="uq_course_translation_language"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     course_id: Mapped[uuid.UUID] = mapped_column(
@@ -130,7 +153,10 @@ class CourseTranslation(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     category: Mapped[str] = mapped_column(String(100), nullable=False)
     final_exam_content: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
 
 class Lesson(Base):
     __tablename__ = "lessons"
@@ -147,7 +173,10 @@ class Lesson(Base):
         index=True,
     )
     module_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("course_modules.id", ondelete="SET NULL"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("course_modules.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
@@ -179,13 +208,17 @@ class LessonMaterial(Base):
     resource_key: Mapped[str] = mapped_column(String(80), nullable=False, unique=True)
     resource_mime_type: Mapped[str] = mapped_column(String(100), nullable=False)
     position: Mapped[int] = mapped_column(Integer, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     lesson: Mapped[Lesson] = relationship(back_populates="materials")
 
 
 class LessonTranslation(Base):
     __tablename__ = "lesson_translations"
-    __table_args__ = (UniqueConstraint("lesson_id", "language", name="uq_lesson_translation_language"),)
+    __table_args__ = (
+        UniqueConstraint("lesson_id", "language", name="uq_lesson_translation_language"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     lesson_id: Mapped[uuid.UUID] = mapped_column(
@@ -195,7 +228,9 @@ class LessonTranslation(Base):
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     quiz_content: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
 
 class LessonAssignment(Base):
@@ -203,35 +238,52 @@ class LessonAssignment(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     lesson_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("lessons.id", ondelete="CASCADE"), nullable=False, unique=True
+        UUID(as_uuid=True),
+        ForeignKey("lessons.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
     )
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     instructions: Mapped[str] = mapped_column(Text, nullable=False)
     max_score: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
 
 class AssignmentTranslation(Base):
     __tablename__ = "assignment_translations"
-    __table_args__ = (UniqueConstraint("assignment_id", "language", name="uq_assignment_translation_language"),)
+    __table_args__ = (
+        UniqueConstraint("assignment_id", "language", name="uq_assignment_translation_language"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     assignment_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("lesson_assignments.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("lesson_assignments.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     language: Mapped[str] = mapped_column(String(5), nullable=False)
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     instructions: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
 
 class AssignmentSubmission(Base):
     __tablename__ = "assignment_submissions"
-    __table_args__ = (UniqueConstraint("assignment_id", "user_id", name="uq_assignment_submission_user"),)
+    __table_args__ = (
+        UniqueConstraint("assignment_id", "user_id", name="uq_assignment_submission_user"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     assignment_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("lesson_assignments.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("lesson_assignments.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
@@ -240,15 +292,15 @@ class AssignmentSubmission(Base):
     status: Mapped[str] = mapped_column(String(16), default="submitted", nullable=False)
     score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
-    submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    submitted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     graded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class Enrollment(Base):
     __tablename__ = "enrollments"
-    __table_args__ = (
-        UniqueConstraint("user_id", "course_id", name="uq_enrollments_user_course"),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "course_id", name="uq_enrollments_user_course"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -279,14 +331,20 @@ class CoursePayment(Base):
     __table_args__ = (UniqueConstraint("external_id", name="uq_course_payments_external_id"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    course_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    course_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     amount_uzs: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)
     external_id: Mapped[str] = mapped_column(String(36), nullable=False)
     provider_token: Mapped[str] = mapped_column(String(100), nullable=False)
     checkout_url: Mapped[str] = mapped_column(String(1000), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
@@ -325,8 +383,12 @@ class VideoWatchProgress(Base):
     __table_args__ = (UniqueConstraint("user_id", "lesson_id", name="uq_video_watch_user_lesson"),)
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    lesson_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("lessons.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    lesson_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("lessons.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     watched_seconds: Mapped[float] = mapped_column(Float, default=0, nullable=False)
     duration_seconds: Mapped[float] = mapped_column(Float, nullable=False)
     last_position_seconds: Mapped[float] = mapped_column(Float, nullable=False)
@@ -340,11 +402,16 @@ class Quiz(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     lesson_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("lessons.id", ondelete="CASCADE"), nullable=False, unique=True
+        UUID(as_uuid=True),
+        ForeignKey("lessons.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
     )
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     passing_score: Mapped[int] = mapped_column(Integer, default=60, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
 
 class QuizQuestion(Base):
@@ -378,7 +445,9 @@ class QuizAttempt(Base):
     total_points: Mapped[int] = mapped_column(Integer, nullable=False)
     score_percent: Mapped[float] = mapped_column(Float, nullable=False)
     passed: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    submitted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
 
 class LearningPlan(Base):
@@ -415,7 +484,9 @@ class CourseCertificate(Base):
     )
     recipient_name: Mapped[str] = mapped_column(String(150), nullable=False)
     course_title: Mapped[str] = mapped_column(String(200), nullable=False)
-    certificate_code: Mapped[str] = mapped_column(String(40), nullable=False, unique=True, index=True)
+    certificate_code: Mapped[str] = mapped_column(
+        String(40), nullable=False, unique=True, index=True
+    )
     score_percent: Mapped[float] = mapped_column(Float, default=0, nullable=False)
     achievement_level: Mapped[str] = mapped_column(String(20), default="bronze", nullable=False)
     issued_at: Mapped[datetime] = mapped_column(
@@ -428,7 +499,10 @@ class CourseFinalExam(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     course_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, unique=True
+        UUID(as_uuid=True),
+        ForeignKey("courses.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
     )
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     passing_score: Mapped[int] = mapped_column(Integer, default=70, nullable=False)
@@ -436,11 +510,16 @@ class CourseFinalExam(Base):
 
 class CourseFinalExamQuestion(Base):
     __tablename__ = "course_final_exam_questions"
-    __table_args__ = (UniqueConstraint("exam_id", "position", name="uq_final_exam_questions_position"),)
+    __table_args__ = (
+        UniqueConstraint("exam_id", "position", name="uq_final_exam_questions_position"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     exam_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("course_final_exams.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("course_final_exams.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     prompt: Mapped[str] = mapped_column(Text, nullable=False)
     choices: Mapped[list[str]] = mapped_column(JSON, nullable=False)
@@ -498,13 +577,17 @@ class PasskeyCredential(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    credential_id: Mapped[str] = mapped_column(String(1024), unique=True, nullable=False, index=True)
+    credential_id: Mapped[str] = mapped_column(
+        String(1024), unique=True, nullable=False, index=True
+    )
     rp_id: Mapped[str | None] = mapped_column(String(253), nullable=True, index=True)
     public_key: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     sign_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     transports: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
     label: Mapped[str] = mapped_column(String(120), default="Passkey", nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
 
 class PasskeyChallenge(Base):
@@ -520,7 +603,9 @@ class PasskeyChallenge(Base):
     purpose: Mapped[str] = mapped_column(String(32), nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
 
 class PasskeyProof(Base):
@@ -534,4 +619,6 @@ class PasskeyProof(Base):
     purpose: Mapped[str] = mapped_column(String(32), nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )

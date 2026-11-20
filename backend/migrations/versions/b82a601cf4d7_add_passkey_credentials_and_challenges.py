@@ -20,13 +20,17 @@ def upgrade() -> None:
         sa.Column("sign_count", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("transports", sa.JSON(), nullable=True),
         sa.Column("label", sa.String(length=120), nullable=False, server_default="Passkey"),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("credential_id"),
     )
     op.create_index("ix_passkey_credentials_user_id", "passkey_credentials", ["user_id"])
-    op.create_index("ix_passkey_credentials_credential_id", "passkey_credentials", ["credential_id"])
+    op.create_index(
+        "ix_passkey_credentials_credential_id", "passkey_credentials", ["credential_id"]
+    )
     op.create_table(
         "passkey_challenges",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
@@ -35,7 +39,9 @@ def upgrade() -> None:
         sa.Column("purpose", sa.String(length=32), nullable=False),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("consumed_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -48,7 +54,9 @@ def upgrade() -> None:
         sa.Column("purpose", sa.String(length=32), nullable=False),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("consumed_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("token_hash"),

@@ -26,7 +26,9 @@ def upgrade() -> None:
         sa.Column("external_id", sa.String(length=36), nullable=False),
         sa.Column("provider_token", sa.String(length=100), nullable=False),
         sa.Column("checkout_url", sa.String(length=1000), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.Column("confirmed_at", sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["course_id"], ["courses.id"], ondelete="CASCADE"),

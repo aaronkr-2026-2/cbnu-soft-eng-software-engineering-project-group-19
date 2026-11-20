@@ -4,6 +4,7 @@ Revision ID: 29ad41e7c2b1
 Revises: f7536fc4c7c5
 Create Date: 2026-11-06
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -23,7 +24,12 @@ def upgrade() -> None:
         sa.Column("lesson_id", sa.UUID(), nullable=False),
         sa.Column("title", sa.String(length=200), nullable=False),
         sa.Column("passing_score", sa.Integer(), nullable=False, server_default="60"),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.ForeignKeyConstraint(["lesson_id"], ["lessons.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("lesson_id", name="uq_quizzes_lesson_id"),
@@ -54,7 +60,12 @@ def upgrade() -> None:
         sa.Column("total_points", sa.Integer(), nullable=False),
         sa.Column("score_percent", sa.Float(), nullable=False),
         sa.Column("passed", sa.Boolean(), nullable=False),
-        sa.Column("submitted_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "submitted_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.ForeignKeyConstraint(["quiz_id"], ["quizzes.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),

@@ -11,7 +11,10 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("course_translations", sa.Column("category", sa.String(length=100), nullable=False, server_default=""))
+    op.add_column(
+        "course_translations",
+        sa.Column("category", sa.String(length=100), nullable=False, server_default=""),
+    )
     op.alter_column("course_translations", "category", server_default=None)
 
 

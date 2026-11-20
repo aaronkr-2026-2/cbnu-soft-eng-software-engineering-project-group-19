@@ -32,11 +32,7 @@ def enroll_in_course(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> EnrollmentResponse:
-    course = (
-        db.query(Course)
-        .filter(Course.id == course_id, Course.is_published.is_(True))
-        .first()
-    )
+    course = db.query(Course).filter(Course.id == course_id, Course.is_published.is_(True)).first()
     if course is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -44,13 +40,20 @@ def enroll_in_course(
         )
 
     if course.price_uzs > 0:
-        paid = db.query(CoursePayment.id).filter(
-            CoursePayment.user_id == current_user.id,
-            CoursePayment.course_id == course.id,
-            CoursePayment.status == "success",
-        ).first()
+        paid = (
+            db.query(CoursePayment.id)
+            .filter(
+                CoursePayment.user_id == current_user.id,
+                CoursePayment.course_id == course.id,
+                CoursePayment.status == "success",
+            )
+            .first()
+        )
         if paid is None:
-            raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail="Payment is required before enrolling in this course")
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail="Payment is required before enrolling in this course",
+            )
 
     existing_enrollment = (
         db.query(Enrollment)

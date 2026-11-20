@@ -18,7 +18,9 @@ def upgrade() -> None:
         sa.Column("course_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("title", sa.String(length=200), nullable=False),
         sa.Column("position", sa.Integer(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.ForeignKeyConstraint(["course_id"], ["courses.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -29,12 +31,16 @@ def upgrade() -> None:
         sa.Column("module_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("language", sa.String(length=5), nullable=False),
         sa.Column("title", sa.String(length=200), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.ForeignKeyConstraint(["module_id"], ["course_modules.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("module_id", "language", name="uq_course_module_translation_language"),
     )
-    op.create_index("ix_course_module_translations_module_id", "course_module_translations", ["module_id"])
+    op.create_index(
+        "ix_course_module_translations_module_id", "course_module_translations", ["module_id"]
+    )
     op.add_column("lessons", sa.Column("module_id", postgresql.UUID(as_uuid=True), nullable=True))
     op.create_index("ix_lessons_module_id", "lessons", ["module_id"])
     op.create_foreign_key(
@@ -51,7 +57,9 @@ def downgrade() -> None:
     op.drop_index("ix_lessons_module_id", table_name="lessons")
     op.drop_constraint("fk_lessons_module_id_course_modules", "lessons", type_="foreignkey")
     op.drop_column("lessons", "module_id")
-    op.drop_index("ix_course_module_translations_module_id", table_name="course_module_translations")
+    op.drop_index(
+        "ix_course_module_translations_module_id", table_name="course_module_translations"
+    )
     op.drop_table("course_module_translations")
     op.drop_index("ix_course_modules_course_id", table_name="course_modules")
     op.drop_table("course_modules")

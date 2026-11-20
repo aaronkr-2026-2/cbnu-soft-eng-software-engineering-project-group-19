@@ -4,6 +4,7 @@ Revision ID: f7536fc4c7c5
 Revises: 6c7e6d8d128f
 Create Date: 2026-11-06
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -22,14 +23,23 @@ def upgrade() -> None:
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("user_id", sa.UUID(), nullable=False),
         sa.Column("lesson_id", sa.UUID(), nullable=False),
-        sa.Column("completed_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "completed_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["lesson_id"], ["lessons.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("user_id", "lesson_id", name="uq_lesson_progress_user_lesson"),
     )
-    op.create_index(op.f("ix_lesson_progress_user_id"), "lesson_progress", ["user_id"], unique=False)
-    op.create_index(op.f("ix_lesson_progress_lesson_id"), "lesson_progress", ["lesson_id"], unique=False)
+    op.create_index(
+        op.f("ix_lesson_progress_user_id"), "lesson_progress", ["user_id"], unique=False
+    )
+    op.create_index(
+        op.f("ix_lesson_progress_lesson_id"), "lesson_progress", ["lesson_id"], unique=False
+    )
 
 
 def downgrade() -> None:

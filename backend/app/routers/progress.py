@@ -6,7 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
-from app.core.schemes.progress import CourseProgressResponse, LessonProgressResponse, VideoWatchReport, VideoWatchResponse
+from app.core.schemes.progress import (
+    CourseProgressResponse,
+    LessonProgressResponse,
+    VideoWatchReport,
+    VideoWatchResponse,
+)
 from app.database import get_db
 from app.models import Course, Enrollment, Lesson, LessonProgress, User, VideoWatchProgress
 
@@ -33,17 +38,24 @@ def _video_watch_items(watch: VideoWatchProgress | None) -> dict[str, dict]:
         items = deepcopy(watch.item_progress)
         for item in items.values():
             if "intervals" not in item:
-                covered = min(float(item.get("watched_seconds", 0)), float(item.get("last_position_seconds", 0)))
+                covered = min(
+                    float(item.get("watched_seconds", 0)),
+                    float(item.get("last_position_seconds", 0)),
+                )
                 item["intervals"] = [[0.0, covered]] if covered > 0 else []
         return items
     # Keep progress made before per-item tracking was introduced.
-    return {"0": {
-        "watched_seconds": watch.watched_seconds,
-        "duration_seconds": watch.duration_seconds,
-        "last_position_seconds": watch.last_position_seconds,
-        "last_reported_at": watch.last_reported_at.isoformat(),
-        "intervals": [[0.0, min(watch.watched_seconds, watch.last_position_seconds)]] if watch.watched_seconds > 0 else [],
-    }}
+    return {
+        "0": {
+            "watched_seconds": watch.watched_seconds,
+            "duration_seconds": watch.duration_seconds,
+            "last_position_seconds": watch.last_position_seconds,
+            "last_reported_at": watch.last_reported_at.isoformat(),
+            "intervals": [[0.0, min(watch.watched_seconds, watch.last_position_seconds)]]
+            if watch.watched_seconds > 0
+            else [],
+        }
+    }
 
 
 def _covered_seconds(item: dict) -> float:
@@ -69,16 +81,20 @@ def _contiguous_position(item: dict) -> float:
     return position
 
 
-def video_watch_response(watch: VideoWatchProgress | None, item_index: int = 0) -> VideoWatchResponse:
+def video_watch_response(
+    watch: VideoWatchProgress | None, item_index: int = 0
+) -> VideoWatchResponse:
     item_count = watch.item_count if watch else 1
     items = _video_watch_items(watch)
     total_watched = sum(_covered_seconds(item) for item in items.values())
     total_duration = sum(float(item.get("duration_seconds", 0)) for item in items.values())
     item_percentages = [
         min(100.0, _covered_seconds(item) / float(item["duration_seconds"]) * 100)
-        for item in items.values() if float(item.get("duration_seconds", 0)) > 0
+        for item in items.values()
+        if float(item.get("duration_seconds", 0)) > 0
     ]
     percent = round(sum(item_percentages) / item_count, 1) if item_count else 0.0
+
     def item_finished(item: dict) -> bool:
         duration = float(item.get("duration_seconds", 0))
         tolerance = min(1.5, max(0.5, duration * 0.005))
@@ -123,11 +139,7 @@ def complete_lesson(
 ) -> LessonProgressResponse:
     require_enrollment(course_id, current_user.id, db)
 
-    lesson = (
-        db.query(Lesson)
-        .filter(Lesson.id == lesson_id, Lesson.course_id == course_id)
-        .first()
-    )
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id, Lesson.course_id == course_id).first()
     if lesson is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -135,9 +147,16 @@ def complete_lesson(
         )
 
     if lesson.resource_type == "video" and (lesson.resource_key or lesson.external_video_url):
-        watch = db.query(VideoWatchProgress).filter_by(user_id=current_user.id, lesson_id=lesson.id).first()
+        watch = (
+            db.query(VideoWatchProgress)
+            .filter_by(user_id=current_user.id, lesson_id=lesson.id)
+            .first()
+        )
         if not video_watch_response(watch).can_complete:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Watch the video to the end before completing this lesson")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Watch the video to the end before completing this lesson",
+            )
 
     progress = (
         db.query(LessonProgress)
@@ -174,15 +193,26 @@ def report_video_watch(
         raise HTTPException(status_code=422, detail="Video position exceeds its duration")
 
     now = datetime.now(timezone.utc)
-    watch = db.query(VideoWatchProgress).filter_by(user_id=current_user.id, lesson_id=lesson.id).first()
+    watch = (
+        db.query(VideoWatchProgress).filter_by(user_id=current_user.id, lesson_id=lesson.id).first()
+    )
     if watch is None:
         watch = VideoWatchProgress(
-            user_id=current_user.id, lesson_id=lesson.id, watched_seconds=0,
-            duration_seconds=0, last_position_seconds=report.position_seconds,
-            last_reported_at=now, item_count=report.item_count, item_progress={},
+            user_id=current_user.id,
+            lesson_id=lesson.id,
+            watched_seconds=0,
+            duration_seconds=0,
+            last_position_seconds=report.position_seconds,
+            last_reported_at=now,
+            item_count=report.item_count,
+            item_progress={},
         )
         db.add(watch)
-    items = deepcopy(watch.item_progress) if watch.item_progress is not None else _video_watch_items(watch)
+    items = (
+        deepcopy(watch.item_progress)
+        if watch.item_progress is not None
+        else _video_watch_items(watch)
+    )
     if watch.item_count != report.item_count:
         # A different playlist size is a changed viewing requirement.
         items = {}
@@ -191,7 +221,9 @@ def report_video_watch(
         raise HTTPException(status_code=422, detail="Video item index exceeds the playlist size")
     item_key = str(report.item_index)
     item = items.get(item_key)
-    if item is None or abs(float(item.get("duration_seconds", report.duration_seconds)) - report.duration_seconds) > max(2, report.duration_seconds * 0.02):
+    if item is None or abs(
+        float(item.get("duration_seconds", report.duration_seconds)) - report.duration_seconds
+    ) > max(2, report.duration_seconds * 0.02):
         item = {
             "watched_seconds": 0.0,
             "duration_seconds": report.duration_seconds,
@@ -204,7 +236,9 @@ def report_video_watch(
         item.setdefault("intervals", [])
         item.setdefault("completed", False)
         if not item["intervals"] and float(item.get("watched_seconds", 0)) > 0:
-            legacy_covered = min(float(item["watched_seconds"]), float(item.get("last_position_seconds", 0)))
+            legacy_covered = min(
+                float(item["watched_seconds"]), float(item.get("last_position_seconds", 0))
+            )
             if legacy_covered > 0:
                 item["intervals"] = [[0.0, legacy_covered]]
         last_reported = datetime.fromisoformat(item["last_reported_at"])
@@ -219,7 +253,9 @@ def report_video_watch(
             if interval_end > interval_start:
                 item["intervals"].append([interval_start, interval_end])
                 merged = []
-                for start, end in sorted(item["intervals"], key=lambda interval: float(interval[0])):
+                for start, end in sorted(
+                    item["intervals"], key=lambda interval: float(interval[0])
+                ):
                     if not merged or float(start) > float(merged[-1][1]) + 0.05:
                         merged.append([float(start), float(end)])
                     else:
@@ -230,14 +266,20 @@ def report_video_watch(
         # skipped interval. The learner can still watch the missing section.
         item["last_position_seconds"] = report.position_seconds
         tolerance = min(1.5, max(0.5, report.duration_seconds * 0.005))
-        if report.ended and movement_valid and report.position_seconds >= report.duration_seconds - tolerance:
+        if (
+            report.ended
+            and movement_valid
+            and report.position_seconds >= report.duration_seconds - tolerance
+        ):
             item["completed"] = _covered_seconds(item) >= report.duration_seconds - tolerance
         # A seek adds no covered interval; later playback can fill the gap.
         item["last_reported_at"] = now.isoformat()
     items[item_key] = item
     watch.item_progress = items
     watch.watched_seconds = sum(_covered_seconds(value) for value in items.values())
-    watch.duration_seconds = sum(float(value.get("duration_seconds", 0)) for value in items.values())
+    watch.duration_seconds = sum(
+        float(value.get("duration_seconds", 0)) for value in items.values()
+    )
     watch.last_position_seconds = float(item.get("last_position_seconds", 0))
     watch.last_reported_at = now
     db.commit()
@@ -259,7 +301,9 @@ def get_video_watch_progress(
         raise HTTPException(status_code=404, detail="Lesson not found in this course")
     if lesson.resource_type != "video" or not (lesson.resource_key or lesson.external_video_url):
         raise HTTPException(status_code=409, detail="This lesson has no video")
-    watch = db.query(VideoWatchProgress).filter_by(user_id=current_user.id, lesson_id=lesson.id).first()
+    watch = (
+        db.query(VideoWatchProgress).filter_by(user_id=current_user.id, lesson_id=lesson.id).first()
+    )
     return video_watch_response(watch, item_index)
 
 

@@ -21,17 +21,31 @@ class LessonCreate(BaseModel):
             return value
         parsed = urlparse(value)
         host = (parsed.hostname or "").lower()
-        if parsed.scheme != "https" or not (host == "youtu.be" or host == "youtube.com" or host.endswith(".youtube.com")):
+        if parsed.scheme != "https" or not (
+            host == "youtu.be" or host == "youtube.com" or host.endswith(".youtube.com")
+        ):
             raise ValueError("Use a secure YouTube or youtu.be link")
         path_parts = [part for part in parsed.path.split("/") if part]
         has_video = bool(parsed.hostname == "youtu.be" and path_parts)
-        has_video = has_video or bool(parsed.hostname != "youtu.be" and (
-            parsed.query and any(part.partition("=")[0] == "v" and part.partition("=")[2] for part in parsed.query.split("&"))
-            or len(path_parts) >= 2 and path_parts[0] in {"embed", "shorts", "live"}
-        ))
-        has_playlist = bool(parsed.path.startswith("/playlist") and any(
-            part.partition("=")[0] == "list" and part.partition("=")[2] for part in parsed.query.split("&")
-        ))
+        has_video = has_video or bool(
+            parsed.hostname != "youtu.be"
+            and (
+                parsed.query
+                and any(
+                    part.partition("=")[0] == "v" and part.partition("=")[2]
+                    for part in parsed.query.split("&")
+                )
+                or len(path_parts) >= 2
+                and path_parts[0] in {"embed", "shorts", "live"}
+            )
+        )
+        has_playlist = bool(
+            parsed.path.startswith("/playlist")
+            and any(
+                part.partition("=")[0] == "list" and part.partition("=")[2]
+                for part in parsed.query.split("&")
+            )
+        )
         if not (has_video or has_playlist):
             raise ValueError("Use a YouTube video or playlist link")
         return value
@@ -58,17 +72,31 @@ class LessonUpdate(BaseModel):
             return value
         parsed = urlparse(value)
         host = (parsed.hostname or "").lower()
-        if parsed.scheme != "https" or not (host == "youtu.be" or host == "youtube.com" or host.endswith(".youtube.com")):
+        if parsed.scheme != "https" or not (
+            host == "youtu.be" or host == "youtube.com" or host.endswith(".youtube.com")
+        ):
             raise ValueError("Use a secure YouTube or youtu.be link")
         path_parts = [part for part in parsed.path.split("/") if part]
         has_video = bool(parsed.hostname == "youtu.be" and path_parts)
-        has_video = has_video or bool(parsed.hostname != "youtu.be" and (
-            parsed.query and any(part.partition("=")[0] == "v" and part.partition("=")[2] for part in parsed.query.split("&"))
-            or len(path_parts) >= 2 and path_parts[0] in {"embed", "shorts", "live"}
-        ))
-        has_playlist = bool(parsed.path.startswith("/playlist") and any(
-            part.partition("=")[0] == "list" and part.partition("=")[2] for part in parsed.query.split("&")
-        ))
+        has_video = has_video or bool(
+            parsed.hostname != "youtu.be"
+            and (
+                parsed.query
+                and any(
+                    part.partition("=")[0] == "v" and part.partition("=")[2]
+                    for part in parsed.query.split("&")
+                )
+                or len(path_parts) >= 2
+                and path_parts[0] in {"embed", "shorts", "live"}
+            )
+        )
+        has_playlist = bool(
+            parsed.path.startswith("/playlist")
+            and any(
+                part.partition("=")[0] == "list" and part.partition("=")[2]
+                for part in parsed.query.split("&")
+            )
+        )
         if not (has_video or has_playlist):
             raise ValueError("Use a YouTube video or playlist link")
         return value

@@ -36,9 +36,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(user_id: str, token_version: int = 0) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
-    )
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {
         "sub": user_id,
         "exp": expire,
@@ -71,7 +69,9 @@ def create_lesson_resource_token(course_id: str, lesson_id: str, resource_key: s
     )
 
 
-def create_lesson_material_token(course_id: str, lesson_id: str, material_id: str, resource_key: str) -> str:
+def create_lesson_material_token(
+    course_id: str, lesson_id: str, material_id: str, resource_key: str
+) -> str:
     expires = datetime.now(timezone.utc) + timedelta(hours=2)
     return jwt.encode(
         {
@@ -104,4 +104,8 @@ def create_lesson_banner_token(course_id: str, lesson_id: str, banner_key: str) 
 
 def create_course_banner_token(course_id: str, banner_key: str) -> str:
     expires = datetime.now(timezone.utc) + timedelta(hours=2)
-    return jwt.encode({"typ": "course_banner", "course_id": course_id, "banner_key": banner_key, "exp": expires}, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(
+        {"typ": "course_banner", "course_id": course_id, "banner_key": banner_key, "exp": expires},
+        SECRET_KEY,
+        algorithm=ALGORITHM,
+    )

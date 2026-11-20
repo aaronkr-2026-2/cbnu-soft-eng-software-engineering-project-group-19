@@ -4,6 +4,7 @@ Revision ID: 6c7e6d8d128f
 Revises: 08bc5042f8bd
 Create Date: 2026-11-06
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -22,7 +23,12 @@ def upgrade() -> None:
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("user_id", sa.UUID(), nullable=False),
         sa.Column("course_id", sa.UUID(), nullable=False),
-        sa.Column("enrolled_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "enrolled_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["course_id"], ["courses.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),

@@ -9,10 +9,13 @@ from dotenv import load_dotenv
 # Environment variables supplied by a deployment take precedence over .env.
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+psycopg://localhost/studyflow_db",
-).strip() or "postgresql+psycopg://localhost/studyflow_db"
+DATABASE_URL = (
+    os.getenv(
+        "DATABASE_URL",
+        "postgresql+psycopg://localhost/studyflow_db",
+    ).strip()
+    or "postgresql+psycopg://localhost/studyflow_db"
+)
 
 # Render provides PostgreSQL URLs without SQLAlchemy's psycopg driver suffix.
 # Keep local and Docker URLs unchanged while making the managed URL explicit.
@@ -23,11 +26,7 @@ elif DATABASE_URL.startswith("postgresql://"):
 
 engine = create_engine(DATABASE_URL)
 
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 

@@ -163,10 +163,14 @@ def get_my_avatar(
     avatar_path = (AVATAR_DIR / filename).resolve()
     if avatar_path.parent != AVATAR_DIR.resolve() or not avatar_path.is_file():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile photo not found")
-    media_type = {".jpg":"image/jpeg", ".png":"image/png", ".webp":"image/webp"}.get(avatar_path.suffix)
+    media_type = {".jpg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}.get(
+        avatar_path.suffix
+    )
     if not media_type:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile photo not found")
-    return FileResponse(avatar_path, media_type=media_type, headers={"Cache-Control":"private, no-store"})
+    return FileResponse(
+        avatar_path, media_type=media_type, headers={"Cache-Control": "private, no-store"}
+    )
 
 
 @router.put("/me/avatar", response_model=UserResponse)
@@ -180,16 +184,29 @@ def update_my_avatar(
         mime_type = header.removeprefix("data:").removesuffix(";base64")
         image_bytes = base64.b64decode(encoded, validate=True)
     except (ValueError, binascii.Error):
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid image data")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid image data"
+        )
 
     signatures = {
         "image/jpeg": (".jpg", lambda data: data.startswith(b"\xff\xd8\xff")),
         "image/png": (".png", lambda data: data.startswith(b"\x89PNG\r\n\x1a\n")),
-        "image/webp": (".webp", lambda data: len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP"),
+        "image/webp": (
+            ".webp",
+            lambda data: len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP",
+        ),
     }
     signature = signatures.get(mime_type)
-    if not signature or len(image_bytes) > MAX_AVATAR_BYTES or len(image_bytes) < 16 or not signature[1](image_bytes):
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Use a JPEG, PNG, or WebP image up to 2 MB")
+    if (
+        not signature
+        or len(image_bytes) > MAX_AVATAR_BYTES
+        or len(image_bytes) < 16
+        or not signature[1](image_bytes)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Use a JPEG, PNG, or WebP image up to 2 MB",
+        )
 
     AVATAR_DIR.mkdir(parents=True, exist_ok=True)
     filename = f"{uuid.uuid4().hex}{signature[0]}"
@@ -229,7 +246,9 @@ def change_password(
     return {"message": "Password changed successfully"}
 
 
-def send_reset_email_over_https(host: str, path: str, headers: dict[str, str], payload: dict) -> None:
+def send_reset_email_over_https(
+    host: str, path: str, headers: dict[str, str], payload: dict
+) -> None:
     with closing(HTTPSConnection(host, timeout=10)) as connection:
         connection.request(
             "POST",
@@ -239,7 +258,9 @@ def send_reset_email_over_https(host: str, path: str, headers: dict[str, str], p
         )
         with connection.getresponse() as response:
             if not 200 <= response.status < 300:
-                raise HTTPException(status_code=503, detail="Unable to send the reset email right now")
+                raise HTTPException(
+                    status_code=503, detail="Unable to send the reset email right now"
+                )
 
 
 @router.post("/password-reset/request")
@@ -271,7 +292,9 @@ def request_password_reset(
     else:
         email_configured = bool(smtp_host and smtp_from and smtp_username and smtp_password)
     if not email_configured:
-        raise HTTPException(status_code=503, detail="Password reset email is not configured on this server")
+        raise HTTPException(
+            status_code=503, detail="Password reset email is not configured on this server"
+        )
 
     user = db.query(User).filter(User.email == reset_request.email).first()
     if user is None:
@@ -291,15 +314,23 @@ def request_password_reset(
     )
     try:
         if brevo_api_key:
-            send_reset_email_over_https("api.brevo.com", "/v3/smtp/email", {"api-key": brevo_api_key}, {
-                "sender": {"name": "StudyFlow AI", "email": brevo_from},
-                "to": [{"email": user.email}],
-                "subject": message["Subject"],
-                "textContent": message.get_content(),
-            })
+            send_reset_email_over_https(
+                "api.brevo.com",
+                "/v3/smtp/email",
+                {"api-key": brevo_api_key},
+                {
+                    "sender": {"name": "StudyFlow AI", "email": brevo_from},
+                    "to": [{"email": user.email}],
+                    "subject": message["Subject"],
+                    "textContent": message.get_content(),
+                },
+            )
         elif resend_api_key:
             send_reset_email_over_https(
-                "api.resend.com", "/emails", {"Authorization": f"Bearer {resend_api_key}"}, {
+                "api.resend.com",
+                "/emails",
+                {"Authorization": f"Bearer {resend_api_key}"},
+                {
                     "from": resend_from,
                     "to": [user.email],
                     "subject": message["Subject"],
@@ -315,7 +346,9 @@ def request_password_reset(
                 smtp.login(smtp_username, smtp_password)
                 smtp.send_message(message)
     except (OSError, HTTPClientError, ValueError):
-        raise HTTPException(status_code=503, detail="Unable to send the reset email right now") from None
+        raise HTTPException(
+            status_code=503, detail="Unable to send the reset email right now"
+        ) from None
     return {"message": "If that email belongs to an account, a reset link has been sent."}
 
 

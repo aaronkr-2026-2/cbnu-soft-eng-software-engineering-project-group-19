@@ -102,7 +102,9 @@ class FinalExamQuestionCreate(BaseModel):
 
     @model_validator(mode="after")
     def validate_correct_choice(self):
-        if self.correct_index >= len(self.choices) or any(not choice.strip() for choice in self.choices):
+        if self.correct_index >= len(self.choices) or any(
+            not choice.strip() for choice in self.choices
+        ):
             raise ValueError("Choose a valid answer and provide non-empty choices")
         return self
 

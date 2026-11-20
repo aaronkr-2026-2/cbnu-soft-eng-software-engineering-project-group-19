@@ -80,7 +80,9 @@ class AuthenticationVerify(BaseModel):
     credential: dict[str, Any]
 
 
-def _challenge_or_404(challenge_id: uuid.UUID, user_id: uuid.UUID, purpose: str, db: Session) -> PasskeyChallenge:
+def _challenge_or_404(
+    challenge_id: uuid.UUID, user_id: uuid.UUID, purpose: str, db: Session
+) -> PasskeyChallenge:
     now = datetime.now(timezone.utc)
     challenge = (
         db.query(PasskeyChallenge)
@@ -95,7 +97,10 @@ def _challenge_or_404(challenge_id: uuid.UUID, user_id: uuid.UUID, purpose: str,
         .first()
     )
     if challenge is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passkey challenge expired or already used")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Passkey challenge expired or already used",
+        )
     return challenge
 
 
@@ -128,9 +133,11 @@ def registration_options(
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     rp_id, origin = _request_webauthn_scope(request)
-    existing = db.query(PasskeyCredential).filter(
-        PasskeyCredential.user_id == current_user.id, PasskeyCredential.rp_id == rp_id
-    ).all()
+    existing = (
+        db.query(PasskeyCredential)
+        .filter(PasskeyCredential.user_id == current_user.id, PasskeyCredential.rp_id == rp_id)
+        .all()
+    )
     options = generate_registration_options(
         rp_id=rp_id,
         rp_name=WEBAUTHN_RP_NAME,
@@ -184,7 +191,10 @@ def verify_registration(
         )
     except Exception as error:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passkey registration could not be verified") from error
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Passkey registration could not be verified",
+        ) from error
 
     credential_id = bytes_to_base64url(verification.credential_id)
     response = payload.credential.get("response", {})
@@ -205,7 +215,9 @@ def verify_registration(
         db.commit()
     except IntegrityError as error:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This passkey is already registered") from error
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="This passkey is already registered"
+        ) from error
     return {"enabled": True}
 
 
@@ -217,11 +229,16 @@ def authentication_options(
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     rp_id, origin = _request_webauthn_scope(request)
-    credentials = db.query(PasskeyCredential).filter(
-        PasskeyCredential.user_id == current_user.id, PasskeyCredential.rp_id == rp_id
-    ).all()
+    credentials = (
+        db.query(PasskeyCredential)
+        .filter(PasskeyCredential.user_id == current_user.id, PasskeyCredential.rp_id == rp_id)
+        .all()
+    )
     if not credentials:
-        raise HTTPException(status_code=status.HTTP_428_PRECONDITION_REQUIRED, detail="Register a passkey before this action")
+        raise HTTPException(
+            status_code=status.HTTP_428_PRECONDITION_REQUIRED,
+            detail="Register a passkey before this action",
+        )
     options = generate_authentication_options(
         rp_id=rp_id,
         allow_credentials=[
@@ -270,17 +287,27 @@ def verify_authentication(
         .first()
     )
     if challenge is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passkey challenge expired or already used")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Passkey challenge expired or already used",
+        )
     if not challenge.rp_id or not challenge.origin:
         raise HTTPException(status_code=400, detail="Passkey challenge has no site origin")
     raw_id = payload.credential.get("rawId") or payload.credential.get("id")
-    credential = db.query(PasskeyCredential).filter(
-        PasskeyCredential.user_id == current_user.id,
-        PasskeyCredential.credential_id == raw_id,
+    credential = (
+        db.query(PasskeyCredential)
+        .filter(
+            PasskeyCredential.user_id == current_user.id,
+            PasskeyCredential.credential_id == raw_id,
             PasskeyCredential.rp_id == challenge.rp_id,
-    ).first()
+        )
+        .first()
+    )
     if credential is None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This passkey is not registered to your account")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This passkey is not registered to your account",
+        )
     try:
         verification = verify_authentication_response(
             credential=payload.credential,
@@ -293,10 +320,14 @@ def verify_authentication(
         )
     except Exception as error:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passkey verification failed") from error
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Passkey verification failed"
+        ) from error
     if not verification.user_verified:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Device user verification is required")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Device user verification is required"
+        )
 
     credential.sign_count = verification.new_sign_count
     challenge.consumed_at = datetime.now(timezone.utc)

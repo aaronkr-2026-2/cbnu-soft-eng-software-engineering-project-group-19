@@ -28,11 +28,11 @@ from app.models import (
 router = APIRouter(tags=["Lesson assignments"])
 
 
-def lesson_context(course_id: uuid.UUID, lesson_id: uuid.UUID, db: Session) -> tuple[Course, Lesson]:
+def lesson_context(
+    course_id: uuid.UUID, lesson_id: uuid.UUID, db: Session
+) -> tuple[Course, Lesson]:
     course = db.query(Course).filter(Course.id == course_id).first()
-    lesson = db.query(Lesson).filter(
-        Lesson.id == lesson_id, Lesson.course_id == course_id
-    ).first()
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id, Lesson.course_id == course_id).first()
     if course is None or lesson is None:
         raise HTTPException(status_code=404, detail="Course or lesson not found")
     return course, lesson
@@ -50,7 +50,9 @@ def owned_assignment_context(
     return course, lesson
 
 
-def submission_response(submission: AssignmentSubmission, learner_name: str | None = None) -> AssignmentSubmissionResponse:
+def submission_response(
+    submission: AssignmentSubmission, learner_name: str | None = None
+) -> AssignmentSubmissionResponse:
     return AssignmentSubmissionResponse(
         id=str(submission.id),
         assignment_id=str(submission.assignment_id),
@@ -78,19 +80,27 @@ def get_lesson_assignment(
     course, lesson = lesson_context(course_id, lesson_id, db)
     is_owner = course.owner_id == current_user.id
     if not is_owner:
-        enrolled = db.query(Enrollment.id).filter(
-            Enrollment.course_id == course.id, Enrollment.user_id == current_user.id
-        ).first()
+        enrolled = (
+            db.query(Enrollment.id)
+            .filter(Enrollment.course_id == course.id, Enrollment.user_id == current_user.id)
+            .first()
+        )
         if not course.is_published or enrolled is None:
             raise HTTPException(status_code=404, detail="Course or lesson not found")
     assignment = db.query(LessonAssignment).filter(LessonAssignment.lesson_id == lesson.id).first()
     if assignment is None:
         return None
     translation = get_assignment_translation(assignment, course, language, db)
-    submission = None if is_owner else db.query(AssignmentSubmission).filter(
-        AssignmentSubmission.assignment_id == assignment.id,
-        AssignmentSubmission.user_id == current_user.id,
-    ).first()
+    submission = (
+        None
+        if is_owner
+        else db.query(AssignmentSubmission)
+        .filter(
+            AssignmentSubmission.assignment_id == assignment.id,
+            AssignmentSubmission.user_id == current_user.id,
+        )
+        .first()
+    )
     return LessonAssignmentResponse(
         id=str(assignment.id),
         lesson_id=str(lesson.id),
@@ -117,7 +127,10 @@ def upsert_lesson_assignment(
     if assignment is None:
         assignment = LessonAssignment(lesson_id=lesson.id)
         db.add(assignment)
-    elif assignment.title != assignment_data.title.strip() or assignment.instructions != assignment_data.instructions.strip():
+    elif (
+        assignment.title != assignment_data.title.strip()
+        or assignment.instructions != assignment_data.instructions.strip()
+    ):
         db.query(AssignmentTranslation).filter(
             AssignmentTranslation.assignment_id == assignment.id
         ).delete(synchronize_session=False)
@@ -127,8 +140,11 @@ def upsert_lesson_assignment(
     db.commit()
     db.refresh(assignment)
     return LessonAssignmentResponse(
-        id=str(assignment.id), lesson_id=str(lesson.id), title=assignment.title,
-        instructions=assignment.instructions, max_score=assignment.max_score,
+        id=str(assignment.id),
+        lesson_id=str(lesson.id),
+        title=assignment.title,
+        instructions=assignment.instructions,
+        max_score=assignment.max_score,
     )
 
 
@@ -168,21 +184,29 @@ def submit_assignment(
     db: Session = Depends(get_db),
 ) -> AssignmentSubmissionResponse:
     course, lesson = lesson_context(course_id, lesson_id, db)
-    enrolled = db.query(Enrollment.id).filter(
-        Enrollment.course_id == course.id, Enrollment.user_id == current_user.id
-    ).first()
+    enrolled = (
+        db.query(Enrollment.id)
+        .filter(Enrollment.course_id == course.id, Enrollment.user_id == current_user.id)
+        .first()
+    )
     if course.owner_id == current_user.id or not course.is_published or enrolled is None:
         raise HTTPException(status_code=404, detail="Course or lesson not found")
     assignment = db.query(LessonAssignment).filter(LessonAssignment.lesson_id == lesson.id).first()
     if assignment is None:
         raise HTTPException(status_code=404, detail="Assignment not found")
-    submission = db.query(AssignmentSubmission).filter(
-        AssignmentSubmission.assignment_id == assignment.id,
-        AssignmentSubmission.user_id == current_user.id,
-    ).first()
+    submission = (
+        db.query(AssignmentSubmission)
+        .filter(
+            AssignmentSubmission.assignment_id == assignment.id,
+            AssignmentSubmission.user_id == current_user.id,
+        )
+        .first()
+    )
     if submission is None:
         submission = AssignmentSubmission(
-            assignment_id=assignment.id, user_id=current_user.id, answer=submission_data.answer.strip()
+            assignment_id=assignment.id,
+            user_id=current_user.id,
+            answer=submission_data.answer.strip(),
         )
         db.add(submission)
     else:
@@ -211,11 +235,13 @@ def list_assignment_submissions(
     assignment = db.query(LessonAssignment).filter(LessonAssignment.lesson_id == lesson.id).first()
     if assignment is None:
         return []
-    rows = db.query(AssignmentSubmission, User.full_name).join(
-        User, User.id == AssignmentSubmission.user_id
-    ).filter(AssignmentSubmission.assignment_id == assignment.id).order_by(
-        AssignmentSubmission.submitted_at.desc()
-    ).all()
+    rows = (
+        db.query(AssignmentSubmission, User.full_name)
+        .join(User, User.id == AssignmentSubmission.user_id)
+        .filter(AssignmentSubmission.assignment_id == assignment.id)
+        .order_by(AssignmentSubmission.submitted_at.desc())
+        .all()
+    )
     return [submission_response(submission, learner_name) for submission, learner_name in rows]
 
 
@@ -237,12 +263,15 @@ def grade_assignment_submission(
         raise HTTPException(status_code=404, detail="Assignment not found")
     if grade.score > assignment.max_score:
         raise HTTPException(status_code=422, detail="Score cannot exceed the assignment maximum")
-    row = db.query(AssignmentSubmission, User.full_name).join(
-        User, User.id == AssignmentSubmission.user_id
-    ).filter(
-        AssignmentSubmission.id == submission_id,
-        AssignmentSubmission.assignment_id == assignment.id,
-    ).first()
+    row = (
+        db.query(AssignmentSubmission, User.full_name)
+        .join(User, User.id == AssignmentSubmission.user_id)
+        .filter(
+            AssignmentSubmission.id == submission_id,
+            AssignmentSubmission.assignment_id == assignment.id,
+        )
+        .first()
+    )
     if row is None:
         raise HTTPException(status_code=404, detail="Submission not found")
     submission, learner_name = row

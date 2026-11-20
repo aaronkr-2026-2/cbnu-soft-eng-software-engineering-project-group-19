@@ -31,14 +31,21 @@ def test_local_passkeys_require_localhost_origin(monkeypatch):
     monkeypatch.setattr(passkeys_router, "WEBAUTHN_ORIGIN", "http://localhost:8000")
 
     def request_for(origin):
-        return Request({
-            "type": "http", "method": "POST", "path": "/auth/passkeys/options",
-            "scheme": "http", "server": ("127.0.0.1", 8000), "client": ("127.0.0.1", 12345),
-            "headers": [(b"origin", origin.encode("ascii"))],
-        })
+        return Request(
+            {
+                "type": "http",
+                "method": "POST",
+                "path": "/auth/passkeys/options",
+                "scheme": "http",
+                "server": ("127.0.0.1", 8000),
+                "client": ("127.0.0.1", 12345),
+                "headers": [(b"origin", origin.encode("ascii"))],
+            }
+        )
 
     assert passkeys_router._request_webauthn_scope(request_for("http://localhost:8000")) == (
-        "localhost", "http://localhost:8000"
+        "localhost",
+        "http://localhost:8000",
     )
     with pytest.raises(HTTPException) as error:
         passkeys_router._request_webauthn_scope(request_for("http://127.0.0.1:8000"))
@@ -107,7 +114,12 @@ def test_course_ownership_enrollment_payment_and_language_filter(client):
         json={"title": "Unauthorized Lesson", "content": "Not owned", "position": 1},
     )
     assert forbidden_lesson.status_code == 404
-    assert client.post("/courses", headers=learner_headers, json={"title": "No author role"}).status_code == 403
+    assert (
+        client.post(
+            "/courses", headers=learner_headers, json={"title": "No author role"}
+        ).status_code
+        == 403
+    )
     assert client.post(f"/courses/{course_id}/enroll", headers=learner_headers).status_code == 404
 
     assert client.post(f"/courses/{course_id}/publish", headers=owner_headers).status_code == 200
@@ -116,12 +128,18 @@ def test_course_ownership_enrollment_payment_and_language_filter(client):
     assert client.post(f"/courses/{course_id}/enroll", headers=learner_headers).status_code == 409
 
     paid_course = create_course(client, owner_headers, "Paid Python", price_uzs=1000)
-    assert client.post(f"/courses/{paid_course['id']}/publish", headers=owner_headers).status_code == 200
+    assert (
+        client.post(f"/courses/{paid_course['id']}/publish", headers=owner_headers).status_code
+        == 200
+    )
     payment_required = client.post(f"/courses/{paid_course['id']}/enroll", headers=learner_headers)
     assert payment_required.status_code == 402
 
     english_course = create_course(client, owner_headers, "English Python", language="en")
-    assert client.post(f"/courses/{english_course['id']}/publish", headers=owner_headers).status_code == 200
+    assert (
+        client.post(f"/courses/{english_course['id']}/publish", headers=owner_headers).status_code
+        == 200
+    )
     english_catalog = client.get("/courses/catalog?language=en").json()
     uzbek_catalog = client.get("/courses/catalog?language=uz").json()
     assert english_course["id"] in {item["id"] for item in english_catalog}
@@ -181,9 +199,12 @@ def test_course_modules_group_lessons_and_keep_old_lessons_compatible(client):
     assert outline.json()["modules"][1]["lessons"][0]["title"] == "First Practice"
     assert outline.json()["unassigned_lessons"] == []
 
-    assert client.delete(
-        f"/courses/{course_id}/modules/{module_id}", headers=author_headers
-    ).status_code == 204
+    assert (
+        client.delete(
+            f"/courses/{course_id}/modules/{module_id}", headers=author_headers
+        ).status_code
+        == 204
+    )
     lessons = client.get(f"/courses/{course_id}/lessons?language=uz", headers=author_headers)
     assert lessons.status_code == 200, lessons.text
     assert lessons.json()[0]["module_id"] is None
@@ -212,7 +233,11 @@ def test_lesson_assignment_submission_and_author_grading(client):
     assignment_response = client.put(
         f"/courses/{course_id}/lessons/{lesson_id}/assignment",
         headers=author_headers,
-        json={"title": "Function task", "instructions": "Write a function and explain it.", "max_score": 100},
+        json={
+            "title": "Function task",
+            "instructions": "Write a function and explain it.",
+            "max_score": 100,
+        },
     )
     assert assignment_response.status_code == 200, assignment_response.text
     assert client.post(f"/courses/{course_id}/publish", headers=author_headers).status_code == 200
@@ -406,7 +431,8 @@ def test_ordered_lesson_materials_are_private_managed_and_visible_to_enrolled_le
     course = create_course(client, author_headers, "Materials course")
     course_id = course["id"]
     lesson_response = client.post(
-        f"/courses/{course_id}/lessons", headers=author_headers,
+        f"/courses/{course_id}/lessons",
+        headers=author_headers,
         json={"title": "Reading lesson", "content": "Read the notes", "position": 1},
     )
     assert lesson_response.status_code == 201, lesson_response.text
@@ -423,15 +449,19 @@ def test_ordered_lesson_materials_are_private_managed_and_visible_to_enrolled_le
     )
     assert first.status_code == 201, first.text
     assert second.status_code == 201, second.text
-    assert client.post(
-        f"/courses/{course_id}/lessons/{lesson_id}/materials?title=Blocked",
-        headers={**outsider_headers, "Content-Type": "application/pdf"},
-        content=b"%PDF-1.4 blocked",
-    ).status_code == 404
+    assert (
+        client.post(
+            f"/courses/{course_id}/lessons/{lesson_id}/materials?title=Blocked",
+            headers={**outsider_headers, "Content-Type": "application/pdf"},
+            content=b"%PDF-1.4 blocked",
+        ).status_code
+        == 404
+    )
     assert client.post(f"/courses/{course_id}/publish", headers=author_headers).status_code == 200
     assert client.post(f"/courses/{course_id}/enroll", headers=learner_headers).status_code == 201
     learner_lessons = client.get(
-        f"/courses/{course_id}/lessons?language=uz", headers=learner_headers,
+        f"/courses/{course_id}/lessons?language=uz",
+        headers=learner_headers,
     )
     assert learner_lessons.status_code == 200, learner_lessons.text
     materials = learner_lessons.json()[0]["materials"]
@@ -451,7 +481,9 @@ def test_ordered_lesson_materials_are_private_managed_and_visible_to_enrolled_le
         headers=author_headers,
     )
     assert removed.status_code == 204
-    after_delete = client.get(f"/courses/{course_id}/lessons?language=uz", headers=learner_headers).json()[0]["materials"]
+    after_delete = client.get(
+        f"/courses/{course_id}/lessons?language=uz", headers=learner_headers
+    ).json()[0]["materials"]
     assert [(item["title"], item["position"]) for item in after_delete] == [("First notes", 1)]
 
 
