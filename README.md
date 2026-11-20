@@ -13,7 +13,7 @@
 
 StudyFlow AI is a multilingual learning platform for independent learners, course authors, and organizations that verify course certificates. It brings course discovery, structured lessons, progress tracking, assessments, and certificate verification into one learning flow.
 
-**Local demo:** Follow [requirements and quick start](#requirements-and-quick-start). A public cloud deployment URL is not available yet; see the current [deployment status](docs/deployment.md).
+[Open the live StudyFlow demo](https://studyflow-web-1hab.vercel.app/). To run it locally, follow the [quick start](#requirements-and-quick-start).
 
 The backend uses FastAPI, SQLAlchemy, Alembic, and PostgreSQL. The frontend is a responsive, dependency-free HTML/CSS/JavaScript app served by FastAPI at `/app`. Learners can use the interface in Uzbek, English, Russian, or Korean.
 
