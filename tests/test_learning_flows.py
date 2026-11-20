@@ -322,6 +322,36 @@ def test_lesson_assignment_submission_and_author_grading(client):
     assert updated_view["score"] is None
 
 
+def test_author_can_open_saved_lesson_quiz_for_editing(client):
+    register(client, "quiz-author@example.com", "author")
+    headers = login(client, "quiz-author@example.com", "author")
+    course = create_course(client, headers)
+    lesson = client.post(
+        f"/courses/{course['id']}/lessons",
+        headers=headers,
+        json={"title": "First lesson", "content": "Lesson content", "position": 1},
+    )
+    assert lesson.status_code == 201, lesson.text
+    quiz_url = f"/courses/{course['id']}/lessons/{lesson.json()['id']}/quiz"
+    created = client.post(
+        quiz_url,
+        headers=headers,
+        json={
+            "title": "Lesson quiz",
+            "questions": [
+                {"prompt": "What is two plus two?", "choices": ["3", "4"], "correct_index": 1},
+            ],
+        },
+    )
+    assert created.status_code == 201, created.text
+
+    editable_quiz = client.get(f"{quiz_url}/manage", headers=headers)
+
+    assert editable_quiz.status_code == 200, editable_quiz.text
+    assert editable_quiz.json()["id"] == created.json()["id"]
+    assert editable_quiz.json()["questions"][0]["correct_index"] == 1
+
+
 def test_final_exam_requires_completed_lessons_and_certificate_is_single(client):
     register(client, "course-author@example.com", "author")
     register(client, "course-learner@example.com")
