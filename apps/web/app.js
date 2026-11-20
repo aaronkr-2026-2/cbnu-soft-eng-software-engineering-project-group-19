@@ -87,7 +87,10 @@ const copy = {
     enroll: "Kursni boshlash",
     courseCount: "dars",
     emptyCourses: "Hozircha kurslar yo‘q. Keyinroq qayta tekshiring.",
-    authRequired: "Kurslarni ko‘rish uchun hisobingizga kiring.",
+    catalogError: "Kurslarni yuklab bo‘lmadi. Keyinroq qayta urinib ko‘ring.",
+    catalogConnectionError:
+      "Ulanish uzildi yoki javob kechikdi. Internetni tekshirib, qayta urinib ko‘ring.",
+    catalogRetry: "Qayta urinish",
     courseSearchLabel: "Kurslarni qidirish",
     filterLanguageLabel: "Til bo‘yicha",
     filterLevelLabel: "Daraja bo‘yicha",
@@ -183,7 +186,10 @@ const copy = {
     enroll: "Start course",
     courseCount: "lessons",
     emptyCourses: "No courses yet. Check back soon.",
-    authRequired: "Log in to explore courses.",
+    catalogError: "Could not load courses. Please try again.",
+    catalogConnectionError:
+      "The connection was lost or timed out. Check your connection and try again.",
+    catalogRetry: "Try again",
     courseSearchLabel: "Search courses",
     filterLanguageLabel: "Language",
     filterLevelLabel: "Level",
@@ -278,7 +284,10 @@ const copy = {
     enroll: "Начать курс",
     courseCount: "уроков",
     emptyCourses: "Курсов пока нет. Загляните позже.",
-    authRequired: "Войдите, чтобы посмотреть курсы.",
+    catalogError: "Не удалось загрузить курсы. Попробуйте ещё раз.",
+    catalogConnectionError:
+      "Соединение прервалось или истекло время ожидания. Проверьте подключение и попробуйте снова.",
+    catalogRetry: "Повторить",
     courseSearchLabel: "Поиск курсов",
     filterLanguageLabel: "Язык",
     filterLevelLabel: "Уровень",
@@ -373,7 +382,10 @@ const copy = {
     enroll: "강의 시작하기",
     courseCount: "개 강의",
     emptyCourses: "아직 강의가 없어요. 나중에 다시 확인해 주세요.",
-    authRequired: "강의를 둘러보려면 로그인하세요.",
+    catalogError: "강의를 불러오지 못했어요. 다시 시도해 주세요.",
+    catalogConnectionError:
+      "연결이 끊겼거나 시간이 초과됐어요. 인터넷 연결을 확인하고 다시 시도해 주세요.",
+    catalogRetry: "다시 시도",
     courseSearchLabel: "강의 검색",
     filterLanguageLabel: "언어",
     filterLevelLabel: "수준",
@@ -1648,6 +1660,7 @@ const langPicker = $("#language");
 const dialog = $("#authDialog");
 const form = $("#authForm");
 let language = localStorage.getItem("studyflow-language") || "uz";
+const CATALOG_REQUEST_TIMEOUT_MS = 75_000;
 let catalogRequestId = 0;
 let courseSearchTimer = null;
 let authMode = "register";
@@ -1976,12 +1989,23 @@ async function loadCourses() {
   params.set("language", language);
   const query = params.toString();
   try {
-    const courses = await api(`/courses/catalog?${query}`);
+    const courses = await api(`/courses/catalog?${query}`, {
+      signal: AbortSignal.timeout(CATALOG_REQUEST_TIMEOUT_MS),
+    });
     if (requestId !== catalogRequestId) return;
     renderCourses(courses, Boolean(search));
-  } catch {
-    if (requestId === catalogRequestId)
-      $("#courseGrid").innerHTML = `<div class="course-placeholder">${t("authRequired")}</div>`;
+  } catch (error) {
+    if (requestId !== catalogRequestId) return;
+    const errorKey =
+      error.name === "TimeoutError" || error instanceof TypeError
+        ? "catalogConnectionError"
+        : "catalogError";
+    const grid = $("#courseGrid");
+    grid.innerHTML = `<div class="course-placeholder"><p role="alert">${escapeHtml(t(errorKey))}</p><button class="button button-outline" type="button" data-retry-catalog>${escapeHtml(t("catalogRetry"))}</button></div>`;
+    grid.querySelector("[data-retry-catalog]").addEventListener("click", (event) => {
+      event.currentTarget.disabled = true;
+      loadCourses();
+    });
   }
 }
 async function openFinalExam(courseId) {
