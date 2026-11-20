@@ -1,9 +1,24 @@
 import { WEB_APP, resourceUrl } from "./api";
-import type { CourseLanguage, Lesson } from "./api";
+import type { CourseLanguage, Lesson, VideoProgress } from "./api";
 
 const playerOrigin = new URL(WEB_APP).origin;
 
-export type VideoSource = { uri: string; youtube: boolean };
+export type PlaybackStart = { item: number; seconds: number };
+export type VideoSource = { uri: string; youtube: boolean; playlist?: string };
+
+const RESUME_OVERLAP_SECONDS = 2;
+
+export function playbackStart(progress: VideoProgress): PlaybackStart {
+  if (progress.can_complete) return { item: 0, seconds: 0 };
+  const item = progress.resume_item_index ?? 0;
+  const seconds = progress.resume_position_seconds ?? progress.furthest_position_seconds;
+  return {
+    item: Number.isInteger(item) && item >= 0 && item < progress.item_count ? item : 0,
+    seconds: Number.isFinite(seconds)
+      ? Math.max(0, Math.floor(seconds - RESUME_OVERLAP_SECONDS))
+      : 0,
+  };
+}
 
 export function lessonVideoSource(lesson: Lesson, language: CourseLanguage): VideoSource | null {
   if (lesson.external_video_url) {
@@ -39,7 +54,11 @@ export function lessonVideoSource(lesson: Lesson, language: CourseLanguage): Vid
           }))
             embed.searchParams.set(key, value);
           if (validPlaylist && playlist) embed.searchParams.set("list", playlist);
-          return { uri: embed.toString(), youtube: true };
+          return {
+            uri: embed.toString(),
+            youtube: true,
+            playlist: validPlaylist ? playlist : undefined,
+          };
         }
       }
     } catch {
@@ -50,8 +69,12 @@ export function lessonVideoSource(lesson: Lesson, language: CourseLanguage): Vid
   return uri ? { uri, youtube: false } : null;
 }
 
-export function playerDocument(source: VideoSource) {
-  const attributes = source.uri
+export function playerDocument(source: VideoSource, start: PlaybackStart) {
+  const url = new URL(source.uri);
+  if (source.youtube && !source.playlist && start.seconds > 0)
+    url.searchParams.set("start", String(start.seconds));
+  const attributes = url
+    .toString()
     .replaceAll("&", "&amp;")
     .replaceAll('"', "&quot;")
     .replaceAll("<", "&lt;");
@@ -67,6 +90,8 @@ export function playerDocument(source: VideoSource) {
 </head><body>${media}<script>
 const media = document.getElementById("video");
 const send = (message) => window.ReactNativeWebView?.postMessage(JSON.stringify(message));
+const start = ${JSON.stringify(start)};
+const playlist = ${JSON.stringify(source.playlist ?? null)};
 let latest;
 function sample(position, duration, index, count, rate, ended = false, force = false) {
   if (!Number.isFinite(duration) || duration <= 0 || !Number.isFinite(position)) return;
@@ -93,8 +118,10 @@ if (${source.youtube}) {
   function poll(force, ended) {
     const playing = player.getPlayerState() === 1;
     if (!playing && !force) return;
-    const count = Math.max(1, player.getPlaylist?.()?.length || 0);
-    const index = Math.max(0, player.getPlaylistIndex?.() ?? 0);
+    const playlistSize = player.getPlaylist?.()?.length || 0;
+    const index = playlist ? player.getPlaylistIndex() : 0;
+    if (playlist && (!playlistSize || index < 0 || index >= playlistSize)) return;
+    const count = playlist ? playlistSize : 1;
     const duration = player.getDuration();
     const position = player.getCurrentTime();
     const rate = player.getPlaybackRate();
@@ -112,6 +139,14 @@ if (${source.youtube}) {
       events: {
         onReady: ({ target }) => {
           player = target;
+          if (playlist && (start.item > 0 || start.seconds > 0)) {
+            player.cuePlaylist({
+              listType: "playlist",
+              list: playlist,
+              index: start.item,
+              startSeconds: start.seconds,
+            });
+          }
           send({ type: "ready" });
           timer = setInterval(() => poll(false, false), 500);
         },
@@ -132,10 +167,14 @@ if (${source.youtube}) {
 } else {
   const report = (force, ended = false) =>
     sample(media.currentTime, media.duration, 0, 1, media.playbackRate, ended, force);
-  media.addEventListener("loadedmetadata", () => send({ type: "ready" }));
-  media.addEventListener("play", () => report(true));
+  media.addEventListener("loadedmetadata", () => {
+    if (start.seconds > 0 && start.seconds < media.duration) media.currentTime = start.seconds;
+    send({ type: "ready" });
+  });
+  let played = false;
+  media.addEventListener("play", () => { played = true; report(true); });
   media.addEventListener("pause", () => { if (!media.ended) report(true); });
-  media.addEventListener("seeked", () => report(true));
+  media.addEventListener("seeked", () => { if (played) report(true); });
   media.addEventListener("timeupdate", () => { if (!media.paused && !media.seeking) report(false); });
   media.addEventListener("ended", () => report(true, true));
   media.addEventListener("error", () => send({ type: "error" }));

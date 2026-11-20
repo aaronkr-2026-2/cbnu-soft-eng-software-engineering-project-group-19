@@ -264,7 +264,6 @@ function CourseScreen({
   const [video, setVideo] = useState<VideoProgress>();
   const [updatedProgress, setUpdatedProgress] = useState(value?.progress);
   const progress = updatedProgress ?? value?.progress;
-  const lessonId = lesson?.id;
   const requireVideo =
     lesson?.resource_type === "video" && Boolean(lesson.resource_url || lesson.external_video_url);
   const done = Boolean(lesson && progress?.completed_lesson_ids.includes(lesson.id));
@@ -285,20 +284,6 @@ function CourseScreen({
     });
     return () => subscription.remove();
   }, [back, lesson, quizOpen, quizSubmitting, working]);
-
-  useEffect(() => {
-    if (!requireVideo || !lessonId) return;
-    const controller = new AbortController();
-    getVideoProgress(token, id, lessonId, controller.signal).then(
-      (result) => {
-        if (!controller.signal.aborted) setVideo((current) => current ?? result);
-      },
-      (failure: unknown) => {
-        if (!controller.signal.aborted) setActionError(failure);
-      },
-    );
-    return () => controller.abort();
-  }, [id, lessonId, requireVideo, token]);
 
   async function openWeb(url: string) {
     setActionError(undefined);

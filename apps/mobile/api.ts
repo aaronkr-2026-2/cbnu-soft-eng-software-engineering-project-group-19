@@ -158,7 +158,14 @@ export function getVideoProgress(
   });
 }
 
-export type VideoProgress = { completion_percent: number; can_complete: boolean };
+export type VideoProgress = {
+  completion_percent: number;
+  can_complete: boolean;
+  furthest_position_seconds: number;
+  item_count: number;
+  resume_item_index?: number | null;
+  resume_position_seconds?: number;
+};
 export type PlaybackSample = {
   position_seconds: number;
   duration_seconds: number;

@@ -1,11 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { WebView } from "react-native-webview";
-import { ApiError, WEB_APP, reportVideoProgress } from "./api";
+import { ApiError, WEB_APP, getVideoProgress, reportVideoProgress } from "./api";
 import type { CourseLanguage, Lesson, PlaybackSample, VideoProgress } from "./api";
-import { lessonVideoSource, playerDocument } from "./playerDocument";
+import { lessonVideoSource, playbackStart, playerDocument } from "./playerDocument";
+import type { PlaybackStart } from "./playerDocument";
 import { color, styles } from "./styles";
 import { Button } from "./ui";
+
+const START_FROM_BEGINNING = { item: 0, seconds: 0 };
+
+function displayTime(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
+}
 
 function validSample(value: unknown): value is PlaybackSample {
   if (!value || typeof value !== "object") return false;
@@ -55,10 +63,12 @@ export function LessonVideo({
   onProgress: (progress: VideoProgress) => void;
   onExpired: () => void;
 }) {
-  const source = useMemo(() => {
-    const video = lessonVideoSource(lesson, language);
-    return video ? { html: playerDocument(video), baseUrl: WEB_APP } : null;
-  }, [lesson, language]);
+  const [start, setStart] = useState<PlaybackStart | null>(null);
+  const video = useMemo(() => lessonVideoSource(lesson, language), [lesson, language]);
+  const source = useMemo(
+    () => (video && start ? { html: playerDocument(video, start), baseUrl: WEB_APP } : null),
+    [video, start],
+  );
   const [ready, setReady] = useState(false);
   const [playerError, setPlayerError] = useState("");
   const [trackingError, setTrackingError] = useState(false);
@@ -70,11 +80,25 @@ export function LessonVideo({
   useEffect(() => {
     const request = new AbortController();
     connection.current = request;
+    if (video) {
+      getVideoProgress(token, course, lesson.id, request.signal).then(
+        (progress) => {
+          if (request.signal.aborted) return;
+          onProgress(progress);
+          setStart((current) => current ?? playbackStart(progress));
+        },
+        (error: unknown) => {
+          if (request.signal.aborted) return;
+          if (error instanceof ApiError && error.status === 401) onExpired();
+          else setStart((current) => current ?? START_FROM_BEGINNING);
+        },
+      );
+    }
     return () => {
       request.abort();
       pending.current = [];
     };
-  }, [course, lesson.id, token]);
+  }, [course, lesson.id, token, video, onExpired, onProgress]);
 
   useEffect(() => {
     if (!source || ready || playerError) return;
@@ -125,7 +149,26 @@ export function LessonVideo({
     }
   }
 
-  if (!source) return <Text style={styles.error}>Video manzili ilovada ochilmadi.</Text>;
+  if (!video) return <Text style={styles.error}>Video manzili ilovada ochilmadi.</Text>;
+  if (!source || !start) {
+    return (
+      <View style={playerStyles.section}>
+        <ActivityIndicator accessibilityLabel="Saqlangan joy yuklanmoqda" color={color.leaf} />
+        <Button
+          title="Videoni boshidan ochish"
+          onPress={() => setStart(START_FROM_BEGINNING)}
+          secondary
+        />
+      </View>
+    );
+  }
+
+  function restart() {
+    setStart(START_FROM_BEGINNING);
+    setReady(false);
+    setPlayerError("");
+    setReload((value) => value + 1);
+  }
 
   return (
     <View style={playerStyles.section}>
@@ -170,6 +213,15 @@ export function LessonVideo({
           setSupportMultipleWindows={false}
         />
       </View>
+      {(start.item > 0 || start.seconds > 0) && !playerError && (
+        <>
+          <Text style={styles.muted}>
+            Davom etish nuqtasi {video.playlist && `${start.item + 1}-video, `}
+            {displayTime(start.seconds)}
+          </Text>
+          <Button title="Boshidan ko‘rish" onPress={restart} secondary />
+        </>
+      )}
       {!ready && !playerError && (
         <ActivityIndicator accessibilityLabel="Video yuklanmoqda" color={color.leaf} />
       )}
