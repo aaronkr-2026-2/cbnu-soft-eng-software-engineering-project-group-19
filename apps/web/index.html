@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./style.css?v=founder-1" />
+    <link rel="stylesheet" href="./style.css?v=about-studyflow-1" />
     <link rel="stylesheet" href="./media-content.css" />
   </head>
   <body>
@@ -37,7 +37,7 @@
       <nav id="mainNav" class="nav-links" aria-label="Main navigation">
         <a href="#how" data-i18n="navHow"></a>
         <a href="#courses" data-i18n="navCourses"></a>
-        <a href="#founder" data-i18n="navFounder">Asoschi</a>
+        <a href="#about" data-i18n="aboutTitle">Dastur haqida</a>
         <a href="verify.html" data-i18n="navVerifyCertificate"></a>
         <a id="authorPortalNav" href="/app/author-login.html" data-i18n="authorPortalNav"></a>
         <a id="learnerNav" href="#myLearning" data-i18n="learnerMenuNav" hidden></a>
@@ -342,25 +342,6 @@
           </section>
         </div>
       </section>
-      <section class="founder-section" id="founder" aria-labelledby="founderName">
-        <img
-          class="founder-photo"
-          src="/app/founder.webp"
-          width="413"
-          height="531"
-          alt=""
-          loading="lazy"
-          decoding="async"
-        />
-        <div class="founder-copy">
-          <p class="section-label" data-i18n="founderRole">StudyFlow asoschisi</p>
-          <h2 id="founderName">Mukhammadaziz Yuldoshboev</h2>
-          <p data-i18n="founderBio">
-            StudyFlow’ni o‘quvchilar kurs topishi, o‘z maromida o‘rganishi va natijalarini kuzatishi
-            uchun yaratgan.
-          </p>
-        </div>
-      </section>
       <section class="closing-banner" id="closingBanner">
         <div>
           <span class="banner-spark">✳</span>
@@ -368,6 +349,58 @@
           <p data-i18n="closingBody"></p>
         </div>
         <button class="button button-light" id="closingSignup" data-i18n="startToday"></button>
+      </section>
+      <section class="studyflow-about" id="about" aria-labelledby="aboutTitle">
+        <div class="about-intro">
+          <h2 id="aboutTitle" data-i18n="aboutTitle">Dastur haqida</h2>
+          <p data-i18n="aboutIntro">
+            StudyFlow — veb-sayt va mobil ilova orqali o‘z maromingizda o‘rganish platformasi.
+            Ikkalasida ham bitta hisob bilan kurslaringizni ochib, o‘qishni davom ettirishingiz
+            mumkin.
+          </p>
+        </div>
+        <div class="about-features">
+          <div class="about-feature">
+            <h3 data-i18n="aboutCoursesTitle">Kurslar va video darslar</h3>
+            <p data-i18n="aboutCoursesBody">
+              O‘zbek, ingliz, rus yoki koreys tilidagi kursni tanlang. Video darslarni ilova ichida
+              ko‘ring va saqlangan joydan davom eting.
+            </p>
+          </div>
+          <div class="about-feature">
+            <h3 data-i18n="aboutAssessmentTitle">Quiz va yakuniy imtihon</h3>
+            <p data-i18n="aboutAssessmentBody">
+              Dars quizlari bilan bilimingizni tekshiring. Barcha darslar tugagach, yakuniy imtihon
+              ochiladi.
+            </p>
+          </div>
+          <div class="about-feature">
+            <h3 data-i18n="aboutProgressTitle">Progress va sertifikat</h3>
+            <p data-i18n="aboutProgressBody">
+              Bajarilgan darslar va natijalaringizni kuzating. Yakuniy imtihondan o‘tgach,
+              sertifikatingizni olib, uni havola orqali tekshirishingiz mumkin.
+            </p>
+          </div>
+        </div>
+        <article class="founder-section" id="founder" aria-labelledby="founderName">
+          <img
+            class="founder-photo"
+            src="/app/founder.webp?v=portrait-2"
+            width="720"
+            height="946"
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+          <div class="founder-copy">
+            <p class="section-label" data-i18n="founderRole">StudyFlow asoschisi</p>
+            <h3 id="founderName">Mukhammadaziz Yuldoshboev</h3>
+            <p data-i18n="founderBio">
+              StudyFlow’ni o‘quvchilar kurs topishi, o‘z maromida o‘rganishi va natijalarini
+              kuzatishi uchun yaratgan.
+            </p>
+          </div>
+        </article>
       </section>
     </main>
     <footer>
@@ -436,6 +469,6 @@
         ></button>
       </div>
     </dialog>
-    <script src="/app/app.js?v=founder-1" defer></script>
+    <script src="/app/app.js?v=about-studyflow-1" defer></script>
   </body>
 </html>

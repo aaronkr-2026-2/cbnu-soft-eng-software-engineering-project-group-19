@@ -4,6 +4,51 @@ import type { CourseLanguage } from "./api";
 const languageIndex: Record<CourseLanguage, number> = { uz: 0, en: 1, ru: 2, ko: 3 };
 
 const messages = {
+  aboutTab: ["Haqida", "About", "О нас", "소개"],
+  aboutTitle: ["Dastur haqida", "About StudyFlow", "О StudyFlow", "StudyFlow 소개"],
+  aboutIntro: [
+    "StudyFlow — veb-sayt va mobil ilova orqali o‘z maromingizda o‘rganish platformasi. Ikkalasida ham bitta hisob bilan kurslaringizni ochib, o‘qishni davom ettirishingiz mumkin.",
+    "StudyFlow is a learning platform for studying at your own pace on the web and on your phone. Use the same account on both to open your courses and continue where you left off.",
+    "StudyFlow — платформа для самостоятельного обучения на сайте и в мобильном приложении. Ваши курсы и прогресс доступны на обоих устройствах через один аккаунт.",
+    "StudyFlow는 웹과 모바일에서 자신의 속도로 공부할 수 있는 학습 플랫폼입니다. 같은 계정으로 강의를 열고 학습을 이어갈 수 있습니다.",
+  ],
+  aboutCoursesTitle: [
+    "Kurslar va video darslar",
+    "Courses and video lessons",
+    "Курсы и видеоуроки",
+    "강의와 동영상 수업",
+  ],
+  aboutCoursesBody: [
+    "O‘zbek, ingliz, rus yoki koreys tilidagi kursni tanlang. Video darslarni ilova ichida ko‘ring va saqlangan joydan davom eting.",
+    "Choose a course in Uzbek, English, Russian, or Korean. Watch video lessons in the app and resume from your saved position.",
+    "Выбирайте курсы на узбекском, английском, русском или корейском языке. Смотрите видеоуроки в приложении и продолжайте с сохранённого места.",
+    "우즈베크어, 영어, 러시아어, 한국어 강의를 선택하세요. 앱에서 동영상 수업을 시청하고 저장된 위치에서 이어보세요.",
+  ],
+  aboutAssessmentTitle: [
+    "Quiz va yakuniy imtihon",
+    "Quizzes and final exams",
+    "Тесты и итоговые экзамены",
+    "퀴즈와 최종 시험",
+  ],
+  aboutAssessmentBody: [
+    "Dars quizlari bilan bilimingizni tekshiring. Barcha darslar tugagach, yakuniy imtihon ochiladi.",
+    "Check what you’ve learned with lesson quizzes. The final exam opens after you complete every lesson.",
+    "Проверяйте знания с помощью тестов к урокам. Итоговый экзамен доступен после завершения всех уроков.",
+    "수업 퀴즈로 배운 내용을 확인하세요. 모든 수업을 완료하면 최종 시험이 열립니다.",
+  ],
+  aboutProgressTitle: [
+    "Progress va sertifikat",
+    "Progress and certificates",
+    "Прогресс и сертификаты",
+    "학습 진도와 수료증",
+  ],
+  aboutProgressBody: [
+    "Bajarilgan darslar va natijalaringizni kuzating. Yakuniy imtihondan o‘tgach, sertifikatingizni olib, uni havola orqali tekshirishingiz mumkin.",
+    "Track your completed lessons and results. After passing the final exam, you can claim your certificate and verify it via its link.",
+    "Следите за завершёнными уроками и результатами. Сдав итоговый экзамен, вы сможете получить сертификат и проверить его по ссылке.",
+    "완료한 수업과 결과를 확인하세요. 최종 시험에 통과하면 수료증을 발급받고 링크로 확인할 수 있습니다.",
+  ],
+
   founderBio: [
     "StudyFlow’ni o‘quvchilar kurs topishi, o‘z maromida o‘rganishi va natijalarini kuzatishi uchun yaratgan.",
     "He created StudyFlow to help learners find courses, study at their own pace, and track their progress.",

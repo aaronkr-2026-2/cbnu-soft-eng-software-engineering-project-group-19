@@ -92,7 +92,7 @@ export const styles = StyleSheet.create({
   },
   founderPhoto: {
     width: 104,
-    aspectRatio: 413 / 531,
+    aspectRatio: 720 / 946,
     backgroundColor: color.lime,
     borderRadius: 18,
     alignItems: "center",
@@ -163,14 +163,21 @@ export const styles = StyleSheet.create({
   error: { color: color.error, fontSize: 14, lineHeight: 20 },
   tabBar: {
     flexDirection: "row",
-    gap: 8,
-    paddingHorizontal: 20,
+    gap: 4,
+    paddingHorizontal: 10,
     paddingTop: 10,
     paddingBottom: 8,
     borderTopWidth: 1,
     borderColor: color.line,
     backgroundColor: color.white,
   },
-  tab: { flex: 1, minHeight: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  tab: {
+    flex: 1,
+    minHeight: 48,
+    paddingVertical: 5,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   activeTab: { backgroundColor: color.lime },
 });

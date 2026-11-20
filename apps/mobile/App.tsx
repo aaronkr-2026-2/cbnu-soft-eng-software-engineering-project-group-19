@@ -38,7 +38,7 @@ import { LocaleContext, useTranslate } from "./localization";
 
 const SESSION_KEY = "studyflow-learner-token";
 const LANGUAGE_KEY = "studyflow-mobile-language";
-const FOUNDER_PHOTO = { uri: WEB_APP + "founder.webp" };
+const FOUNDER_PHOTO = { uri: WEB_APP + "founder.webp?v=portrait-2" };
 
 function FounderProfile() {
   const t = useTranslate();
@@ -65,6 +65,37 @@ function FounderProfile() {
       </Text>
       <Text style={styles.body}>{t("founderBio")}</Text>
     </View>
+  );
+}
+
+function AboutScreen() {
+  const t = useTranslate();
+  return (
+    <Content>
+      <Text accessibilityRole="header" style={styles.title}>
+        {t("aboutTitle")}
+      </Text>
+      <Text style={styles.body}>{t("aboutIntro")}</Text>
+      <View style={styles.notice}>
+        <Text accessibilityRole="header" style={styles.listTitle}>
+          {t("aboutCoursesTitle")}
+        </Text>
+        <Text style={styles.body}>{t("aboutCoursesBody")}</Text>
+      </View>
+      <View style={styles.notice}>
+        <Text accessibilityRole="header" style={styles.listTitle}>
+          {t("aboutAssessmentTitle")}
+        </Text>
+        <Text style={styles.body}>{t("aboutAssessmentBody")}</Text>
+      </View>
+      <View style={styles.notice}>
+        <Text accessibilityRole="header" style={styles.listTitle}>
+          {t("aboutProgressTitle")}
+        </Text>
+        <Text style={styles.body}>{t("aboutProgressBody")}</Text>
+      </View>
+      <FounderProfile />
+    </Content>
   );
 }
 
@@ -152,7 +183,6 @@ function Catalog({
           </View>
         );
       })}
-      <FounderProfile />
     </Content>
   );
 }
@@ -540,7 +570,7 @@ function StudyFlow({
   const [restoring, setRestoring] = useState(true);
   const [restoreError, setRestoreError] = useState<unknown>();
   const [session, setSession] = useState<Session | null>(null);
-  const [tab, setTab] = useState<"catalog" | "mine" | "certificates">("catalog");
+  const [tab, setTab] = useState<"catalog" | "mine" | "certificates" | "about">("catalog");
   const [login, setLogin] = useState(false);
   const [selection, setSelection] = useState<Selection | null>(null);
 
@@ -638,7 +668,9 @@ function StudyFlow({
         />
       ) : (
         <>
-          {tab === "certificates" && session ? (
+          {tab === "about" ? (
+            <AboutScreen />
+          ) : tab === "certificates" && session ? (
             <CertificatesScreen
               token={session.token}
               language={language}
@@ -690,6 +722,15 @@ function StudyFlow({
               }}
             >
               <Text style={styles.filterText}>{t("myCertificates")}</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityLabel={t("aboutTitle")}
+              accessibilityState={{ selected: tab === "about" }}
+              style={[styles.tab, tab === "about" && styles.activeTab]}
+              onPress={() => setTab("about")}
+            >
+              <Text style={styles.filterText}>{t("aboutTab")}</Text>
             </Pressable>
           </View>
         </>
