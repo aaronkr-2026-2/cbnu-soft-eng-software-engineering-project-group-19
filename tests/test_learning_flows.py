@@ -11,6 +11,32 @@ from app.routers import passkeys as passkeys_router
 from tests.helpers import login, register
 
 
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("email", "invalid-email", "email address"),
+        ("full_name", "   ", "at least 2"),
+        ("full_name", "n" * 151, "at most 150"),
+        ("password", "short", "at least 8"),
+        ("password", "p" * 129, "at most 128"),
+    ],
+)
+def test_registration_validates_inputs(client, field, value, message):
+    payload = {
+        "email": "student@example.com",
+        "full_name": "StudyFlow Student",
+        "password": "correct-horse-42",
+        field: value,
+    }
+
+    response = client.post("/auth/register", json=payload)
+
+    assert response.status_code == 422
+    error = response.json()["detail"][0]
+    assert error["loc"] == ["body", field]
+    assert message in error["msg"]
+
+
 def create_course(client, author_headers, title="Intro to Python", price_uzs=0, language="uz"):
     response = client.post(
         "/courses",

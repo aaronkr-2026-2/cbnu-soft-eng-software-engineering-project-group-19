@@ -1,12 +1,26 @@
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, StringConstraints
+
+
+MIN_FULL_NAME_LENGTH = 2
+MAX_FULL_NAME_LENGTH = 150
+MIN_PASSWORD_LENGTH = 8
+MAX_PASSWORD_LENGTH = 128
+
+FullName = Annotated[
+    str,
+    StringConstraints(
+        strip_whitespace=True, min_length=MIN_FULL_NAME_LENGTH, max_length=MAX_FULL_NAME_LENGTH
+    ),
+]
+Password = Annotated[str, Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)]
 
 
 class UserRegister(BaseModel):
     email: EmailStr
-    full_name: str = Field(min_length=2, max_length=150)
-    password: str = Field(min_length=8, max_length=128)
+    full_name: FullName
+    password: Password
     preferred_language: Literal["uz", "en", "ru", "ko"] = "uz"
     account_type: Literal["learner", "author"] = "learner"
 
@@ -34,11 +48,7 @@ class Token(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    full_name: str | None = Field(
-        default=None,
-        min_length=2,
-        max_length=150,
-    )
+    full_name: FullName | None = None
     email: EmailStr | None = None
     preferred_language: Literal["uz", "en", "ru", "ko"] | None = None
     age: int | None = Field(default=None, ge=5, le=120)
@@ -51,10 +61,7 @@ class AvatarUpload(BaseModel):
 
 class UserPasswordChange(BaseModel):
     current_password: str
-    new_password: str = Field(
-        min_length=8,
-        max_length=128,
-    )
+    new_password: Password
 
 
 class PasswordResetRequest(BaseModel):
@@ -63,4 +70,4 @@ class PasswordResetRequest(BaseModel):
 
 class PasswordResetConfirm(BaseModel):
     token: str = Field(min_length=20, max_length=4096)
-    new_password: str = Field(min_length=8, max_length=128)
+    new_password: Password

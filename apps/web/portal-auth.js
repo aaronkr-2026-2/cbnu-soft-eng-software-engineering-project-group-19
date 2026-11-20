@@ -142,8 +142,11 @@ async function request(path, body) {
   });
   const result = await response.json().catch(() => ({}));
   if (!response.ok) {
+    const detail = Array.isArray(result?.detail)
+      ? result.detail.map(({ loc, msg }) => `${loc.at(-1)}: ${msg}`).join(" ")
+      : result?.detail;
     const error = new Error(
-      response.status === 403 ? translate("mismatch") : result.detail || translate("genericError"),
+      response.status === 403 ? translate("mismatch") : detail || translate("genericError"),
     );
     error.status = response.status;
     throw error;
