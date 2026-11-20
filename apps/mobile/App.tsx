@@ -29,10 +29,11 @@ import {
   resourceUrl,
   signIn,
 } from "./api";
-import type { CourseLanguage, Lesson, Selection, Session } from "./api";
+import type { CourseLanguage, Lesson, Selection, Session, VideoProgress } from "./api";
 import { color, styles } from "./styles";
 import { Button, Content, ErrorNotice, useResource } from "./ui";
 import { CertificatesScreen, CourseCompletion, QuizScreen } from "./Assessments";
+import { LessonVideo } from "./LessonVideo";
 
 const SESSION_KEY = "studyflow-learner-token";
 
@@ -260,7 +261,7 @@ function CourseScreen({
   const [quizSubmitting, setQuizSubmitting] = useState(false);
   const [actionError, setActionError] = useState<unknown>();
   const [working, setWorking] = useState(false);
-  const [video, setVideo] = useState<{ completion_percent: number; can_complete: boolean }>();
+  const [video, setVideo] = useState<VideoProgress>();
   const [updatedProgress, setUpdatedProgress] = useState(value?.progress);
   const progress = updatedProgress ?? value?.progress;
   const lessonId = lesson?.id;
@@ -290,7 +291,7 @@ function CourseScreen({
     const controller = new AbortController();
     getVideoProgress(token, id, lessonId, controller.signal).then(
       (result) => {
-        if (!controller.signal.aborted) setVideo(result);
+        if (!controller.signal.aborted) setVideo((current) => current ?? result);
       },
       (failure: unknown) => {
         if (!controller.signal.aborted) setActionError(failure);
@@ -367,7 +368,6 @@ function CourseScreen({
         <Text accessibilityRole="header" style={styles.title}>
           {lesson.title}
         </Text>
-        <Text style={styles.body}>{lesson.content}</Text>
         {media ? (
           <Button
             title="Dars materialini ochish"
@@ -379,12 +379,23 @@ function CourseScreen({
         ) : null}
         {requireVideo && (
           <View style={styles.notice}>
-            <Text style={styles.body}>
-              Video brauzerda ochiladi. So‘ralsa, shu o‘quvchi hisobi bilan kiring.
-            </Text>
+            <LessonVideo
+              course={id}
+              lesson={lesson}
+              token={token}
+              language={language}
+              onProgress={setVideo}
+              onExpired={onExpired}
+            />
+            {video && (
+              <Text accessibilityLiveRegion="polite" style={styles.muted}>
+                Video progressi {Math.floor(video.completion_percent)}%
+              </Text>
+            )}
             <Button
-              title="Videoni webda ochish"
+              title="Brauzerda ochish"
               onPress={() => openWeb(courseWebLink(id, { lesson: lesson.id }))}
+              secondary
             />
             <Button
               title="Video progressini yangilash"
@@ -392,13 +403,9 @@ function CourseScreen({
               disabled={working}
               secondary
             />
-            {video && (
-              <Text style={styles.muted}>
-                Video progressi {Math.floor(video.completion_percent)}%
-              </Text>
-            )}
           </View>
         )}
+        <Text style={styles.body}>{lesson.content}</Text>
         <Button
           title="Dars quizini ishlash"
           onPress={() => setQuizOpen(true)}

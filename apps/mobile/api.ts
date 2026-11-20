@@ -152,10 +152,35 @@ export function getVideoProgress(
   lessonId: string,
   signal?: AbortSignal,
 ) {
-  return request<{ completion_percent: number; can_complete: boolean }>(
-    `/courses/${courseId}/progress/lessons/${lessonId}/video-watch`,
-    { token, signal },
-  );
+  return request<VideoProgress>(`/courses/${courseId}/progress/lessons/${lessonId}/video-watch`, {
+    token,
+    signal,
+  });
+}
+
+export type VideoProgress = { completion_percent: number; can_complete: boolean };
+export type PlaybackSample = {
+  position_seconds: number;
+  duration_seconds: number;
+  item_index: number;
+  item_count: number;
+  playback_rate: number;
+  ended: boolean;
+};
+
+export function reportVideoProgress(
+  token: string,
+  courseId: string,
+  lessonId: string,
+  sample: PlaybackSample,
+  signal: AbortSignal,
+) {
+  return request<VideoProgress>(`/courses/${courseId}/progress/lessons/${lessonId}/video-watch`, {
+    token,
+    signal,
+    method: "POST",
+    body: sample,
+  });
 }
 
 export function resourceUrl(value: string) {
