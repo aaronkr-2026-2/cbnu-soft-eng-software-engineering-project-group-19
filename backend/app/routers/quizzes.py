@@ -45,6 +45,11 @@ from app.models import (
 router = APIRouter(tags=["Quizzes and Assessments"])
 RESOURCE_DIR = Path(__file__).resolve().parents[2] / "storage" / "course-materials"
 
+MAX_QUIZ_PDF_PAGES = 50
+MIN_QUIZ_SOURCE_CHARS = 80
+MAX_QUIZ_SOURCE_CHARS = 24_000
+GENERATED_QUIZ_PASSING_SCORE = 60
+
 
 def get_lesson_context(
     course_id: uuid.UUID, lesson_id: uuid.UUID, db: Session
@@ -123,18 +128,20 @@ def to_quiz_manage_response(quiz: Quiz, db: Session) -> QuizManageResponse:
 
 
 def extract_quiz_material(lesson: Lesson) -> str:
-    material = (lesson.content or "").strip()
+    lesson_text = (lesson.content or "").strip()
     if lesson.resource_type == "pdf" and lesson.resource_key:
-        resource_path = (RESOURCE_DIR / Path(lesson.resource_key).name).resolve()
-        if resource_path.parent != RESOURCE_DIR.resolve() or not resource_path.is_file():
+        pdf_path = (RESOURCE_DIR / Path(lesson.resource_key).name).resolve()
+        if pdf_path.parent != RESOURCE_DIR.resolve() or not pdf_path.is_file():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Uploaded lesson PDF was not found"
             )
         try:
             from pypdf import PdfReader
 
-            reader = PdfReader(str(resource_path))
-            pdf_text = "\n".join((page.extract_text() or "") for page in reader.pages[:50])
+            reader = PdfReader(str(pdf_path))
+            pdf_text = "\n".join(
+                (page.extract_text() or "") for page in reader.pages[:MAX_QUIZ_PDF_PAGES]
+            )
         except ImportError:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -145,18 +152,37 @@ def extract_quiz_material(lesson: Lesson) -> str:
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Could not extract text from this PDF",
             ) from None
-        material = "\n\n".join(part for part in (material, pdf_text.strip()) if part)
-    if lesson.resource_type in {"audio", "video"} and len(material) < 80:
+        lesson_text = "\n\n".join(part for part in (lesson_text, pdf_text.strip()) if part)
+    if lesson.resource_type in {"audio", "video"} and len(lesson_text) < MIN_QUIZ_SOURCE_CHARS:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Add a text transcript to the lesson before generating a quiz from audio or video",
         )
-    if len(material) < 80:
+    if len(lesson_text) < MIN_QUIZ_SOURCE_CHARS:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Add at least 80 characters of lesson text or upload a text-based PDF",
+            detail=f"Add at least {MIN_QUIZ_SOURCE_CHARS} characters of lesson text or upload a text-based PDF",
         )
-    return material[:24000]
+    return lesson_text[:MAX_QUIZ_SOURCE_CHARS]
+
+
+def generate_quiz_draft(course: Course, lesson: Lesson) -> QuizCreate:
+    lesson_text = extract_quiz_material(lesson)
+    try:
+        return QuizCreate.model_validate(
+            generate_quiz_json(course.title, lesson.title, lesson_text)
+        )
+    except AIConfigurationError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI_API_KEY is not configured on the server",
+        ) from None
+    except AIProviderError as error:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error)) from None
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY, detail="AI returned an invalid quiz; try again"
+        ) from None
 
 
 @router.post(
@@ -176,51 +202,38 @@ def generate_lesson_quiz(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only the course owner can generate a quiz",
         )
-    existing = get_quiz(lesson.id, db)
-    if existing and db.query(QuizAttempt.id).filter(QuizAttempt.quiz_id == existing.id).first():
+    saved_quiz = get_quiz(lesson.id, db)
+    if saved_quiz and db.query(QuizAttempt.id).filter(QuizAttempt.quiz_id == saved_quiz.id).first():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="This quiz has learner attempts and cannot be regenerated",
         )
-    material = extract_quiz_material(lesson)
-    try:
-        quiz_data = QuizCreate.model_validate(
-            generate_quiz_json(course.title, lesson.title, material)
+    quiz_draft = generate_quiz_draft(course, lesson)
+    if saved_quiz is None:
+        saved_quiz = Quiz(
+            lesson_id=lesson.id, title=quiz_draft.title, passing_score=GENERATED_QUIZ_PASSING_SCORE
         )
-    except AIConfigurationError:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="AI_API_KEY is not configured on the server",
-        ) from None
-    except AIProviderError as error:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error)) from None
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY, detail="AI returned an invalid quiz; try again"
-        ) from None
-    if existing is None:
-        existing = Quiz(lesson_id=lesson.id, title=quiz_data.title, passing_score=60)
-        db.add(existing)
+        db.add(saved_quiz)
         db.flush()
     else:
-        existing.title = quiz_data.title
-        db.query(QuizQuestion).filter(QuizQuestion.quiz_id == existing.id).delete(
+        saved_quiz.title = quiz_draft.title
+        db.query(QuizQuestion).filter(QuizQuestion.quiz_id == saved_quiz.id).delete(
             synchronize_session=False
         )
-    for position, question in enumerate(quiz_data.questions, start=1):
+    for question_position, draft_question in enumerate(quiz_draft.questions, start=1):
         db.add(
             QuizQuestion(
-                quiz_id=existing.id,
-                prompt=question.prompt,
-                choices=question.choices,
-                correct_index=question.correct_index,
-                points=question.points,
-                position=position,
+                quiz_id=saved_quiz.id,
+                prompt=draft_question.prompt,
+                choices=draft_question.choices,
+                correct_index=draft_question.correct_index,
+                points=draft_question.points,
+                position=question_position,
             )
         )
     db.commit()
-    db.refresh(existing)
-    return to_quiz_response(existing, db)
+    db.refresh(saved_quiz)
+    return to_quiz_response(saved_quiz, db)
 
 
 def to_attempt_response(attempt: QuizAttempt, question_count: int) -> QuizAttemptResponse:
