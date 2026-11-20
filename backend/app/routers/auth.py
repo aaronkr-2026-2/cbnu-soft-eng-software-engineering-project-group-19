@@ -1,9 +1,12 @@
 import base64
 import binascii
+import json
 import os
 import smtplib
 import uuid
+from contextlib import closing
 from email.message import EmailMessage
+from http.client import HTTPException as HTTPClientError, HTTPSConnection
 from pathlib import Path
 from urllib.parse import urlencode
 
@@ -234,6 +237,8 @@ def request_password_reset(
 ) -> dict[str, str]:
     enforce_rate_limit(request, scope="password-reset", max_attempts=5, window_seconds=900)
 
+    resend_api_key = (os.getenv("RESEND_API_KEY") or "").strip()
+    resend_from = (os.getenv("RESEND_FROM") or "").strip()
     smtp_host = os.getenv("SMTP_HOST")
     smtp_from = os.getenv("SMTP_FROM")
     smtp_username = (os.getenv("SMTP_USERNAME") or "").strip()
@@ -244,7 +249,11 @@ def request_password_reset(
     frontend_url = (os.getenv("FRONTEND_BASE_URL") or default_frontend_url).rstrip("/")
     if not frontend_url.endswith("/app"):
         frontend_url += "/app"
-    if not smtp_host or not smtp_from or not smtp_username or not smtp_password:
+    if resend_api_key or resend_from:
+        email_configured = bool(resend_api_key and resend_from)
+    else:
+        email_configured = bool(smtp_host and smtp_from and smtp_username and smtp_password)
+    if not email_configured:
         raise HTTPException(status_code=503, detail="Password reset email is not configured on this server")
 
     user = db.query(User).filter(User.email == reset_request.email).first()
@@ -256,7 +265,7 @@ def request_password_reset(
     reset_url = f"{frontend_url}/reset-password.html?{reset_query}"
     message = EmailMessage()
     message["Subject"] = "Reset your StudyFlow AI password"
-    message["From"] = smtp_from
+    message["From"] = resend_from if resend_api_key else smtp_from
     message["To"] = user.email
     message.set_content(
         "We received a request to reset your StudyFlow AI password. "
@@ -264,17 +273,30 @@ def request_password_reset(
         "If you did not request this, ignore this email."
     )
     try:
-        smtp_port = int(os.getenv("SMTP_PORT", "587"))
-        if smtp_port == 465:
-            with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=10) as smtp:
-                smtp.login(smtp_username, smtp_password)
-                smtp.send_message(message)
+        if resend_api_key:
+            payload = json.dumps({
+                "from": resend_from,
+                "to": [user.email],
+                "subject": message["Subject"],
+                "text": message.get_content(),
+            })
+            with closing(HTTPSConnection("api.resend.com", timeout=10)) as connection:
+                connection.request("POST", "/emails", body=payload, headers={
+                    "Authorization": f"Bearer {resend_api_key}",
+                    "Content-Type": "application/json",
+                })
+                with connection.getresponse() as response:
+                    if not 200 <= response.status < 300:
+                        raise HTTPException(status_code=503, detail="Unable to send the reset email right now")
         else:
-            with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as smtp:
-                smtp.starttls()
+            smtp_port = int(os.getenv("SMTP_PORT", "587"))
+            smtp_client = smtplib.SMTP_SSL if smtp_port == 465 else smtplib.SMTP
+            with smtp_client(smtp_host, smtp_port, timeout=10) as smtp:
+                if smtp_port != 465:
+                    smtp.starttls()
                 smtp.login(smtp_username, smtp_password)
                 smtp.send_message(message)
-    except (OSError, smtplib.SMTPException, ValueError):
+    except (OSError, HTTPClientError, ValueError):
         raise HTTPException(status_code=503, detail="Unable to send the reset email right now") from None
     return {"message": "If that email belongs to an account, a reset link has been sent."}
 
