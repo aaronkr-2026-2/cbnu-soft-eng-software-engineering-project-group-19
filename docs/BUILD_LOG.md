@@ -24,3 +24,13 @@
 - Backend tests passed (15). Pytest reported one existing Starlette deprecation warning. Docker
   Compose configuration validation passed. The live PostgreSQL migration check remains in CI
   because the local sandbox blocked PostgreSQL shared memory.
+
+### Verification follow-up
+
+- Tested passkey registration options for an authenticated test learner. The configured
+  `http://localhost:8000` origin returned HTTP 200 with a challenge and RP ID `localhost`.
+  The unconfigured smoke-test origin on port 8175 returned HTTP 403 as expected. Hardware passkey
+  enrollment was outside this API check.
+- Ran `alembic upgrade head` against a fresh in-memory PGlite PostgreSQL instance over TCP.
+  `alembic current` confirmed `c7d4e2a910bf (head)`. CI still checks the migration on standard
+  PostgreSQL.
