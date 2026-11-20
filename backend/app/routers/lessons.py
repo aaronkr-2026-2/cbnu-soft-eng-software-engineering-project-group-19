@@ -1,6 +1,5 @@
 import uuid
 import logging
-import os
 import html
 import mimetypes
 from pathlib import Path

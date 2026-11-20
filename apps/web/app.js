@@ -1507,13 +1507,13 @@ function setupVideoCompletion(container, courseId, lesson) {
     .then(() => progressReady)
     .then(
       () =>
-        new Promise((resolve, reject) => {
+        new Promise((resolve) => {
           let player,
             activeIndex = 0,
             itemCount = 1,
             activeDuration = 0,
             timer;
-          const loadItemProgress = async (index, count) => {
+          const loadItemProgress = async (index) => {
             const result = await api(
               `/courses/${courseId}/progress/lessons/${lesson.id}/video-watch?item_index=${index}`,
             );
@@ -1541,7 +1541,7 @@ function setupVideoCompletion(container, courseId, lesson) {
               activeIndex = nextIndex;
               itemCount = nextCount;
               activeDuration = player.getDuration() || 0;
-              await loadItemProgress(activeIndex, itemCount);
+              await loadItemProgress(activeIndex);
               return;
             }
             const duration = player.getDuration() || activeDuration;
@@ -1571,7 +1571,7 @@ function setupVideoCompletion(container, courseId, lesson) {
               );
             }
           };
-          player = new YT.Player(youtubeFrame, {
+          player = new window.YT.Player(youtubeFrame, {
             events: {
               onReady: async (event) => {
                 player = event.target;
@@ -1579,7 +1579,7 @@ function setupVideoCompletion(container, courseId, lesson) {
                   itemCount = Math.max(1, (player.getPlaylist() || []).length);
                   activeIndex = Math.max(0, player.getPlaylistIndex() || 0);
                   activeDuration = player.getDuration() || 0;
-                  await loadItemProgress(activeIndex, itemCount);
+                  await loadItemProgress(activeIndex);
                   timer = window.setInterval(poll, 1000);
                 } catch {
                   if (meter) meter.textContent = videoWatchCopy[language];
@@ -1730,9 +1730,6 @@ function updateAuthDialog() {
   );
   $("#authSubmit").textContent = t(authMode === "register" ? "registerSubmit" : "loginSubmit");
   $("#formMessage").textContent = "";
-}
-function openAuth(mode = "register") {
-  window.location.href = "/app/learner-login.html";
 }
 function updateAuthUI() {
   const signedIn = Boolean(accessToken && user);
@@ -3114,10 +3111,7 @@ async function renderEnrolledCourses(enrollments) {
     container.innerHTML = `<div class="course-placeholder">${t("emptyEnrollments")}</div>`;
   else
     container.innerHTML = entries
-      .map(({ enrollment, lessons, lessonAssignments, progress, certificate, exam, review }) => {
-        const assignmentByLesson = new Map(
-          lessonAssignments.filter(Boolean).map((assignment) => [assignment.lesson_id, assignment]),
-        );
+      .map(({ enrollment, lessons, progress, certificate, exam, review }) => {
         const items = lessons
           .map((lesson) => {
             const done = progress.completed_lesson_ids.includes(lesson.id);

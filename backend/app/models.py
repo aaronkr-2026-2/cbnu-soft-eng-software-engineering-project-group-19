@@ -2,6 +2,8 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import (
+    ForeignKey,
+    Text,
     Boolean,
     DateTime,
     Float,
@@ -54,9 +56,6 @@ class User(Base):
         server_default=func.now(),
         nullable=False,
     )
-
-
-from sqlalchemy import ForeignKey, Text
 
 
 class CourseModule(Base):

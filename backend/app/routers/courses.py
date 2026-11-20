@@ -1,5 +1,4 @@
 import uuid
-import hashlib
 import html
 import mimetypes
 from pathlib import Path
@@ -11,7 +10,7 @@ import jwt
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import get_current_user, require_author
+from app.core.dependencies import require_author
 from app.core.localization import (
     get_course_translation,
     get_lesson_translation,
@@ -38,7 +37,6 @@ from app.models import (
     CourseModuleTranslation,
     CourseReview,
     CourseTranslation,
-    Enrollment,
     Lesson,
     LessonMaterial,
     LessonTranslation,
@@ -53,8 +51,6 @@ MAX_BANNER_BYTES = 8 * 1024 * 1024
 
 
 def render_course_banner(course: Course) -> bytes:
-    fingerprint = hashlib.sha256(f"{course.title}:{course.category}".encode()).hexdigest()
-    hue = int(fingerprint[:4], 16) % 360
     title, category = html.escape(course.title[:60]), html.escape(course.category[:35])
     tagline = html.escape(
         {

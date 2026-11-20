@@ -103,6 +103,23 @@ def to_quiz_manage_response(quiz: Quiz, db: Session) -> QuizManageResponse:
         .order_by(QuizQuestion.position)
         .all()
     )
+    return QuizManageResponse(
+        id=quiz.id,
+        lesson_id=quiz.lesson_id,
+        title=quiz.title,
+        passing_score=quiz.passing_score,
+        questions=[
+            QuizManageQuestionResponse(
+                id=question.id,
+                prompt=question.prompt,
+                choices=question.choices,
+                correct_index=question.correct_index,
+                points=question.points,
+                position=question.position,
+            )
+            for question in questions
+        ],
+    )
 
 
 def extract_quiz_material(lesson: Lesson) -> str:
@@ -204,23 +221,6 @@ def generate_lesson_quiz(
     db.commit()
     db.refresh(existing)
     return to_quiz_response(existing, db)
-    return QuizManageResponse(
-        id=quiz.id,
-        lesson_id=quiz.lesson_id,
-        title=quiz.title,
-        passing_score=quiz.passing_score,
-        questions=[
-            QuizManageQuestionResponse(
-                id=question.id,
-                prompt=question.prompt,
-                choices=question.choices,
-                correct_index=question.correct_index,
-                points=question.points,
-                position=question.position,
-            )
-            for question in questions
-        ],
-    )
 
 
 def to_attempt_response(attempt: QuizAttempt, question_count: int) -> QuizAttemptResponse:
