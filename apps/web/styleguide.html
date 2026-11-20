@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f8f4" />
+    <title>Style guide — StudyFlow AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./styleguide.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/app/" aria-label="StudyFlow AI home">
+        <span class="brand-mark" aria-hidden="true">s</span>
+        <span>studyflow<span class="brand-ai">.ai</span></span>
+      </a>
+    </header>
+
+    <main class="styleguide">
+      <h1>StudyFlow style guide</h1>
+      <p>Use these colors, typefaces, and components when designing StudyFlow screens.</p>
+
+      <section aria-labelledby="colors">
+        <h2 id="colors">Colors</h2>
+        <ul class="styleguide-colors">
+          <li>
+            <span style="--swatch: var(--paper)" aria-hidden="true"></span>Paper
+            <code>#F7F8F4</code>
+          </li>
+          <li>
+            <span style="--swatch: var(--ink)" aria-hidden="true"></span>Ink <code>#20241F</code>
+          </li>
+          <li>
+            <span style="--swatch: var(--lime)" aria-hidden="true"></span>Lime <code>#D8F36A</code>
+          </li>
+          <li>
+            <span style="--swatch: var(--green)" aria-hidden="true"></span>Green
+            <code>#40552C</code>
+          </li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="type">
+        <h2 id="type">Typography</h2>
+        <p class="styleguide-heading-sample">Learn at your own pace</p>
+        <p>Manrope for headings. DM Sans for body copy, labels, and controls.</p>
+      </section>
+
+      <section aria-labelledby="actions">
+        <h2 id="actions">Actions</h2>
+        <p>Use one primary action per screen. Use an outlined button for secondary actions.</p>
+        <div class="styleguide-actions">
+          <a class="button button-dark" href="/app/learner-login.html">Sign in</a>
+          <a class="button button-outline" href="/app/#courses">Browse courses</a>
+        </div>
+      </section>
+
+      <section aria-labelledby="forms">
+        <h2 id="forms">Forms and feedback</h2>
+        <p>Keep the label visible and place a specific correction beside the affected field.</p>
+        <div class="studio-form styleguide-field">
+          <label>
+            Email
+            <input
+              type="email"
+              value="learner"
+              readonly
+              aria-invalid="true"
+              aria-describedby="email-feedback"
+            />
+          </label>
+          <p class="form-error" id="email-feedback">
+            Enter a complete email address, such as learner@example.com.
+          </p>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

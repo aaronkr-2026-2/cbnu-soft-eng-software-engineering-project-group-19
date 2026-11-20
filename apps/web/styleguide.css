@@ -1,0 +1,63 @@
+.styleguide {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px clamp(20px, 5vw, 64px) 72px;
+}
+
+.styleguide h1 {
+  margin: 0;
+  font: 800 clamp(32px, 6vw, 58px) / 1.08 var(--display);
+}
+
+.styleguide h2 {
+  margin: 0;
+  font: 700 24px / 1.2 var(--display);
+}
+
+.styleguide section {
+  margin-top: 28px;
+  padding: clamp(18px, 4vw, 30px);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--white);
+}
+
+.styleguide-colors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+  gap: 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.styleguide-colors span {
+  display: block;
+  height: 48px;
+  margin-bottom: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--swatch);
+}
+
+.styleguide-colors code {
+  display: block;
+}
+
+.styleguide-heading-sample {
+  margin: 16px 0 0;
+  font: 800 29px / 1.2 var(--display);
+}
+
+.styleguide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.styleguide-field {
+  max-width: 380px;
+}
+
+.styleguide-field input {
+  font-family: var(--font);
+}
