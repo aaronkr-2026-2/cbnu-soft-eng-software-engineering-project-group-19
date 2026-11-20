@@ -22,6 +22,10 @@
       "destination": "https://studyflow-ai-mtlw.onrender.com/auth/:path*"
     },
     {
+      "source": "/courses",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/courses"
+    },
+    {
       "source": "/courses/:path*",
       "destination": "https://studyflow-ai-mtlw.onrender.com/courses/:path*"
     },
