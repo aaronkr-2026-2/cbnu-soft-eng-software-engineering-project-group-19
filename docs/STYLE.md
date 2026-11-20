@@ -2,10 +2,12 @@
 
 ## Code
 
-- MUST format Python with Ruff and supported web and text files with Prettier so diffs focus on the
+- MUST format Python with Ruff and JavaScript, TypeScript, and supported markup with Prettier so diffs focus on the
   intended change.
 - MUST pass Ruff and ESLint with zero errors and warnings so unused code and invalid references
   cannot enter the repository.
+- MUST pass the mobile TypeScript check in strict mode with no unused variables or parameters so
+  type mistakes and stale code are caught before device testing.
 - MUST validate input format and bounds on the server because clients can bypass browser validation.
 - MUST keep credentials and reset tokens out of logs, source files, and user-facing errors because
   they grant access.
@@ -22,11 +24,11 @@
   recover without guessing.
 - MUST label form controls and announce errors with an accessible status or alert so keyboard and
   screen-reader users can complete the same flows.
-- MUST provide supported UI copy in Uzbek, English, Russian, and Korean so a language change leaves
-  the interface usable.
+- MUST provide web UI copy in Uzbek, English, Russian, and Korean so switching languages leaves the
+  web interface usable. The mobile interface currently uses Uzbek and offers courses in all four languages.
 - SHOULD reuse established button, form, and spacing styles so users can recognize familiar
   actions.
 - SHOULD preserve entered values while users correct errors so they can retry without retyping.
 
-Run `ruff format --check backend tests`, `ruff check backend tests`, `npm run format:check`, and
-`npm run lint` before pushing. GitHub Actions runs these checks on every push and pull request.
+Run `ruff format --check backend tests`, `ruff check backend tests`, `npm run format:check`, `npm run lint`,
+and `npm --prefix apps/mobile run check` before pushing. GitHub Actions runs these checks on every push and pull request.

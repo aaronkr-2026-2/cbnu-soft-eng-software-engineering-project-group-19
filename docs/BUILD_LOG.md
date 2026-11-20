@@ -34,3 +34,11 @@
 - Ran `alembic upgrade head` against a fresh in-memory PGlite PostgreSQL instance over TCP.
   `alembic current` confirmed `c7d4e2a910bf (head)`. CI still checks the migration on standard
   PostgreSQL.
+
+## 2026-11-21 · Mobile code style checks
+
+- Added tracked TypeScript and TSX files to the shared Prettier commands and enabled strict mobile
+  TypeScript checks for unused locals and parameters.
+- Ran Prettier and the mobile TypeScript checker locally. Both passed with zero errors.
+- Added a GitHub Actions step to install mobile dependencies from the lockfile and run type checks
+  on every push and pull request.
