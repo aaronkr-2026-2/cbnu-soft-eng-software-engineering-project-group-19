@@ -60,7 +60,7 @@ function FounderProfile() {
         )}
       </View>
       <Text style={styles.category}>{t("founderRole")}</Text>
-      <Text accessibilityRole="header" style={styles.cardTitle}>
+      <Text accessibilityRole="header" style={styles.founderName}>
         MUKHAMMADAZIZ YULDOSHBOEV
       </Text>
       <Text style={styles.body}>{t("founderBio")}</Text>
@@ -68,32 +68,30 @@ function FounderProfile() {
   );
 }
 
+const aboutFeatures = [
+  ["aboutCoursesTitle", "aboutCoursesBody"],
+  ["aboutAssessmentTitle", "aboutAssessmentBody"],
+  ["aboutProgressTitle", "aboutProgressBody"],
+] as const;
+
 function AboutScreen() {
   const t = useTranslate();
   return (
     <Content>
-      <Text accessibilityRole="header" style={styles.title}>
-        {t("aboutTitle")}
-      </Text>
-      <Text style={styles.body}>{t("aboutIntro")}</Text>
-      <View style={styles.notice}>
-        <Text accessibilityRole="header" style={styles.listTitle}>
-          {t("aboutCoursesTitle")}
+      <View style={styles.aboutHero}>
+        <Text accessibilityRole="header" style={styles.aboutTitle}>
+          {t("aboutTitle")}
         </Text>
-        <Text style={styles.body}>{t("aboutCoursesBody")}</Text>
+        <Text style={styles.aboutLead}>{t("aboutIntro")}</Text>
       </View>
-      <View style={styles.notice}>
-        <Text accessibilityRole="header" style={styles.listTitle}>
-          {t("aboutAssessmentTitle")}
-        </Text>
-        <Text style={styles.body}>{t("aboutAssessmentBody")}</Text>
-      </View>
-      <View style={styles.notice}>
-        <Text accessibilityRole="header" style={styles.listTitle}>
-          {t("aboutProgressTitle")}
-        </Text>
-        <Text style={styles.body}>{t("aboutProgressBody")}</Text>
-      </View>
+      {aboutFeatures.map(([title, body]) => (
+        <View key={title} style={styles.aboutFeature}>
+          <Text accessibilityRole="header" style={styles.listTitle}>
+            {t(title)}
+          </Text>
+          <Text style={styles.muted}>{t(body)}</Text>
+        </View>
+      ))}
       <FounderProfile />
     </Content>
   );
@@ -570,7 +568,9 @@ function StudyFlow({
   const [restoring, setRestoring] = useState(true);
   const [restoreError, setRestoreError] = useState<unknown>();
   const [session, setSession] = useState<Session | null>(null);
-  const [tab, setTab] = useState<"catalog" | "mine" | "certificates" | "about">("catalog");
+  const [tab, setTab] = useState<"catalog" | "mine" | "certificates">("catalog");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [login, setLogin] = useState(false);
   const [selection, setSelection] = useState<Selection | null>(null);
 
@@ -593,6 +593,16 @@ function StudyFlow({
     void restore();
   }, [restore]);
 
+  useEffect(() => {
+    if (!menuOpen && !aboutOpen) return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (aboutOpen) setAboutOpen(false);
+      else setMenuOpen(false);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [menuOpen, aboutOpen]);
+
   const expireSession = useCallback(() => {
     setSession(null);
     setLogin(true);
@@ -600,6 +610,7 @@ function StudyFlow({
   }, []);
 
   function openCourse(course: Selection) {
+    setMenuOpen(false);
     setSelection(course);
     if (!session) setLogin(true);
   }
@@ -631,10 +642,52 @@ function StudyFlow({
             studyflow<Text style={styles.brandAccent}>.ai</Text>
           </Text>
         </View>
-        {!session && !login && !restoring && (
-          <Button title={t("signIn")} onPress={() => setLogin(true)} secondary />
+        {aboutOpen ? (
+          <Button title={t("back")} onPress={() => setAboutOpen(false)} secondary />
+        ) : (
+          !login &&
+          !selection &&
+          !restoring && (
+            <View style={styles.headerActions}>
+              {!session && (
+                <Button
+                  title={t("signIn")}
+                  onPress={() => {
+                    setMenuOpen(false);
+                    setLogin(true);
+                  }}
+                  secondary
+                />
+              )}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ expanded: menuOpen }}
+                onPress={() => setMenuOpen((open) => !open)}
+                style={styles.menuButton}
+              >
+                <Text style={styles.menuButtonText}>{t("menuButton")}</Text>
+              </Pressable>
+            </View>
+          )
         )}
       </View>
+      {menuOpen && !login && !selection && !restoring && (
+        <View style={styles.menuPanel}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              setMenuOpen(false);
+              setAboutOpen(true);
+            }}
+            style={styles.menuItem}
+          >
+            <Text style={[styles.listTitle, styles.fill]}>{t("aboutTitle")}</Text>
+            <Text accessibilityElementsHidden style={styles.category}>
+              →
+            </Text>
+          </Pressable>
+        </View>
+      )}
       {languageError && (
         <Text accessibilityRole="alert" style={styles.error}>
           {t("saveLanguageError")}
@@ -643,7 +696,9 @@ function StudyFlow({
       {restoreError !== undefined && (
         <ErrorNotice error={restoreError} retry={() => void restore()} />
       )}
-      {restoring ? (
+      {aboutOpen ? (
+        <AboutScreen />
+      ) : restoring ? (
         <ActivityIndicator
           accessibilityLabel={t("accountLoading")}
           style={styles.fill}
@@ -668,9 +723,7 @@ function StudyFlow({
         />
       ) : (
         <>
-          {tab === "about" ? (
-            <AboutScreen />
-          ) : tab === "certificates" && session ? (
+          {tab === "certificates" && session ? (
             <CertificatesScreen
               token={session.token}
               language={language}
@@ -697,7 +750,10 @@ function StudyFlow({
               accessibilityRole="tab"
               accessibilityState={{ selected: tab === "catalog" }}
               style={[styles.tab, tab === "catalog" && styles.activeTab]}
-              onPress={() => setTab("catalog")}
+              onPress={() => {
+                setMenuOpen(false);
+                setTab("catalog");
+              }}
             >
               <Text style={styles.filterText}>{t("catalog")}</Text>
             </Pressable>
@@ -706,6 +762,7 @@ function StudyFlow({
               accessibilityState={{ selected: tab === "mine" }}
               style={[styles.tab, tab === "mine" && styles.activeTab]}
               onPress={() => {
+                setMenuOpen(false);
                 setTab("mine");
                 if (!session) setLogin(true);
               }}
@@ -717,20 +774,12 @@ function StudyFlow({
               accessibilityState={{ selected: tab === "certificates" }}
               style={[styles.tab, tab === "certificates" && styles.activeTab]}
               onPress={() => {
+                setMenuOpen(false);
                 setTab("certificates");
                 if (!session) setLogin(true);
               }}
             >
               <Text style={styles.filterText}>{t("myCertificates")}</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityLabel={t("aboutTitle")}
-              accessibilityState={{ selected: tab === "about" }}
-              style={[styles.tab, tab === "about" && styles.activeTab]}
-              onPress={() => setTab("about")}
-            >
-              <Text style={styles.filterText}>{t("aboutTab")}</Text>
             </Pressable>
           </View>
         </>

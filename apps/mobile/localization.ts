@@ -4,7 +4,7 @@ import type { CourseLanguage } from "./api";
 const languageIndex: Record<CourseLanguage, number> = { uz: 0, en: 1, ru: 2, ko: 3 };
 
 const messages = {
-  aboutTab: ["Haqida", "About", "О нас", "소개"],
+  menuButton: ["Menyu", "Menu", "Меню", "메뉴"],
   aboutTitle: ["Dastur haqida", "About StudyFlow", "О StudyFlow", "StudyFlow 소개"],
   aboutIntro: [
     "StudyFlow — veb-sayt va mobil ilova orqali o‘z maromingizda o‘rganish platformasi. Ikkalasida ham bitta hisob bilan kurslaringizni ochib, o‘qishni davom ettirishingiz mumkin.",
@@ -50,10 +50,10 @@ const messages = {
   ],
 
   founderBio: [
-    "StudyFlow’ni o‘quvchilar kurs topishi, o‘z maromida o‘rganishi va natijalarini kuzatishi uchun yaratgan.",
-    "He created StudyFlow to help learners find courses, study at their own pace, and track their progress.",
-    "Он создал StudyFlow, чтобы учащиеся могли искать курсы, учиться в своём темпе и отслеживать результаты.",
-    "학습자가 강의를 찾고, 자신의 속도로 공부하며, 학습 진행 상황을 확인할 수 있도록 StudyFlow를 만들었습니다.",
+    "StudyFlow loyihasini boshlagan va uning veb hamda mobil ilovalarini rivojlantiradi. Loyihada kurslar, video darslar, testlar va sertifikatlar orqali o‘quvchilarga o‘z maromida o‘rganish imkonini yaratishga e’tibor qaratadi.",
+    "He founded StudyFlow and develops its web and mobile apps. His work on the project focuses on helping learners study at their own pace through courses, video lessons, assessments, and certificates.",
+    "Он основал StudyFlow и развивает веб-версию и мобильное приложение. В проекте он стремится помочь учащимся заниматься в своём темпе с помощью курсов, видеоуроков, тестов и сертификатов.",
+    "StudyFlow를 설립하고 웹과 모바일 앱을 개발하고 있습니다. 강의, 동영상 수업, 평가, 수료증을 통해 학습자가 자신의 속도로 공부할 수 있도록 하는 데 집중합니다.",
   ],
   founderRole: [
     "StudyFlow asoschisi",

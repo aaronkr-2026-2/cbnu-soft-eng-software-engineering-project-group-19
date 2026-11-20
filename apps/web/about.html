@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f8f4" />
+    <title>Dastur haqida · StudyFlow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/app/style.css?v=about-menu-1" />
+  </head>
+  <body class="about-page">
+    <header class="about-nav">
+      <a class="brand" href="/app/" aria-label="StudyFlow AI"
+        ><span class="brand-mark">s</span><span>studyflow<span class="brand-ai">.ai</span></span></a
+      >
+      <label class="language-picker">
+        <span aria-hidden="true">◎</span>
+        <select id="aboutLanguage" aria-label="Tilni tanlang">
+          <option value="uz">O‘zbekcha</option>
+          <option value="en">English</option>
+          <option value="ru">Русский</option>
+          <option value="ko">한국어</option>
+        </select>
+      </label>
+    </header>
+    <main>
+      <div class="about-path">
+        <a href="/app/" class="text-link"
+          ><span aria-hidden="true">←</span>
+          <span data-about-copy="backHome">Bosh sahifaga qaytish</span></a
+        >
+      </div>
+      <section class="studyflow-about" id="about" aria-labelledby="aboutTitle">
+        <div class="about-intro">
+          <h1 id="aboutTitle" data-about-copy="aboutTitle">Dastur haqida</h1>
+          <p data-about-copy="aboutIntro">
+            StudyFlow — veb-sayt va mobil ilova orqali o‘z maromingizda o‘rganish platformasi.
+            Ikkalasida ham bitta hisob bilan kurslaringizni ochib, o‘qishni davom ettirishingiz
+            mumkin.
+          </p>
+        </div>
+        <div class="about-features">
+          <div class="about-feature">
+            <h2 data-about-copy="aboutCoursesTitle">Kurslar va video darslar</h2>
+            <p data-about-copy="aboutCoursesBody">
+              O‘zbek, ingliz, rus yoki koreys tilidagi kursni tanlang. Video darslarni ilova ichida
+              ko‘ring va saqlangan joydan davom eting.
+            </p>
+          </div>
+          <div class="about-feature">
+            <h2 data-about-copy="aboutAssessmentTitle">Quiz va yakuniy imtihon</h2>
+            <p data-about-copy="aboutAssessmentBody">
+              Dars quizlari bilan bilimingizni tekshiring. Barcha darslar tugagach, yakuniy imtihon
+              ochiladi.
+            </p>
+          </div>
+          <div class="about-feature">
+            <h2 data-about-copy="aboutProgressTitle">Progress va sertifikat</h2>
+            <p data-about-copy="aboutProgressBody">
+              Bajarilgan darslar va natijalaringizni kuzating. Yakuniy imtihondan o‘tgach,
+              sertifikatingizni olib, uni havola orqali tekshirishingiz mumkin.
+            </p>
+          </div>
+        </div>
+        <article class="founder-section" id="founder" aria-labelledby="founderName">
+          <img
+            class="founder-photo"
+            src="/app/founder.webp?v=portrait-2"
+            width="720"
+            height="946"
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+          <div class="founder-copy">
+            <p class="section-label" data-about-copy="founderRole">StudyFlow asoschisi</p>
+            <h2 id="founderName">MUKHAMMADAZIZ YULDOSHBOEV</h2>
+            <p data-about-copy="founderBio">
+              StudyFlow loyihasini boshlagan va uning veb hamda mobil ilovalarini rivojlantiradi.
+              Loyihada kurslar, video darslar, testlar va sertifikatlar orqali o‘quvchilarga o‘z
+              maromida o‘rganish imkonini yaratishga e’tibor qaratadi.
+            </p>
+          </div>
+        </article>
+      </section>
+    </main>
+    <script src="/app/about.js?v=about-menu-1" defer></script>
+  </body>
+</html>
