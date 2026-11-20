@@ -38,6 +38,7 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    readonly messageKey?: "learnerRequired" | "invalidCredentials",
   ) {
     super(message);
   }
@@ -66,18 +67,15 @@ async function request<T>(
     const payload = await response.json().catch(() => null);
     if (!response.ok) {
       const detail = payload?.detail;
-      throw new ApiError(
-        response.status,
-        typeof detail === "string" ? detail : "So‘rovni bajarib bo‘lmadi.",
-      );
+      throw new ApiError(response.status, typeof detail === "string" ? detail : "Request failed");
     }
-    if (payload === null) throw new Error("Serverdan javobni o‘qib bo‘lmadi.");
+    if (payload === null) throw new ApiError(502, "Invalid server response");
     return payload;
   } catch (error) {
     if (error instanceof ApiError) throw error;
     if (options.signal?.aborted) throw error;
     if (controller.signal.aborted || error instanceof TypeError)
-      throw new Error("Serverga ulanib bo‘lmadi. Internetni tekshirib, qayta urining.");
+      throw new ApiError(0, "Network request failed");
     throw error;
   } finally {
     clearTimeout(timer);
@@ -88,7 +86,7 @@ async function request<T>(
 export async function loadSession(token: string): Promise<Session> {
   const profile = await request<{ full_name: string; account_type: string }>("/auth/me", { token });
   if (profile.account_type !== "learner")
-    throw new ApiError(403, "StudyFlow o‘quvchi hisobi bilan kiring.");
+    throw new ApiError(403, "Learner account required", "learnerRequired");
   return { token, name: profile.full_name };
 }
 
@@ -101,7 +99,7 @@ export async function signIn(email: string, password: string): Promise<Session> 
     return await loadSession(access_token);
   } catch (error) {
     if (error instanceof ApiError && [401, 403, 422].includes(error.status))
-      throw new Error("O‘quvchi hisobining email manzili va parolini tekshiring.");
+      throw new ApiError(error.status, "Invalid learner credentials", "invalidCredentials");
     throw error;
   }
 }

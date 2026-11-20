@@ -15,7 +15,7 @@ Telefon va kompyuterni bir Wi-Fi tarmog‘iga ulang. Android’da Expo Go ichida
 ## Birinchi versiya
 
 - O‘quvchi hisobi bilan kirish va qurilmada sessiyani xavfsiz saqlash.
-- O‘zbek, ingliz, rus va koreys tilidagi kurslar katalogi, qidiruv va «Kurslarim».
+- O‘zbek, ingliz, rus va koreys tilidagi interfeys va kurslar katalogi. Tanlangan til qurilmada saqlanadi.
 - Tanlangan kursning darslari, dars materiallari va progressi.
 - Videoni dars ichida ijro etish. Ko‘rish progressi StudyFlow’da saqlanadi. Dars qayta ochilganda pleyer saqlangan joydan davom etishga tayyor turadi. Kerak bo‘lsa videoni brauzerda ochib, ilovaga qaytgach progressni yangilash mumkin.
 - Dars quizlarini mobil ilovada ishlash, natijasi va avvalgi urinishlarini ko‘rish.

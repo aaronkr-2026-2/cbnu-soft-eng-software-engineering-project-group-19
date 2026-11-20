@@ -6,6 +6,8 @@ import type { CourseLanguage, Lesson, PlaybackSample, VideoProgress } from "./ap
 import { lessonVideoSource, playbackStart, playerDocument } from "./playerDocument";
 import type { PlaybackStart } from "./playerDocument";
 import { color, styles } from "./styles";
+import { useTranslate } from "./localization";
+import type { MessageKey } from "./localization";
 import { Button } from "./ui";
 
 const START_FROM_BEGINNING = { item: 0, seconds: 0 };
@@ -63,14 +65,16 @@ export function LessonVideo({
   onProgress: (progress: VideoProgress) => void;
   onExpired: () => void;
 }) {
+  const t = useTranslate();
   const [start, setStart] = useState<PlaybackStart | null>(null);
   const video = useMemo(() => lessonVideoSource(lesson, language), [lesson, language]);
   const source = useMemo(
-    () => (video && start ? { html: playerDocument(video, start), baseUrl: WEB_APP } : null),
-    [video, start],
+    () =>
+      video && start ? { html: playerDocument(video, start, language), baseUrl: WEB_APP } : null,
+    [video, start, language],
   );
   const [ready, setReady] = useState(false);
-  const [playerError, setPlayerError] = useState("");
+  const [playerError, setPlayerError] = useState<MessageKey | null>(null);
   const [trackingError, setTrackingError] = useState(false);
   const [reload, setReload] = useState(0);
   const pending = useRef<PlaybackSample[]>([]);
@@ -102,10 +106,7 @@ export function LessonVideo({
 
   useEffect(() => {
     if (!source || ready || playerError) return;
-    const timeout = setTimeout(
-      () => setPlayerError("Video yuklanmadi. Qayta urinib ko‘ring."),
-      20_000,
-    );
+    const timeout = setTimeout(() => setPlayerError("videoLoadError"), 20_000);
     return () => clearTimeout(timeout);
   }, [source, ready, playerError, reload]);
 
@@ -149,13 +150,13 @@ export function LessonVideo({
     }
   }
 
-  if (!video) return <Text style={styles.error}>Video manzili ilovada ochilmadi.</Text>;
+  if (!video) return <Text style={styles.error}>{t("videoSourceError")}</Text>;
   if (!source || !start) {
     return (
       <View style={playerStyles.section}>
-        <ActivityIndicator accessibilityLabel="Saqlangan joy yuklanmoqda" color={color.leaf} />
+        <ActivityIndicator accessibilityLabel={t("loadingSavedPosition")} color={color.leaf} />
         <Button
-          title="Videoni boshidan ochish"
+          title={t("openFromStart")}
           onPress={() => setStart(START_FROM_BEGINNING)}
           secondary
         />
@@ -166,7 +167,7 @@ export function LessonVideo({
   function restart() {
     setStart(START_FROM_BEGINNING);
     setReady(false);
-    setPlayerError("");
+    setPlayerError(null);
     setReload((value) => value + 1);
   }
 
@@ -188,22 +189,22 @@ export function LessonVideo({
               const message = JSON.parse(data);
               if (message.type === "ready") {
                 setReady(true);
-                setPlayerError("");
+                setPlayerError(null);
               } else if (message.type === "progress" && validSample(message.sample)) {
                 void record(message.sample);
               } else if (message.type === "error") {
                 setPlayerError(
                   [100, 101, 150].includes(message.code)
-                    ? "YouTube bu videoni ilova ichida ochishga ruxsat bermadi."
-                    : "Videoni ijro qilib bo‘lmadi. Qayta urinib ko‘ring.",
+                    ? "youtubeRestricted"
+                    : "videoPlaybackError",
                 );
               }
             } catch {
               // Other WebView messages do not describe a playback event.
             }
           }}
-          onError={() => setPlayerError("Video yuklanmadi. Qayta urinib ko‘ring.")}
-          onHttpError={() => setPlayerError("Video serveri javob bermadi.")}
+          onError={() => setPlayerError("videoLoadError")}
+          onHttpError={() => setPlayerError("videoServerError")}
           allowsInlineMediaPlayback
           allowsFullscreenVideo
           mediaPlaybackRequiresUserAction
@@ -216,24 +217,25 @@ export function LessonVideo({
       {(start.item > 0 || start.seconds > 0) && !playerError && (
         <>
           <Text style={styles.muted}>
-            Davom etish nuqtasi {video.playlist && `${start.item + 1}-video, `}
-            {displayTime(start.seconds)}
+            {video.playlist
+              ? t("resumePlaylist", { item: start.item + 1, time: displayTime(start.seconds) })
+              : t("resumePosition", { time: displayTime(start.seconds) })}
           </Text>
-          <Button title="Boshidan ko‘rish" onPress={restart} secondary />
+          <Button title={t("restartVideo")} onPress={restart} secondary />
         </>
       )}
       {!ready && !playerError && (
-        <ActivityIndicator accessibilityLabel="Video yuklanmoqda" color={color.leaf} />
+        <ActivityIndicator accessibilityLabel={t("videoLoading")} color={color.leaf} />
       )}
       {!!playerError && (
         <>
           <Text accessibilityRole="alert" style={styles.error}>
-            {playerError}
+            {t(playerError)}
           </Text>
           <Button
-            title="Videoni qayta yuklash"
+            title={t("reloadVideo")}
             onPress={() => {
-              setPlayerError("");
+              setPlayerError(null);
               setReady(false);
               setReload((value) => value + 1);
             }}
@@ -243,7 +245,7 @@ export function LessonVideo({
       )}
       {trackingError && (
         <Text accessibilityRole="alert" style={styles.error}>
-          Video progressini saqlab bo‘lmadi. Internet aloqasini tekshiring.
+          {t("videoTrackingError")}
         </Text>
       )}
     </View>

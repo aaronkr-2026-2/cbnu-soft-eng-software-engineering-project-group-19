@@ -75,7 +75,7 @@ export const styles = StyleSheet.create({
     backgroundColor: color.white,
   },
   selectedFilter: { backgroundColor: color.lime, borderColor: color.lime },
-  filterText: { color: color.ink, fontSize: 14, fontWeight: "700" },
+  filterText: { color: color.ink, fontSize: 14, fontWeight: "700", textAlign: "center" },
   card: {
     borderWidth: 1,
     borderColor: color.line,

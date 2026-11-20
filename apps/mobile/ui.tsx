@@ -2,9 +2,21 @@ import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { styles } from "./styles";
+import { ApiError } from "./api";
+import { useTranslate } from "./localization";
+import type { MessageKey } from "./localization";
 
-function messageFor(error: unknown) {
-  return error instanceof Error ? error.message : "Xato yuz berdi. Qayta urinib ko‘ring.";
+function errorKey(error: unknown): MessageKey {
+  if (!(error instanceof ApiError)) return "genericError";
+  if (error.messageKey) return error.messageKey;
+  if (error.status === 0 || error.status >= 500) return "connectionError";
+  if (error.message === "Watch the video to the end before completing this lesson")
+    return "videoRequired";
+  if (error.status === 401) return "signInAgain";
+  if (error.status === 403) return "accessDenied";
+  if (error.status === 404) return "notFound";
+  if (error.status === 429) return "tooManyRequests";
+  return "genericError";
 }
 
 export function useResource<T>(load: (signal: AbortSignal) => Promise<T>) {
@@ -60,12 +72,13 @@ export function Button({
 }
 
 export function ErrorNotice({ error, retry }: { error: unknown; retry?: () => void }) {
+  const t = useTranslate();
   return (
     <View style={styles.notice}>
       <Text accessibilityRole="alert" style={styles.error}>
-        {messageFor(error)}
+        {t(errorKey(error))}
       </Text>
-      {retry && <Button title="Qayta urinish" onPress={retry} secondary />}
+      {retry && <Button title={t("retry")} onPress={retry} secondary />}
     </View>
   );
 }

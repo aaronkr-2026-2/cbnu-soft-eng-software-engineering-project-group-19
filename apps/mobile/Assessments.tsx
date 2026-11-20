@@ -12,6 +12,7 @@ import {
 } from "./api";
 import type { Certificate, CourseLanguage, QuizAttempt } from "./api";
 import { color, styles } from "./styles";
+import { translate, useLocale, useTranslate } from "./localization";
 import { Button, Content, ErrorNotice, useResource } from "./ui";
 
 type CourseProps = {
@@ -36,8 +37,13 @@ function useRefreshOnReturn(refresh: () => void) {
   }, [refresh]);
 }
 
-function attemptText(attempt: QuizAttempt) {
-  return `${attempt.passed ? "O‘tdingiz" : "O‘tmadingiz"} · ${attempt.score_percent}% · ${attempt.correct_count}/${attempt.total_questions} to‘g‘ri`;
+function attemptText(attempt: QuizAttempt, language: CourseLanguage) {
+  return translate(language, "quizResult", {
+    status: translate(language, attempt.passed ? "passed" : "failed"),
+    score: attempt.score_percent,
+    correct: attempt.correct_count,
+    total: attempt.total_questions,
+  });
 }
 
 export function QuizScreen({
@@ -49,6 +55,7 @@ export function QuizScreen({
   back,
   onSubmitting,
 }: CourseProps & { lesson: string; back: () => void; onSubmitting: (value: boolean) => void }) {
+  const t = useTranslate();
   const loadQuiz = useCallback(
     (signal: AbortSignal) => getQuiz(token, course, lesson, language, signal),
     [token, course, lesson, language],
@@ -96,11 +103,11 @@ export function QuizScreen({
 
   return (
     <Content>
-      <Button title="Darsga qaytish" onPress={back} disabled={sending} secondary />
+      <Button title={t("backToLesson")} onPress={back} disabled={sending} secondary />
       {quiz.loading && !quizData && (
-        <ActivityIndicator accessibilityLabel="Quiz yuklanmoqda" color={color.leaf} />
+        <ActivityIndicator accessibilityLabel={t("quizLoading")} color={color.leaf} />
       )}
-      {missing && <Text style={styles.muted}>Bu darsda hali quiz yo‘q.</Text>}
+      {missing && <Text style={styles.muted}>{t("noQuiz")}</Text>}
       {quiz.error !== undefined && !missing && (
         <ErrorNotice error={quiz.error} retry={quiz.refresh} />
       )}
@@ -109,7 +116,7 @@ export function QuizScreen({
           <Text accessibilityRole="header" style={styles.title}>
             {quizData.title}
           </Text>
-          <Text style={styles.muted}>O‘tish bali {quizData.passing_score}%</Text>
+          <Text style={styles.muted}>{t("passingScore", { score: quizData.passing_score })}</Text>
           {quizData.questions.map((question, number) => (
             <View key={question.id} style={styles.notice}>
               <Text style={styles.listTitle}>
@@ -142,10 +149,10 @@ export function QuizScreen({
                 accessibilityLiveRegion="polite"
                 style={result.passed ? styles.category : styles.error}
               >
-                {attemptText(result)}
+                {attemptText(result, language)}
               </Text>
               <Button
-                title="Qayta ishlash"
+                title={t("retakeQuiz")}
                 onPress={() => {
                   setResult(null);
                   setSelected({});
@@ -155,7 +162,7 @@ export function QuizScreen({
             </View>
           ) : (
             <Button
-              title={sending ? "Yuborilmoqda…" : "Javoblarni yuborish"}
+              title={sending ? t("submitting") : t("submitAnswers")}
               disabled={!canSubmit || sending}
               onPress={submit}
             />
@@ -166,11 +173,12 @@ export function QuizScreen({
           {!!attemptHistory?.length && (
             <View style={styles.notice}>
               <Text accessibilityRole="header" style={styles.listTitle}>
-                Avvalgi urinishlar
+                {t("previousAttempts")}
               </Text>
               {attemptHistory.map((attempt) => (
                 <Text key={attempt.id} style={styles.body}>
-                  {attemptText(attempt)} · {new Date(attempt.submitted_at).toLocaleDateString("uz")}
+                  {attemptText(attempt, language)} ·{" "}
+                  {new Date(attempt.submitted_at).toLocaleDateString(language)}
                 </Text>
               ))}
             </View>
@@ -188,19 +196,22 @@ function CertificateCard({
   certificate: Certificate;
   onOpen: (url: string) => void;
 }) {
+  const t = useTranslate();
+  const language = useLocale();
   return (
     <View style={styles.notice}>
       <Text accessibilityRole="header" style={styles.listTitle}>
         {certificate.course_title}
       </Text>
       <Text style={styles.body}>
-        {certificate.recipient_name} · {certificate.score_percent}%
+        {certificate.recipient_name} · {certificate.score_percent.toLocaleString(language)}%
       </Text>
       <Text style={styles.muted}>
-        {certificate.certificate_code} · {new Date(certificate.issued_at).toLocaleDateString("uz")}
+        {certificate.certificate_code} ·{" "}
+        {new Date(certificate.issued_at).toLocaleDateString(language)}
       </Text>
       <Button
-        title="Sertifikatni ko‘rish"
+        title={t("viewCertificate")}
         onPress={() => onOpen(certificateWebLink(certificate.certificate_code))}
         secondary
       />
@@ -215,6 +226,7 @@ export function CourseCompletion({
   onExpired,
   onOpen,
 }: CourseProps & { onOpen: (url: string) => void }) {
+  const t = useTranslate();
   const load = useCallback(
     (signal: AbortSignal) => getCourseCompletion(token, course, language, signal),
     [token, course, language],
@@ -224,38 +236,39 @@ export function CourseCompletion({
   useSessionFailure(error, onExpired);
   if (error !== undefined) return <ErrorNotice error={error} retry={refresh} />;
   if (loading && !value)
-    return <ActivityIndicator accessibilityLabel="Imtihon holati yuklanmoqda" color={color.leaf} />;
+    return <ActivityIndicator accessibilityLabel={t("examLoading")} color={color.leaf} />;
   if (value?.certificate)
     return <CertificateCard certificate={value.certificate} onOpen={onOpen} />;
   const exam = value?.exam;
   return (
     <View style={styles.notice}>
       <Text accessibilityRole="header" style={styles.listTitle}>
-        Yakuniy imtihon
+        {t("finalExam")}
       </Text>
       {exam ? (
         <>
           <Text style={styles.body}>
-            {exam.passed ? "Imtihondan o‘tdingiz." : `O‘tish bali ${exam.passing_score}%.`}
-            {exam.latest_score !== null ? ` Oxirgi natija ${exam.latest_score}%.` : ""}
+            {exam.passed ? t("examPassed") : t("passingScore", { score: exam.passing_score })}
           </Text>
-          <Text style={styles.muted}>
-            Brauzerda shu hisob bilan kiring va passkey bilan tasdiqlang.
-          </Text>
+          {exam.latest_score !== null && (
+            <Text style={styles.body}>{t("latestScore", { score: exam.latest_score })}</Text>
+          )}
+          <Text style={styles.muted}>{t("confirmPasskey")}</Text>
           <Button
-            title={exam.passed ? "Sertifikat olish" : "Webda imtihonni ochish"}
+            title={exam.passed ? t("getCertificate") : t("openExam")}
             onPress={() => onOpen(courseWebLink(course, "completion"))}
           />
         </>
       ) : (
-        <Text style={styles.muted}>Bu kursning yakuniy imtihoni hali tayyor emas.</Text>
+        <Text style={styles.muted}>{t("noExam")}</Text>
       )}
-      <Button title="Holatni yangilash" onPress={refresh} disabled={loading} secondary />
+      <Button title={t("refreshStatus")} onPress={refresh} disabled={loading} secondary />
     </View>
   );
 }
 
 export function CertificatesScreen({ token, language, onExpired }: Omit<CourseProps, "course">) {
+  const t = useTranslate();
   const load = useCallback(
     (signal: AbortSignal) => getCertificates(token, language, signal),
     [token, language],
@@ -267,13 +280,11 @@ export function CertificatesScreen({ token, language, onExpired }: Omit<CoursePr
   return (
     <Content refreshing={loading} refresh={refresh}>
       <Text accessibilityRole="header" style={styles.title}>
-        Sertifikatlarim
+        {t("myCertificates")}
       </Text>
       {error !== undefined && <ErrorNotice error={error} retry={refresh} />}
       {linkError !== undefined && <ErrorNotice error={linkError} />}
-      {!loading && value?.length === 0 && (
-        <Text style={styles.muted}>Hali sertifikat berilmagan.</Text>
-      )}
+      {!loading && value?.length === 0 && <Text style={styles.muted}>{t("noCertificates")}</Text>}
       {value?.map((certificate) => (
         <CertificateCard
           key={certificate.certificate_code}

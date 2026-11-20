@@ -24,8 +24,8 @@
   recover without guessing.
 - MUST label form controls and announce errors with an accessible status or alert so keyboard and
   screen-reader users can complete the same flows.
-- MUST provide web UI copy in Uzbek, English, Russian, and Korean so switching languages leaves the
-  web interface usable. The mobile interface currently uses Uzbek and offers courses in all four languages.
+- MUST provide web and mobile UI copy in Uzbek, English, Russian, and Korean so the interface stays
+  usable after a language change.
 - SHOULD reuse established button, form, and spacing styles so users can recognize familiar
   actions.
 - SHOULD preserve entered values while users correct errors so they can retry without retyping.

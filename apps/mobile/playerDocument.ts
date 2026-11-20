@@ -1,5 +1,6 @@
 import { WEB_APP, resourceUrl } from "./api";
 import type { CourseLanguage, Lesson, VideoProgress } from "./api";
+import { translate } from "./localization";
 
 const playerOrigin = new URL(WEB_APP).origin;
 
@@ -69,20 +70,25 @@ export function lessonVideoSource(lesson: Lesson, language: CourseLanguage): Vid
   return uri ? { uri, youtube: false } : null;
 }
 
-export function playerDocument(source: VideoSource, start: PlaybackStart) {
+function escapeAttribute(value: string) {
+  return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
+}
+
+export function playerDocument(
+  source: VideoSource,
+  start: PlaybackStart,
+  language: CourseLanguage,
+) {
   const url = new URL(source.uri);
   if (source.youtube && !source.playlist && start.seconds > 0)
     url.searchParams.set("start", String(start.seconds));
-  const attributes = url
-    .toString()
-    .replaceAll("&", "&amp;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("<", "&lt;");
+  const attributes = escapeAttribute(url.toString());
+  const title = escapeAttribute(translate(language, "youtubeVideo"));
   const media = source.youtube
-    ? `<iframe id="video" src="${attributes}" title="YouTube video" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`
+    ? `<iframe id="video" src="${attributes}" title="${title}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`
     : `<video id="video" src="${attributes}" controls playsinline preload="metadata"></video>`;
 
-  return `<!doctype html><html><head>
+  return `<!doctype html><html lang="${language}"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="strict-origin-when-cross-origin">

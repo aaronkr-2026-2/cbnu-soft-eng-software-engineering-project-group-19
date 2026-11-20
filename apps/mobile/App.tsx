@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   BackHandler,
@@ -34,8 +34,10 @@ import { color, styles } from "./styles";
 import { Button, Content, ErrorNotice, useResource } from "./ui";
 import { CertificatesScreen, CourseCompletion, QuizScreen } from "./Assessments";
 import { LessonVideo } from "./LessonVideo";
+import { LocaleContext, useTranslate } from "./localization";
 
 const SESSION_KEY = "studyflow-learner-token";
+const LANGUAGE_KEY = "studyflow-mobile-language";
 
 function Catalog({
   language,
@@ -46,6 +48,7 @@ function Catalog({
   changeLanguage: (value: CourseLanguage) => void;
   openCourse: (selection: Selection) => void;
 }) {
+  const t = useTranslate();
   const load = useCallback((signal: AbortSignal) => getCatalog(language, signal), [language]);
   const { value, loading, error, refresh } = useResource(load);
   const [query, setQuery] = useState("");
@@ -58,12 +61,12 @@ function Catalog({
   return (
     <Content refreshing={loading} refresh={refresh}>
       <Text accessibilityRole="header" style={styles.title}>
-        Kurslar katalogi
+        {t("catalogTitle")}
       </Text>
       <TextInput
         style={styles.input}
-        accessibilityLabel="Kurs qidirish"
-        placeholder="Kurs qidirish"
+        accessibilityLabel={t("searchCourses")}
+        placeholder={t("searchCourses")}
         placeholderTextColor={color.muted}
         value={query}
         onChangeText={setQuery}
@@ -84,7 +87,7 @@ function Catalog({
       </View>
       {error !== undefined && <ErrorNotice error={error} retry={refresh} />}
       {!loading && value && matches.length === 0 && (
-        <Text style={styles.muted}>Mos kurs topilmadi.</Text>
+        <Text style={styles.muted}>{t("noMatchingCourses")}</Text>
       )}
       {matches.map((course) => {
         const banner = course.banner_url && resourceUrl(course.banner_url);
@@ -104,10 +107,14 @@ function Catalog({
               </Text>
               {course.description && <Text style={styles.body}>{course.description}</Text>}
               <Text style={styles.category}>
-                {course.price_uzs > 0 ? `${course.price_uzs.toLocaleString("uz")} so‘m` : "Bepul"}
+                {course.price_uzs > 0
+                  ? new Intl.NumberFormat(language, { style: "currency", currency: "UZS" }).format(
+                      course.price_uzs,
+                    )
+                  : t("free")}
               </Text>
               <Button
-                title="Kursni ochish"
+                title={t("openCourse")}
                 onPress={() =>
                   openCourse({ id: course.id, title: course.title, price: course.price_uzs })
                 }
@@ -121,6 +128,7 @@ function Catalog({
 }
 
 function Login({ onLogin, cancel }: { onLogin: (value: Session) => void; cancel: () => void }) {
+  const t = useTranslate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
@@ -148,15 +156,13 @@ function Login({ onLogin, cancel }: { onLogin: (value: Session) => void; cancel:
     >
       <Content>
         <Text accessibilityRole="header" style={styles.title}>
-          O‘quvchi hisobi
+          {t("learnerAccount")}
         </Text>
-        <Text style={styles.body}>
-          StudyFlow’da ishlatgan emailingiz va parolingiz bilan kiring.
-        </Text>
+        <Text style={styles.body}>{t("loginHelp")}</Text>
         <TextInput
           style={styles.input}
-          accessibilityLabel="Email"
-          placeholder="Email"
+          accessibilityLabel={t("email")}
+          placeholder={t("email")}
           placeholderTextColor={color.muted}
           autoComplete="email"
           autoCapitalize="none"
@@ -166,8 +172,8 @@ function Login({ onLogin, cancel }: { onLogin: (value: Session) => void; cancel:
         />
         <TextInput
           style={styles.input}
-          accessibilityLabel="Parol"
-          placeholder="Parol"
+          accessibilityLabel={t("password")}
+          placeholder={t("password")}
           placeholderTextColor={color.muted}
           autoComplete="current-password"
           secureTextEntry
@@ -177,11 +183,11 @@ function Login({ onLogin, cancel }: { onLogin: (value: Session) => void; cancel:
         />
         {error !== undefined && <ErrorNotice error={error} />}
         <Button
-          title={pending ? "Kirilmoqda…" : "Kirish"}
+          title={pending ? t("signingIn") : t("signIn")}
           onPress={submit}
           disabled={pending || !email.trim() || !password}
         />
-        <Button title="Katalogga qaytish" onPress={cancel} disabled={pending} secondary />
+        <Button title={t("backToCatalog")} onPress={cancel} disabled={pending} secondary />
       </Content>
     </KeyboardAvoidingView>
   );
@@ -200,6 +206,7 @@ function MyCourses({
   onSignOut: () => void;
   onExpired: () => void;
 }) {
+  const t = useTranslate();
   const load = useCallback(
     (signal: AbortSignal) => getEnrollments(session.token, language, signal),
     [session.token, language],
@@ -211,13 +218,11 @@ function MyCourses({
   return (
     <Content refreshing={loading} refresh={refresh}>
       <Text accessibilityRole="header" style={styles.title}>
-        Kurslarim
+        {t("myCourses")}
       </Text>
       <Text style={styles.muted}>{session.name}</Text>
       {error !== undefined && <ErrorNotice error={error} retry={refresh} />}
-      {!loading && value?.length === 0 && (
-        <Text style={styles.body}>Hali kursga yozilmagansiz.</Text>
-      )}
+      {!loading && value?.length === 0 && <Text style={styles.body}>{t("noEnrollments")}</Text>}
       {value?.map((course) => (
         <Pressable
           key={course.course_id}
@@ -231,7 +236,7 @@ function MyCourses({
           </Text>
         </Pressable>
       ))}
-      <Button title="Hisobdan chiqish" onPress={onSignOut} secondary />
+      <Button title={t("signOut")} onPress={onSignOut} secondary />
     </Content>
   );
 }
@@ -249,6 +254,7 @@ function CourseScreen({
   onExpired: () => void;
   back: () => void;
 }) {
+  const t = useTranslate();
   const { token } = session;
   const { id } = selection;
   const load = useCallback(
@@ -345,7 +351,7 @@ function CourseScreen({
     return (
       <Content key={lesson.id}>
         <Button
-          title="Darslar ro‘yxatiga qaytish"
+          title={t("backToLessons")}
           secondary
           disabled={working}
           onPress={() => setLesson(null)}
@@ -355,7 +361,7 @@ function CourseScreen({
         </Text>
         {media ? (
           <Button
-            title="Dars materialini ochish"
+            title={t("openMaterial")}
             secondary
             onPress={() => {
               void Linking.openURL(media).catch(setActionError);
@@ -374,16 +380,16 @@ function CourseScreen({
             />
             {video && (
               <Text accessibilityLiveRegion="polite" style={styles.muted}>
-                Video progressi {Math.floor(video.completion_percent)}%
+                {t("videoProgress", { progress: Math.floor(video.completion_percent) })}
               </Text>
             )}
             <Button
-              title="Brauzerda ochish"
+              title={t("openBrowser")}
               onPress={() => openWeb(courseWebLink(id, { lesson: lesson.id }))}
               secondary
             />
             <Button
-              title="Video progressini yangilash"
+              title={t("refreshVideo")}
               onPress={updateProgress}
               disabled={working}
               secondary
@@ -392,7 +398,7 @@ function CourseScreen({
         )}
         <Text style={styles.body}>{lesson.content}</Text>
         <Button
-          title="Dars quizini ishlash"
+          title={t("takeQuiz")}
           onPress={() => setQuizOpen(true)}
           disabled={working}
           secondary
@@ -400,11 +406,11 @@ function CourseScreen({
         {actionError !== undefined && <ErrorNotice error={actionError} />}
         {done ? (
           <Text accessibilityRole="text" style={styles.category}>
-            ✓ Dars tugallangan
+            {t("lessonDone")}
           </Text>
         ) : (
           <Button
-            title={working ? "Yangilanmoqda…" : "Tugatdim"}
+            title={working ? t("refreshing") : t("markComplete")}
             onPress={markDone}
             disabled={working || (requireVideo && !video?.can_complete)}
           />
@@ -421,20 +427,15 @@ function CourseScreen({
         refresh();
       }}
     >
-      <Button title="Orqaga" onPress={back} secondary />
+      <Button title={t("back")} onPress={back} secondary />
       <Text accessibilityRole="header" style={styles.title}>
         {selection.title}
       </Text>
       {error !== undefined &&
         (error instanceof ApiError && error.status === 402 ? (
           <View style={styles.notice}>
-            <Text style={styles.body}>
-              Pulli kursga StudyFlow veb-sayti orqali yozilish mumkin.
-            </Text>
-            <Button
-              title="StudyFlow veb-saytini ochish"
-              onPress={() => openWeb(WEB_APP + "#courses")}
-            />
+            <Text style={styles.body}>{t("paidWeb")}</Text>
+            <Button title={t("openWebsite")} onPress={() => openWeb(WEB_APP + "#courses")} />
           </View>
         ) : (
           <ErrorNotice error={error} retry={refresh} />
@@ -443,25 +444,27 @@ function CourseScreen({
       {progress && (
         <View style={styles.progressCard}>
           <Text style={styles.category}>
-            {progress.completed_lessons}/{progress.total_lessons} dars bajarildi
+            {t("lessonsDone", { done: progress.completed_lessons, total: progress.total_lessons })}
           </Text>
-          <Text style={styles.percent}>{progress.progress_percent}%</Text>
+          <Text style={styles.percent}>{progress.progress_percent.toLocaleString(language)}%</Text>
           <View
             style={styles.track}
-            accessibilityLabel={`Kurs progressi ${progress.progress_percent}%`}
+            accessibilityLabel={t("courseProgress", { progress: progress.progress_percent })}
           >
             <View style={[styles.trackFill, { width: `${progress.progress_percent}%` }]} />
           </View>
         </View>
       )}
-      {value?.lessons.length === 0 && <Text style={styles.muted}>Bu kursda hali dars yo‘q.</Text>}
+      {value?.lessons.length === 0 && <Text style={styles.muted}>{t("noLessons")}</Text>}
       {value?.lessons.map((item) => {
         const completed = progress?.completed_lesson_ids.includes(item.id);
         return (
           <Pressable
             key={item.id}
             accessibilityRole="button"
-            accessibilityLabel={completed ? `${item.title}, tugallangan` : item.title}
+            accessibilityLabel={
+              completed ? t("completedLessonLabel", { title: item.title }) : item.title
+            }
             style={styles.listItem}
             onPress={() => {
               setVideo(undefined);
@@ -488,17 +491,25 @@ function CourseScreen({
             onOpen={openWeb}
           />
         ) : (
-          <Text style={styles.muted}>Yakuniy imtihon barcha darslar tugagach ochiladi.</Text>
+          <Text style={styles.muted}>{t("examLocked")}</Text>
         ))}
     </Content>
   );
 }
 
-function StudyFlow() {
+function StudyFlow({
+  language,
+  changeLanguage,
+  languageError,
+}: {
+  language: CourseLanguage;
+  changeLanguage: (language: CourseLanguage) => void;
+  languageError: boolean;
+}) {
+  const t = useTranslate();
   const [restoring, setRestoring] = useState(true);
   const [restoreError, setRestoreError] = useState<unknown>();
   const [session, setSession] = useState<Session | null>(null);
-  const [language, setLanguage] = useState<CourseLanguage>("uz");
   const [tab, setTab] = useState<"catalog" | "mine" | "certificates">("catalog");
   const [login, setLogin] = useState(false);
   const [selection, setSelection] = useState<Selection | null>(null);
@@ -561,15 +572,20 @@ function StudyFlow() {
           </Text>
         </View>
         {!session && !login && !restoring && (
-          <Button title="Kirish" onPress={() => setLogin(true)} secondary />
+          <Button title={t("signIn")} onPress={() => setLogin(true)} secondary />
         )}
       </View>
+      {languageError && (
+        <Text accessibilityRole="alert" style={styles.error}>
+          {t("saveLanguageError")}
+        </Text>
+      )}
       {restoreError !== undefined && (
         <ErrorNotice error={restoreError} retry={() => void restore()} />
       )}
       {restoring ? (
         <ActivityIndicator
-          accessibilityLabel="Hisob yuklanmoqda"
+          accessibilityLabel={t("accountLoading")}
           style={styles.fill}
           color={color.ink}
         />
@@ -610,7 +626,7 @@ function StudyFlow() {
             <Catalog
               key={language}
               language={language}
-              changeLanguage={setLanguage}
+              changeLanguage={changeLanguage}
               openCourse={openCourse}
             />
           )}
@@ -621,7 +637,7 @@ function StudyFlow() {
               style={[styles.tab, tab === "catalog" && styles.activeTab]}
               onPress={() => setTab("catalog")}
             >
-              <Text style={styles.filterText}>Katalog</Text>
+              <Text style={styles.filterText}>{t("catalog")}</Text>
             </Pressable>
             <Pressable
               accessibilityRole="tab"
@@ -632,7 +648,7 @@ function StudyFlow() {
                 if (!session) setLogin(true);
               }}
             >
-              <Text style={styles.filterText}>Kurslarim</Text>
+              <Text style={styles.filterText}>{t("myCourses")}</Text>
             </Pressable>
             <Pressable
               accessibilityRole="tab"
@@ -643,7 +659,7 @@ function StudyFlow() {
                 if (!session) setLogin(true);
               }}
             >
-              <Text style={styles.filterText}>Sertifikatlarim</Text>
+              <Text style={styles.filterText}>{t("myCertificates")}</Text>
             </Pressable>
           </View>
         </>
@@ -653,9 +669,42 @@ function StudyFlow() {
 }
 
 export default function App() {
+  const [language, setLanguage] = useState<CourseLanguage | null>(null);
+  const [languageError, setLanguageError] = useState(false);
+  const savingLanguage = useRef(Promise.resolve());
+
+  useEffect(() => {
+    SecureStore.getItemAsync(LANGUAGE_KEY).then(
+      (value) =>
+        setLanguage(value && Object.hasOwn(languages, value) ? (value as CourseLanguage) : "uz"),
+      () => setLanguage("uz"),
+    );
+  }, []);
+
+  function changeLanguage(value: CourseLanguage) {
+    setLanguage(value);
+    setLanguageError(false);
+    savingLanguage.current = savingLanguage.current
+      .then(() => SecureStore.setItemAsync(LANGUAGE_KEY, value))
+      .then(
+        () => setLanguageError(false),
+        () => setLanguageError(true),
+      );
+  }
+
   return (
     <SafeAreaProvider>
-      <StudyFlow />
+      {language ? (
+        <LocaleContext.Provider value={language}>
+          <StudyFlow
+            language={language}
+            changeLanguage={changeLanguage}
+            languageError={languageError}
+          />
+        </LocaleContext.Provider>
+      ) : (
+        <ActivityIndicator color={color.ink} style={styles.fill} />
+      )}
     </SafeAreaProvider>
   );
 }
