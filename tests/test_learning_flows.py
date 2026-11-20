@@ -2,6 +2,7 @@ import hashlib
 import json
 import re
 from uuid import uuid4
+from xml.etree import ElementTree
 from urllib.parse import parse_qs, urlparse
 
 import cbor2
@@ -14,8 +15,12 @@ from webauthn.helpers import bytes_to_base64url
 from webauthn.helpers.structs import AuthenticatorTransport
 
 from app.routers import auth as auth_router
+from app.routers import courses as courses_router
 from app.routers import passkeys as passkeys_router
 from tests.helpers import login, register
+
+
+_save_course_banner = courses_router.save_course_banner
 
 
 @pytest.mark.parametrize(
@@ -291,6 +296,42 @@ def test_course_ownership_enrollment_payment_and_language_filter(client):
     uzbek_catalog = client.get("/courses/catalog?language=uz").json()
     assert english_course["id"] in {item["id"] for item in english_catalog}
     assert english_course["id"] not in {item["id"] for item in uzbek_catalog}
+
+
+def test_missing_course_banner_is_regenerated_without_exposing_draft(client, monkeypatch, tmp_path):
+    original_save_course_banner = _save_course_banner
+    monkeypatch.setattr(courses_router, "save_course_banner", original_save_course_banner)
+    monkeypatch.setattr(courses_router, "COURSE_BANNER_DIR", tmp_path)
+    email = "banner-author@example.com"
+    register(client, email, "author")
+    headers = login(client, email, "author")
+    response = client.post(
+        "/courses",
+        headers=headers,
+        json={"title": "HTML & CSS", "description": "A course on layout", "category": "R&D"},
+    )
+    assert response.status_code == 201, response.text
+    draft = response.json()
+    banner_url = draft["banner_url"]
+    assert banner_url
+    banner_path = urlparse(banner_url).path
+    original = list(tmp_path.iterdir())
+    assert len(original) == 1
+    original[0].unlink()
+
+    assert client.get(banner_path).status_code == 404
+    preview = client.get(banner_url)
+    assert preview.status_code == 200
+    assert preview.headers["cache-control"] == "private, no-store"
+    assert ElementTree.fromstring(preview.content).attrib["aria-label"] == "HTML & CSS"
+
+    published = client.post(f"/courses/{draft['id']}/publish", headers=headers)
+    assert published.status_code == 200
+    cover = client.get(published.json()["banner_url"])
+    assert cover.status_code == 200
+    assert cover.headers["content-type"] == "image/svg+xml"
+    assert any(node.text == "R&D" for node in ElementTree.fromstring(cover.content))
+    assert not list(tmp_path.iterdir())
 
 
 def test_course_modules_group_lessons_and_keep_old_lessons_compatible(client):

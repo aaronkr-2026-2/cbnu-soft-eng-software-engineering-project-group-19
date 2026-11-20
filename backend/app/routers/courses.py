@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 import jwt
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
@@ -51,7 +51,7 @@ MAX_BANNER_BYTES = 8 * 1024 * 1024
 
 
 def render_course_banner(course: Course) -> bytes:
-    title, category = html.escape(course.title[:60]), html.escape(course.category[:35])
+    title, category = html.escape(course.title[:60]), html.escape(course.category[:35].upper())
     tagline = html.escape(
         {
             "uz": "Kod yozing · Tajriba qiling · Natijani ko‘ring",
@@ -85,7 +85,7 @@ def render_course_banner(course: Course) -> bytes:
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" role="img" aria-label="{title}">
 <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="{dark}"/><stop offset="1" stop-color="{accent}"/></linearGradient><pattern id="p" width="38" height="38" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.5" fill="#fff" fill-opacity=".16"/></pattern></defs>
 <rect width="1200" height="480" rx="30" fill="url(#g)"/><rect width="1200" height="480" rx="30" fill="url(#p)"/><circle cx="954" cy="245" r="196" fill="#fff" fill-opacity=".07"/><circle cx="954" cy="245" r="145" fill="none" stroke="#fff" stroke-opacity=".14" stroke-width="2"/>
-{icon}<text x="68" y="112" fill="{soft}" font-family="Arial,sans-serif" font-size="22" font-weight="700" letter-spacing="4">{category.upper()}</text><text x="68" y="218" fill="#fff" font-family="Arial,sans-serif" font-size="48" font-weight="700">{title}</text><text x="68" y="282" fill="#fff" fill-opacity=".78" font-family="Arial,sans-serif" font-size="24">{tagline}</text><rect x="68" y="330" width="68" height="6" rx="3" fill="#d7f36a"/></svg>'''
+{icon}<text x="68" y="112" fill="{soft}" font-family="Arial,sans-serif" font-size="22" font-weight="700" letter-spacing="4">{category}</text><text x="68" y="218" fill="#fff" font-family="Arial,sans-serif" font-size="48" font-weight="700">{title}</text><text x="68" y="282" fill="#fff" fill-opacity=".78" font-family="Arial,sans-serif" font-size="24">{tagline}</text><rect x="68" y="330" width="68" height="6" rx="3" fill="#d7f36a"/></svg>'''
     return svg.encode("utf-8")
 
 
@@ -475,7 +475,17 @@ def read_course_banner(
             raise HTTPException(status_code=404, detail="Course banner not found")
     path = COURSE_BANNER_DIR / Path(course.banner_key).name
     if not path.is_file():
-        raise HTTPException(status_code=404, detail="Course banner not found")
+        # Hosted instances can lose their local media files after a restart.
+        return Response(
+            render_course_banner(course),
+            media_type="image/svg+xml",
+            headers={
+                "Cache-Control": "public, max-age=300"
+                if course.is_published
+                else "private, no-store",
+                "X-Content-Type-Options": "nosniff",
+            },
+        )
     media_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
     return FileResponse(
         path,
