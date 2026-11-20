@@ -38,8 +38,11 @@ router = APIRouter(prefix="/auth/passkeys", tags=["Passkeys"])
 LOCAL_WEBAUTHN_ORIGINS = {"http://localhost:8000"}
 
 
-def _request_webauthn_scope(request: Request) -> tuple[str, str]:
-    origin = (request.headers.get("origin") or str(request.base_url)).rstrip("/")
+def _request_webauthn_scope(
+    request: Request, *, allow_status_origin_fallback: bool = False
+) -> tuple[str, str]:
+    browser_origin = request.headers.get("origin")
+    origin = (browser_origin or str(request.base_url)).rstrip("/")
     configured_origin = WEBAUTHN_ORIGIN.rstrip("/")
     if origin == "http://127.0.0.1:8000":
         raise HTTPException(
@@ -47,7 +50,13 @@ def _request_webauthn_scope(request: Request) -> tuple[str, str]:
             detail="Passkeys require the local hostname. Open http://localhost:8000/app and sign in again.",
         )
     if origin != configured_origin and origin not in LOCAL_WEBAUTHN_ORIGINS:
-        raise HTTPException(status_code=403, detail="This site origin is not enabled for passkeys")
+        if allow_status_origin_fallback and browser_origin is None:
+            # A proxied same-origin GET may have no Origin and use the upstream host.
+            origin = configured_origin
+        else:
+            raise HTTPException(
+                status_code=403, detail="This site origin is not enabled for passkeys"
+            )
     parsed = urlsplit(origin)
     rp_id = parsed.hostname
     if not rp_id or parsed.path or parsed.query or parsed.fragment:
@@ -116,7 +125,7 @@ def passkey_status(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
-    rp_id, _ = _request_webauthn_scope(request)
+    rp_id, _ = _request_webauthn_scope(request, allow_status_origin_fallback=True)
     credentials = (
         db.query(PasskeyCredential)
         .filter(PasskeyCredential.user_id == current_user.id, PasskeyCredential.rp_id == rp_id)

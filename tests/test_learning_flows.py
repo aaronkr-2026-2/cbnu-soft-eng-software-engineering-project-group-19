@@ -125,6 +125,22 @@ def test_passkey_registration_and_signed_verification(client, monkeypatch):
             }
         ).encode()
 
+    upstream = "https://studyflow-backend.example"
+    proxy_headers = {key: value for key, value in headers.items() if key != "Origin"}
+    status_response = client.get(f"{upstream}{endpoint}/me", headers=proxy_headers)
+    assert status_response.status_code == 200, status_response.text
+    assert status_response.json() == {"enabled": False, "credentials": []}
+    assert (
+        client.get(
+            f"{upstream}{endpoint}/me", headers={**proxy_headers, "Origin": upstream}
+        ).status_code
+        == 403
+    )
+    assert (
+        client.post(f"{upstream}{endpoint}/registration/options", headers=proxy_headers).status_code
+        == 403
+    )
+
     options = client.post(f"{endpoint}/registration/options", headers=headers)
     assert options.status_code == 200, options.text
     challenge = options.json()
@@ -153,6 +169,10 @@ def test_passkey_registration_and_signed_verification(client, monkeypatch):
         },
     )
     assert registered.status_code == 200, registered.text
+
+    status_response = client.get(f"{upstream}{endpoint}/me", headers=proxy_headers)
+    assert status_response.status_code == 200, status_response.text
+    assert status_response.json()["enabled"] is True
 
     options = client.post(
         f"{endpoint}/authentication/options", headers=headers, json={"purpose": "certificate"}
