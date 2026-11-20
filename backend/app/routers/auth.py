@@ -229,6 +229,19 @@ def change_password(
     return {"message": "Password changed successfully"}
 
 
+def send_reset_email_over_https(host: str, path: str, headers: dict[str, str], payload: dict) -> None:
+    with closing(HTTPSConnection(host, timeout=10)) as connection:
+        connection.request(
+            "POST",
+            path,
+            body=json.dumps(payload),
+            headers={**headers, "Content-Type": "application/json"},
+        )
+        with connection.getresponse() as response:
+            if not 200 <= response.status < 300:
+                raise HTTPException(status_code=503, detail="Unable to send the reset email right now")
+
+
 @router.post("/password-reset/request")
 def request_password_reset(
     reset_request: PasswordResetRequest,
@@ -237,6 +250,8 @@ def request_password_reset(
 ) -> dict[str, str]:
     enforce_rate_limit(request, scope="password-reset", max_attempts=5, window_seconds=900)
 
+    brevo_api_key = (os.getenv("BREVO_API_KEY") or "").strip()
+    brevo_from = (os.getenv("BREVO_FROM") or "").strip()
     resend_api_key = (os.getenv("RESEND_API_KEY") or "").strip()
     resend_from = (os.getenv("RESEND_FROM") or "").strip()
     smtp_host = os.getenv("SMTP_HOST")
@@ -249,7 +264,9 @@ def request_password_reset(
     frontend_url = (os.getenv("FRONTEND_BASE_URL") or default_frontend_url).rstrip("/")
     if not frontend_url.endswith("/app"):
         frontend_url += "/app"
-    if resend_api_key or resend_from:
+    if brevo_api_key or brevo_from:
+        email_configured = bool(brevo_api_key and brevo_from)
+    elif resend_api_key or resend_from:
         email_configured = bool(resend_api_key and resend_from)
     else:
         email_configured = bool(smtp_host and smtp_from and smtp_username and smtp_password)
@@ -265,7 +282,7 @@ def request_password_reset(
     reset_url = f"{frontend_url}/reset-password.html?{reset_query}"
     message = EmailMessage()
     message["Subject"] = "Reset your StudyFlow AI password"
-    message["From"] = resend_from if resend_api_key else smtp_from
+    message["From"] = brevo_from or resend_from or smtp_from
     message["To"] = user.email
     message.set_content(
         "We received a request to reset your StudyFlow AI password. "
@@ -273,21 +290,22 @@ def request_password_reset(
         "If you did not request this, ignore this email."
     )
     try:
-        if resend_api_key:
-            payload = json.dumps({
-                "from": resend_from,
-                "to": [user.email],
+        if brevo_api_key:
+            send_reset_email_over_https("api.brevo.com", "/v3/smtp/email", {"api-key": brevo_api_key}, {
+                "sender": {"name": "StudyFlow AI", "email": brevo_from},
+                "to": [{"email": user.email}],
                 "subject": message["Subject"],
-                "text": message.get_content(),
+                "textContent": message.get_content(),
             })
-            with closing(HTTPSConnection("api.resend.com", timeout=10)) as connection:
-                connection.request("POST", "/emails", body=payload, headers={
-                    "Authorization": f"Bearer {resend_api_key}",
-                    "Content-Type": "application/json",
-                })
-                with connection.getresponse() as response:
-                    if not 200 <= response.status < 300:
-                        raise HTTPException(status_code=503, detail="Unable to send the reset email right now")
+        elif resend_api_key:
+            send_reset_email_over_https(
+                "api.resend.com", "/emails", {"Authorization": f"Bearer {resend_api_key}"}, {
+                    "from": resend_from,
+                    "to": [user.email],
+                    "subject": message["Subject"],
+                    "text": message.get_content(),
+                },
+            )
         else:
             smtp_port = int(os.getenv("SMTP_PORT", "587"))
             smtp_client = smtplib.SMTP_SSL if smtp_port == 465 else smtplib.SMTP
