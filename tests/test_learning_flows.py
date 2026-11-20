@@ -1,9 +1,16 @@
+import hashlib
+import json
 import re
+from uuid import uuid4
 from urllib.parse import parse_qs, urlparse
 
+import cbor2
 import pytest
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
 from fastapi import HTTPException
 from starlette.requests import Request
+from webauthn.helpers import bytes_to_base64url
 from webauthn.helpers.structs import AuthenticatorTransport
 
 from app.routers import auth as auth_router
@@ -83,6 +90,100 @@ def test_local_passkeys_require_localhost_origin(monkeypatch):
         AuthenticatorTransport.USB,
     ]
     assert passkeys_router._credential_transports(None) is None
+
+
+def test_passkey_registration_and_signed_verification(client, monkeypatch):
+    host = "studyflow-web-1hab.vercel.app"
+    origin = f"https://{host}"
+    monkeypatch.setattr(passkeys_router, "WEBAUTHN_ORIGIN", origin)
+    email = "passkey-learner@example.com"
+    register(client, email)
+    headers = {**login(client, email), "Origin": origin}
+    endpoint = "/auth/passkeys"
+    credential_id = uuid4().bytes
+    encoded_id = bytes_to_base64url(credential_id)
+    credential = {"id": encoded_id, "rawId": encoded_id, "type": "public-key"}
+    private_key = ec.generate_private_key(ec.SECP256R1())
+    public_key = private_key.public_key().public_numbers()
+    cose_key = cbor2.dumps(
+        {
+            1: 2,
+            3: -7,
+            -1: 1,
+            -2: public_key.x.to_bytes(32, "big"),
+            -3: public_key.y.to_bytes(32, "big"),
+        }
+    )
+    rp_hash = hashlib.sha256(host.encode()).digest()
+
+    def client_data(challenge, operation):
+        return json.dumps(
+            {
+                "type": operation,
+                "challenge": json.loads(challenge["publicKey"])["challenge"],
+                "origin": origin,
+            }
+        ).encode()
+
+    options = client.post(f"{endpoint}/registration/options", headers=headers)
+    assert options.status_code == 200, options.text
+    challenge = options.json()
+    registration_data = (
+        rp_hash
+        + b"\x45"
+        + bytes(4)
+        + bytes(16)
+        + len(credential_id).to_bytes(2, "big")
+        + credential_id
+        + cose_key
+    )
+    attestation = cbor2.dumps({"fmt": "none", "authData": registration_data, "attStmt": {}})
+    registered = client.post(
+        f"{endpoint}/registration/verify",
+        headers=headers,
+        json={
+            "challenge_id": challenge["challenge_id"],
+            "credential": {
+                **credential,
+                "response": {
+                    "clientDataJSON": bytes_to_base64url(client_data(challenge, "webauthn.create")),
+                    "attestationObject": bytes_to_base64url(attestation),
+                },
+            },
+        },
+    )
+    assert registered.status_code == 200, registered.text
+
+    options = client.post(
+        f"{endpoint}/authentication/options", headers=headers, json={"purpose": "certificate"}
+    )
+    assert options.status_code == 200, options.text
+    challenge = options.json()
+    authenticator_data = rp_hash + b"\x05" + (1).to_bytes(4, "big")
+    client_json = client_data(challenge, "webauthn.get")
+    signature = private_key.sign(
+        authenticator_data + hashlib.sha256(client_json).digest(), ec.ECDSA(hashes.SHA256())
+    )
+    payload = {
+        "challenge_id": challenge["challenge_id"],
+        "credential": {
+            **credential,
+            "response": {
+                "clientDataJSON": bytes_to_base64url(client_json),
+                "authenticatorData": bytes_to_base64url(authenticator_data),
+                "signature": bytes_to_base64url(signature),
+            },
+        },
+    }
+    verification = client.post(f"{endpoint}/authentication/verify", headers=headers, json=payload)
+    assert verification.status_code == 200, verification.text
+    assert verification.json()["proof"]
+    assert verification.json()["purpose"] == "certificate"
+    assert verification.json()["expires_in"] == 300
+    assert (
+        client.post(f"{endpoint}/authentication/verify", headers=headers, json=payload).status_code
+        == 400
+    )
 
 
 def test_password_change_invalidates_existing_session(client):

@@ -80,6 +80,12 @@ class AuthenticationVerify(BaseModel):
     credential: dict[str, Any]
 
 
+class AuthenticationProofResponse(BaseModel):
+    proof: str
+    purpose: Literal["final_exam", "certificate"]
+    expires_in: int
+
+
 def _challenge_or_404(
     challenge_id: uuid.UUID, user_id: uuid.UUID, purpose: str, db: Session
 ) -> PasskeyChallenge:
@@ -273,7 +279,7 @@ def verify_authentication(
     payload: AuthenticationVerify,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> dict[str, str]:
+) -> AuthenticationProofResponse:
     challenge = (
         db.query(PasskeyChallenge)
         .filter(
@@ -340,4 +346,4 @@ def verify_authentication(
     )
     db.add(proof)
     db.commit()
-    return {"proof": token, "purpose": challenge.purpose, "expires_in": 300}
+    return AuthenticationProofResponse(proof=token, purpose=challenge.purpose, expires_in=300)
