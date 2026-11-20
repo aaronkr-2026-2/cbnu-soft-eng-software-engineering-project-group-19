@@ -12,6 +12,38 @@
     {
       "source": "/app/:file",
       "destination": "/:file"
+    },
+    {
+      "source": "/auth/:path*",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/auth/:path*"
+    },
+    {
+      "source": "/courses/:path*",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/courses/:path*"
+    },
+    {
+      "source": "/certificates/:path*",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/certificates/:path*"
+    },
+    {
+      "source": "/enrollments/:path*",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/enrollments/:path*"
+    },
+    {
+      "source": "/learning-plans/:path*",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/learning-plans/:path*"
+    },
+    {
+      "source": "/payments/:path*",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/payments/:path*"
+    },
+    {
+      "source": "/recommendations/:path*",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/recommendations/:path*"
+    },
+    {
+      "source": "/health",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/health"
     }
   ]
 }

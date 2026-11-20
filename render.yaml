@@ -17,27 +17,15 @@ services:
       - key: PORT
         value: "10000"
       - key: WEBAUTHN_RP_ID
-        fromService:
-          name: studyflow-ai
-          type: web
-          envVarKey: RENDER_EXTERNAL_HOSTNAME
+        value: studyflow-web-1hab.vercel.app
       - key: WEBAUTHN_RP_NAME
         value: StudyFlow AI
       - key: WEBAUTHN_ORIGIN
-        fromService:
-          name: studyflow-ai
-          type: web
-          envVarKey: RENDER_EXTERNAL_URL
+        value: https://studyflow-web-1hab.vercel.app
       - key: PUBLIC_APP_URL
-        fromService:
-          name: studyflow-ai
-          type: web
-          envVarKey: RENDER_EXTERNAL_URL
+        value: https://studyflow-web-1hab.vercel.app
       - key: FRONTEND_BASE_URL
-        fromService:
-          name: studyflow-ai
-          type: web
-          envVarKey: RENDER_EXTERNAL_URL
+        value: https://studyflow-web-1hab.vercel.app
       - key: SMTP_HOST
         value: smtp.gmail.com
       - key: SMTP_PORT
