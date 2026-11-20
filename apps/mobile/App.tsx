@@ -61,7 +61,7 @@ function FounderProfile() {
       </View>
       <Text style={styles.category}>{t("founderRole")}</Text>
       <Text accessibilityRole="header" style={styles.cardTitle}>
-        Mukhammadaziz Yuldoshboev
+        MUKHAMMADAZIZ YULDOSHBOEV
       </Text>
       <Text style={styles.body}>{t("founderBio")}</Text>
     </View>
