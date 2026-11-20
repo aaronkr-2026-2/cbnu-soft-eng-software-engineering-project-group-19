@@ -3423,3 +3423,43 @@ body[dir="rtl"] {
     width: 100%;
   }
 }
+
+.founder-section {
+  width: min(1090px, calc(100% - 40px));
+  margin: 0 auto 40px;
+  padding: clamp(20px, 4vw, 40px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(18px, 4vw, 36px);
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: #eef3e6;
+  scroll-margin-top: 85px;
+}
+
+.founder-photo {
+  display: block;
+  width: clamp(108px, 18vw, 172px);
+  height: auto;
+  flex: 0 0 auto;
+  border-radius: 18px;
+  object-fit: contain;
+}
+
+.founder-copy {
+  flex: 1 1 230px;
+}
+
+.founder-copy h2 {
+  margin: 8px 0 10px;
+  color: var(--ink);
+  font: 800 clamp(24px, 4vw, 39px) var(--display);
+}
+
+.founder-copy > p:last-child {
+  max-width: 56ch;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}

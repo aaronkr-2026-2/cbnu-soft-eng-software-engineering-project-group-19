@@ -38,6 +38,35 @@ import { LocaleContext, useTranslate } from "./localization";
 
 const SESSION_KEY = "studyflow-learner-token";
 const LANGUAGE_KEY = "studyflow-mobile-language";
+const FOUNDER_PHOTO = { uri: WEB_APP + "founder.webp" };
+
+function FounderProfile() {
+  const t = useTranslate();
+  const [photoAvailable, setPhotoAvailable] = useState(true);
+  return (
+    <View style={styles.founderCard}>
+      <View
+        style={styles.founderPhoto}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <Text style={styles.founderInitials}>MY</Text>
+        {photoAvailable && (
+          <Image
+            source={FOUNDER_PHOTO}
+            style={styles.founderImage}
+            onError={() => setPhotoAvailable(false)}
+          />
+        )}
+      </View>
+      <Text style={styles.category}>{t("founderRole")}</Text>
+      <Text accessibilityRole="header" style={styles.cardTitle}>
+        Mukhammadaziz Yuldoshboev
+      </Text>
+      <Text style={styles.body}>{t("founderBio")}</Text>
+    </View>
+  );
+}
 
 function Catalog({
   language,
@@ -123,6 +152,7 @@ function Catalog({
           </View>
         );
       })}
+      <FounderProfile />
     </Content>
   );
 }

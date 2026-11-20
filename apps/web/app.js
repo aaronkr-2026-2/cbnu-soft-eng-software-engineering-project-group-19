@@ -60,6 +60,10 @@ const copy = {
     exploreTitle: "O‘rganishga tayyormisiz?",
     browseCourses: "Kurslarni ko‘rish",
     coursesHint: "Kurslarni ko‘rish uchun avval tizimga kiring.",
+    navFounder: "Asoschi",
+    founderRole: "StudyFlow asoschisi",
+    founderBio:
+      "StudyFlow’ni o‘quvchilar kurs topishi, o‘z maromida o‘rganishi va natijalarini kuzatishi uchun yaratgan.",
     closingTitle: "Bugun boshlang. Ertaga o‘zingizga rahmat aytasiz.",
     closingBody: "Kichik qadamlar katta o‘zgarishlarga olib boradi.",
     startToday: "Bepul boshlash",
@@ -163,6 +167,10 @@ const copy = {
     exploreTitle: "Ready to start learning?",
     browseCourses: "Browse courses",
     coursesHint: "Log in to explore available courses.",
+    navFounder: "Founder",
+    founderRole: "Founder of StudyFlow",
+    founderBio:
+      "He created StudyFlow to help learners find courses, study at their own pace, and track their progress.",
     closingTitle: "Start today. Thank yourself tomorrow.",
     closingBody: "Small steps can lead to big changes.",
     startToday: "Start for free",
@@ -263,6 +271,10 @@ const copy = {
     exploreTitle: "Готовы начать учиться?",
     browseCourses: "Смотреть курсы",
     coursesHint: "Войдите, чтобы посмотреть доступные курсы.",
+    navFounder: "Основатель",
+    founderRole: "Основатель StudyFlow",
+    founderBio:
+      "Он создал StudyFlow, чтобы учащиеся могли искать курсы, учиться в своём темпе и отслеживать результаты.",
     closingTitle: "Начните сегодня. Завтра вы скажете себе спасибо.",
     closingBody: "Маленькие шаги ведут к большим переменам.",
     startToday: "Начать бесплатно",
@@ -363,6 +375,10 @@ const copy = {
     exploreTitle: "학습을 시작할 준비가 됐나요?",
     browseCourses: "강의 둘러보기",
     coursesHint: "로그인하면 강의를 둘러볼 수 있어요.",
+    navFounder: "설립자",
+    founderRole: "StudyFlow 설립자",
+    founderBio:
+      "학습자가 강의를 찾고, 자신의 속도로 공부하며, 학습 진행 상황을 확인할 수 있도록 StudyFlow를 만들었습니다.",
     closingTitle: "오늘 시작하고, 내일의 나에게 고마워하세요.",
     closingBody: "작은 걸음이 큰 변화를 만들어요.",
     startToday: "무료로 시작하기",

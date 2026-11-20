@@ -4,6 +4,18 @@ import type { CourseLanguage } from "./api";
 const languageIndex: Record<CourseLanguage, number> = { uz: 0, en: 1, ru: 2, ko: 3 };
 
 const messages = {
+  founderBio: [
+    "StudyFlow’ni o‘quvchilar kurs topishi, o‘z maromida o‘rganishi va natijalarini kuzatishi uchun yaratgan.",
+    "He created StudyFlow to help learners find courses, study at their own pace, and track their progress.",
+    "Он создал StudyFlow, чтобы учащиеся могли искать курсы, учиться в своём темпе и отслеживать результаты.",
+    "학습자가 강의를 찾고, 자신의 속도로 공부하며, 학습 진행 상황을 확인할 수 있도록 StudyFlow를 만들었습니다.",
+  ],
+  founderRole: [
+    "StudyFlow asoschisi",
+    "Founder of StudyFlow",
+    "Основатель StudyFlow",
+    "StudyFlow 설립자",
+  ],
   catalogTitle: ["Kurslar katalogi", "Course catalog", "Каталог курсов", "강의 카탈로그"],
   searchCourses: ["Kurs qidirish", "Search courses", "Поиск курсов", "강의 검색"],
   noMatchingCourses: [
