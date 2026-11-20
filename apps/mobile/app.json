@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "StudyFlow",
+    "slug": "studyflow-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "platforms": ["ios", "android"],
+    "plugins": ["expo-secure-store"]
+  }
+}
