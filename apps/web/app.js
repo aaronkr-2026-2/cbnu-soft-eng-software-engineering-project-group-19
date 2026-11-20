@@ -1819,8 +1819,11 @@ function showMyCourses() {
   $("#enrolledCourses").hidden = false;
 }
 
-function redirectToCourseLogin(courseId, price) {
-  sessionStorage.setItem("studyflow-pending-course", JSON.stringify({ courseId, price }));
+function redirectToCourseLogin(courseId, { price, lessonId, openLesson }) {
+  sessionStorage.setItem(
+    "studyflow-pending-course",
+    JSON.stringify({ courseId, price, lessonId, openLesson }),
+  );
   accessToken = null;
   user = null;
   learnerEnrollments = [];
@@ -1833,9 +1836,12 @@ function listEnrollments(options) {
   return api(`/enrollments/me?language=${encodeURIComponent(language)}`, options);
 }
 
-async function openLearnerCourse(courseId, { price, previewDialog, openLesson = true } = {}) {
+async function openLearnerCourse(
+  courseId,
+  { price, previewDialog, lessonId, openLesson = true } = {},
+) {
   if (!accessToken) {
-    redirectToCourseLogin(courseId, price);
+    redirectToCourseLogin(courseId, { price, lessonId, openLesson });
     return;
   }
 
@@ -1858,7 +1864,7 @@ async function openLearnerCourse(courseId, { price, previewDialog, openLesson = 
       updateAuthUI();
     }
     if (user.account_type !== "learner") {
-      redirectToCourseLogin(courseId, price);
+      redirectToCourseLogin(courseId, { price, lessonId, openLesson });
       return;
     }
     if (previewDialog?.open) previewDialog.close();
@@ -1902,8 +1908,21 @@ async function openLearnerCourse(courseId, { price, previewDialog, openLesson = 
       host.querySelector(".lesson-item:has([data-complete]) [data-toggle]") ||
       host.querySelector("[data-toggle]");
     const heading = host.querySelector("h3");
-    if ((openLesson || !examUnlocked) && firstToggle) firstToggle.click();
-    heading.focus({ preventScroll: true });
+    const selectedToggle = lessonId
+      ? [...host.querySelectorAll("[data-toggle]")].find(
+          (button) => button.dataset.toggle === `lesson-${lessonId}`,
+        )
+      : null;
+    if (selectedToggle) {
+      selectedToggle.click();
+      selectedToggle.focus({ preventScroll: true });
+      selectedToggle
+        .closest(".lesson-item")
+        .scrollIntoView({ behavior: "instant", block: "center" });
+    } else {
+      if ((openLesson || !examUnlocked) && firstToggle) firstToggle.click();
+      heading.focus({ preventScroll: true });
+    }
     if (!examUnlocked) return;
 
     const [exam, certificate, review] = await Promise.all([
@@ -1921,7 +1940,7 @@ async function openLearnerCourse(courseId, { price, previewDialog, openLesson = 
   } catch (error) {
     if (request.signal.aborted) return;
     if (error.status === 401) {
-      redirectToCourseLogin(courseId, price);
+      redirectToCourseLogin(courseId, { price, lessonId, openLesson });
       return;
     }
     if (previewDialog?.open) previewDialog.close();
@@ -1929,18 +1948,36 @@ async function openLearnerCourse(courseId, { price, previewDialog, openLesson = 
     view.hidden = false;
     host.innerHTML = `<p class="form-error" role="alert">${escapeHtml(error.name === "TimeoutError" || error instanceof TypeError ? t("catalogConnectionError") : error.message || t("coursePreviewError"))}</p><button class="button button-outline" type="button" data-course-retry>${escapeHtml(t("catalogRetry"))}</button>`;
     const retry = host.querySelector("[data-course-retry]");
-    retry.addEventListener("click", () => openLearnerCourse(courseId, { price, openLesson }));
+    retry.addEventListener("click", () =>
+      openLearnerCourse(courseId, { price, lessonId, openLesson }),
+    );
     retry.focus();
   }
 }
 
 async function resumePendingCourse() {
+  const url = new URL(window.location.href);
+  const courseId = url.searchParams.get("course");
+  const uuid = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
+  if (courseId && uuid.test(courseId)) {
+    const lesson = url.searchParams.get("lesson");
+    const openLesson = url.searchParams.get("view") !== "completion";
+    for (const key of ["course", "lesson", "view"]) url.searchParams.delete(key);
+    window.history.replaceState(null, "", url);
+    sessionStorage.removeItem("studyflow-pending-course");
+    await openLearnerCourse(courseId.toLowerCase(), {
+      lessonId: lesson && uuid.test(lesson) ? lesson.toLowerCase() : undefined,
+      openLesson,
+    });
+    return;
+  }
+
   const saved = sessionStorage.getItem("studyflow-pending-course");
   if (!saved || !accessToken) return;
   sessionStorage.removeItem("studyflow-pending-course");
   try {
-    const course = JSON.parse(saved);
-    await openLearnerCourse(course.courseId, { price: course.price });
+    const { courseId, price, lessonId, openLesson } = JSON.parse(saved);
+    await openLearnerCourse(courseId, { price, lessonId, openLesson });
   } catch (error) {
     alert(error.message || t("genericError"));
   }
@@ -3757,8 +3794,6 @@ form.addEventListener("submit", async (event) => {
 
 setLanguage(language, false);
 if (!accessToken) loadCourses();
-else {
-  loadDashboard();
-  resumePendingCourse();
-}
+else loadDashboard();
+resumePendingCourse();
 checkReturnedPayment();
