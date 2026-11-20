@@ -2,8 +2,8 @@
   "name": "studyflow-quality",
   "private": true,
   "scripts": {
-    "format": "git ls-files -z -- '*.js' '*.mjs' '*.css' '*.html' '*.json' '*.md' '*.yaml' '*.yml' | xargs -0 prettier --write",
-    "format:check": "git ls-files -z -- '*.js' '*.mjs' '*.css' '*.html' '*.json' '*.md' '*.yaml' '*.yml' | xargs -0 prettier --check",
+    "format": "git ls-files -z -- '*.js' '*.mjs' '*.ts' '*.tsx' '*.css' '*.html' '*.json' '*.md' '*.yaml' '*.yml' | xargs -0 prettier --write",
+    "format:check": "git ls-files -z -- '*.js' '*.mjs' '*.ts' '*.tsx' '*.css' '*.html' '*.json' '*.md' '*.yaml' '*.yml' | xargs -0 prettier --check",
     "lint": "eslint --max-warnings 0 apps/web"
   },
   "devDependencies": {

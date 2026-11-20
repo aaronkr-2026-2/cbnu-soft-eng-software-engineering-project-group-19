@@ -58,6 +58,12 @@ jobs:
           npm run format:check
           npm run lint
 
+      - name: Install mobile dependencies and check TypeScript
+        working-directory: apps/mobile
+        run: |
+          npm ci
+          npm run check
+
       - name: Run backend regression tests
         run: python -m pytest
 
