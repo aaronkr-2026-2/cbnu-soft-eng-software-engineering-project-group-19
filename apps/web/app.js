@@ -27,14 +27,14 @@ const copy = {
     eyebrow: "O‘zingizga mos o‘rganish",
     heroTitle: "Bilim olish — o‘z maromingizda.",
     heroBody:
-      "Maqsadlaringizga mos shaxsiy reja, foydali kurslar va har kuni ozgina oldinga siljish. O‘rganish sizga moslashadi.",
+      "Qiziqishingizga mos kurslarni toping, amaliy mashqlarni bajaring va yutuqlaringizni kuzating.",
     startLearning: "O‘rganishni boshlash",
     seeHow: "Qanday ishlashini ko‘ring",
     learnerNote: "Har kuni o‘z ustida ishlayotganlar bilan birga o‘rganing",
     dailyGoal: "Bugungi maqsad",
     dailyGoalValue: "25 daqiqa o‘qish",
     yourJourney: "SIZNING YO‘LINGIZ",
-    learningPath: "O‘rganish rejam",
+    learningPath: "O‘qish yo‘lim",
     courseOne: "Ingliz tilida so‘zlashuv",
     courseOneMeta: "8 dars · Til",
     courseTwo: "Sun’iy intellekt asoslari",
@@ -49,9 +49,9 @@ const copy = {
     whyStudyflow: "Nega StudyFlow?",
     introTitle: "Katta maqsadlar kichik qadamlar bilan boshlanadi.",
     introBody:
-      "O‘rganish yo‘lingizni rejalashtiring, qiziqishingizga mos kurslarni toping va natijangizni kuzating — barchasi bitta joyda.",
-    featureOneTitle: "Sizga mos reja",
-    featureOneBody: "Vaqtingiz va maqsadingizga mos o‘quv jadvalini tuzing.",
+      "Qiziqishingizga mos kurslarni toping, darslarni bajaring va natijalaringizni kuzating.",
+    featureOneTitle: "O‘z maromingizda o‘rganing",
+    featureOneBody: "O‘zingizga qulay vaqtda darslarni davom ettiring.",
     featureTwoTitle: "Aqlli tavsiyalar",
     featureTwoBody: "Til va o‘rganish darajangizga mos kurslarni kashf qiling.",
     featureThreeTitle: "Natijani ko‘ring",
@@ -69,7 +69,7 @@ const copy = {
     email: "Elektron pochta",
     password: "Parol",
     registerTitle: "O‘z yo‘lingizni boshlang",
-    registerSubtitle: "Hisob yarating va o‘rganish rejangizni tuzing.",
+    registerSubtitle: "Hisob yarating va birinchi kursingizni boshlang.",
     loginTitle: "Xush kelibsiz",
     loginSubtitle: "Davom etish uchun hisobingizga kiring.",
     registerSubmit: "Hisob yaratish",
@@ -126,7 +126,7 @@ const copy = {
     eyebrow: "Learning that fits you",
     heroTitle: "Learn at your own pace.",
     heroBody:
-      "A personal plan for your goals, courses that matter, and a little progress every day. Learning that adapts to you.",
+      "Find courses that match your interests, practise what you learn, and track your progress.",
     startLearning: "Start learning",
     seeHow: "See how it works",
     learnerNote: "Learn alongside people growing a little every day",
@@ -148,9 +148,9 @@ const copy = {
     whyStudyflow: "Why StudyFlow?",
     introTitle: "Big goals start with small steps.",
     introBody:
-      "Plan your learning, find courses that match your interests, and see how far you’ve come — all in one place.",
-    featureOneTitle: "A plan that fits",
-    featureOneBody: "Build a study schedule around your time and goals.",
+      "Find courses that match your interests, complete lessons, and see how far you’ve come.",
+    featureOneTitle: "Learn at your pace",
+    featureOneBody: "Pick up lessons whenever it works for you.",
     featureTwoTitle: "Thoughtful suggestions",
     featureTwoBody: "Discover courses matched to your language and level.",
     featureThreeTitle: "See your progress",
@@ -168,7 +168,7 @@ const copy = {
     email: "Email address",
     password: "Password",
     registerTitle: "Start your journey",
-    registerSubtitle: "Create an account and build your learning plan.",
+    registerSubtitle: "Create an account and start your first course.",
     loginTitle: "Welcome back",
     loginSubtitle: "Log in to continue where you left off.",
     registerSubmit: "Create account",
@@ -223,15 +223,14 @@ const copy = {
     getStarted: "Начать",
     eyebrow: "Обучение в вашем ритме",
     heroTitle: "Учитесь в своём темпе.",
-    heroBody:
-      "Личный план для ваших целей, полезные курсы и небольшой прогресс каждый день. Обучение подстраивается под вас.",
+    heroBody: "Находите интересные курсы, выполняйте практические задания и следите за прогрессом.",
     startLearning: "Начать обучение",
     seeHow: "Как это работает",
     learnerNote: "Учитесь вместе с теми, кто развивается каждый день",
     dailyGoal: "Цель на сегодня",
     dailyGoalValue: "25 минут занятий",
     yourJourney: "ВАШ ПУТЬ",
-    learningPath: "Мой учебный план",
+    learningPath: "Моё обучение",
     courseOne: "Разговорный английский",
     courseOneMeta: "8 уроков · Язык",
     courseTwo: "Основы ИИ",
@@ -245,10 +244,9 @@ const copy = {
     fourLanguages: "4 языка",
     whyStudyflow: "Почему StudyFlow?",
     introTitle: "Большие цели начинаются с маленьких шагов.",
-    introBody:
-      "Планируйте обучение, находите интересные курсы и следите за прогрессом — всё в одном месте.",
-    featureOneTitle: "Удобный план",
-    featureOneBody: "Составьте расписание с учётом вашего времени и целей.",
+    introBody: "Находите интересные курсы, проходите уроки и следите за прогрессом.",
+    featureOneTitle: "Учитесь в своём темпе",
+    featureOneBody: "Возвращайтесь к урокам в удобное время.",
     featureTwoTitle: "Полезные рекомендации",
     featureTwoBody: "Находите курсы с учётом языка и уровня.",
     featureThreeTitle: "Видимый прогресс",
@@ -266,7 +264,7 @@ const copy = {
     email: "Электронная почта",
     password: "Пароль",
     registerTitle: "Начните свой путь",
-    registerSubtitle: "Создайте аккаунт и составьте план обучения.",
+    registerSubtitle: "Создайте аккаунт и начните свой первый курс.",
     loginTitle: "С возвращением",
     loginSubtitle: "Войдите, чтобы продолжить обучение.",
     registerSubmit: "Создать аккаунт",
@@ -321,15 +319,14 @@ const copy = {
     getStarted: "시작하기",
     eyebrow: "나에게 맞는 학습",
     heroTitle: "나만의 속도로 배워 보세요.",
-    heroBody:
-      "목표에 맞는 학습 계획, 필요한 강의, 매일의 작은 성장을 한곳에서 경험하세요. 학습이 당신에게 맞춰집니다.",
+    heroBody: "관심 있는 강의를 찾고, 실습을 하며, 학습 진도를 확인하세요.",
     startLearning: "학습 시작하기",
     seeHow: "이용 방법 보기",
     learnerNote: "매일 조금씩 성장하는 학습자들과 함께하세요",
     dailyGoal: "오늘의 목표",
     dailyGoalValue: "25분 학습",
     yourJourney: "나의 학습 여정",
-    learningPath: "나의 학습 계획",
+    learningPath: "나의 학습 여정",
     courseOne: "생활 영어 회화",
     courseOneMeta: "강의 8개 · 언어",
     courseTwo: "AI 기초",
@@ -343,10 +340,9 @@ const copy = {
     fourLanguages: "4개 언어",
     whyStudyflow: "왜 StudyFlow인가요?",
     introTitle: "큰 목표는 작은 한 걸음에서 시작돼요.",
-    introBody:
-      "학습 계획을 세우고, 관심에 맞는 강의를 찾고, 성장을 확인하세요. 모든 것이 한곳에 있어요.",
-    featureOneTitle: "나에게 맞는 계획",
-    featureOneBody: "시간과 목표에 맞춰 학습 일정을 만들어 보세요.",
+    introBody: "관심 있는 강의를 찾고, 수업을 완료하고, 진도를 확인하세요.",
+    featureOneTitle: "나만의 속도로 학습",
+    featureOneBody: "편한 시간에 수업을 이어서 들으세요.",
     featureTwoTitle: "맞춤 추천",
     featureTwoBody: "언어와 학습 수준에 맞는 강의를 찾아보세요.",
     featureThreeTitle: "성장 확인",
@@ -364,7 +360,7 @@ const copy = {
     email: "이메일 주소",
     password: "비밀번호",
     registerTitle: "나만의 여정을 시작하세요",
-    registerSubtitle: "계정을 만들고 학습 계획을 세워 보세요.",
+    registerSubtitle: "계정을 만들고 첫 강의를 시작하세요.",
     loginTitle: "다시 만나 반가워요",
     loginSubtitle: "로그인하고 학습을 이어가세요.",
     registerSubmit: "계정 만들기",
@@ -518,26 +514,14 @@ const dashboardCopy = {
     lessonCount: "dars",
     completed: "Bajarildi",
     markComplete: "Tugatdim",
-    createPlan: "Reja tuzish",
-    studyDays: "Haftada kun",
-    sessionMinutes: "Daqiqa",
-    planButton: "Reja yaratish",
     emptyEnrollments: "Siz hali kursga yozilmagansiz. Pastdagi kurslardan boshlang.",
     emptyLessons: "Bu kursda hali dars yo‘q.",
     recommendationsTitle: "Sizga tavsiya etiladi",
     recommendationReason: "Nega mos",
-    plansTitle: "O‘quv rejalaringiz",
     emptyRecommendations: "Hozircha tavsiya yo‘q.",
-    emptyPlans: "Hali o‘quv rejangiz yo‘q. Kurs kartasidan reja tuzing.",
-    planCreated: "O‘quv reja yaratildi.",
-    planWeeks: "hafta",
-    planSessions: "mashg‘ulot",
     openLesson: "Darsni ochish",
     hideLesson: "Yopish",
-    planError: "Rejani yaratib bo‘lmadi. Kursga yozilganingizni tekshiring.",
     recommendedLevel: "Daraja",
-    minutesSuffix: "daq",
-    daysSuffix: "kun/hafta",
     assignmentTitleLabel: "Topshiriq nomi",
     assignmentInstructionsLabel: "Topshiriq sharti",
     assignmentMaxScoreLabel: "Maksimal ball",
@@ -693,26 +677,14 @@ const dashboardCopy = {
     lessonCount: "lessons",
     completed: "Completed",
     markComplete: "Mark complete",
-    createPlan: "Build a plan",
-    studyDays: "Days per week",
-    sessionMinutes: "Minutes",
-    planButton: "Create plan",
     emptyEnrollments: "You haven’t enrolled in a course yet. Pick one below to get started.",
     emptyLessons: "This course has no lessons yet.",
     recommendationsTitle: "Picked for you",
     recommendationReason: "Why it fits",
-    plansTitle: "Your study plans",
     emptyRecommendations: "No recommendations yet.",
-    emptyPlans: "No study plans yet. Create one from an enrolled course.",
-    planCreated: "Your study plan is ready.",
-    planWeeks: "weeks",
-    planSessions: "sessions",
     openLesson: "Open lesson",
     hideLesson: "Close",
-    planError: "Couldn’t create a plan. Check that you’re enrolled in this course.",
     recommendedLevel: "Level",
-    minutesSuffix: "min",
-    daysSuffix: "days/week",
     assignmentTitleLabel: "Assignment title",
     assignmentInstructionsLabel: "Instructions",
     assignmentMaxScoreLabel: "Maximum score",
@@ -867,26 +839,14 @@ const dashboardCopy = {
     lessonCount: "уроков",
     completed: "Завершено",
     markComplete: "Отметить",
-    createPlan: "Составить план",
-    studyDays: "Дней в неделю",
-    sessionMinutes: "Минуты",
-    planButton: "Создать план",
     emptyEnrollments: "Вы ещё не записались на курс. Выберите подходящий ниже.",
     emptyLessons: "В этом курсе пока нет уроков.",
     recommendationsTitle: "Рекомендуем вам",
     recommendationReason: "Почему подходит",
-    plansTitle: "Ваши учебные планы",
     emptyRecommendations: "Пока нет рекомендаций.",
-    emptyPlans: "Учебных планов пока нет. Создайте план в карточке курса.",
-    planCreated: "Учебный план готов.",
-    planWeeks: "нед.",
-    planSessions: "занятий",
     openLesson: "Открыть урок",
     hideLesson: "Закрыть",
-    planError: "Не удалось создать план. Проверьте запись на курс.",
     recommendedLevel: "Уровень",
-    minutesSuffix: "мин",
-    daysSuffix: "дн./нед.",
     assignmentTitleLabel: "Название задания",
     assignmentInstructionsLabel: "Условия задания",
     assignmentMaxScoreLabel: "Максимальный балл",
@@ -1038,26 +998,14 @@ const dashboardCopy = {
     lessonCount: "개 강의",
     completed: "완료",
     markComplete: "완료 표시",
-    createPlan: "학습 계획",
-    studyDays: "주간 학습일",
-    sessionMinutes: "분",
-    planButton: "계획 만들기",
     emptyEnrollments: "아직 신청한 강의가 없어요. 아래에서 시작해 보세요.",
     emptyLessons: "이 강의에는 아직 수업이 없어요.",
     recommendationsTitle: "나를 위한 추천",
     recommendationReason: "추천 이유",
-    plansTitle: "나의 학습 계획",
     emptyRecommendations: "아직 추천 강의가 없어요.",
-    emptyPlans: "아직 학습 계획이 없어요. 신청한 강의에서 만들어 보세요.",
-    planCreated: "학습 계획을 만들었어요.",
-    planWeeks: "주",
-    planSessions: "회 학습",
     openLesson: "강의 열기",
     hideLesson: "닫기",
-    planError: "계획을 만들지 못했어요. 강의 신청 여부를 확인해 주세요.",
     recommendedLevel: "수준",
-    minutesSuffix: "분",
-    daysSuffix: "일/주",
     assignmentTitleLabel: "과제 제목",
     assignmentInstructionsLabel: "과제 안내",
     assignmentMaxScoreLabel: "최대 점수",
@@ -1447,7 +1395,9 @@ function setupVideoCompletion(container, courseId, lesson) {
   const button = document.querySelector(`[data-complete="${lesson.id}"]`);
   const meter = document.querySelector(`[data-watch-progress="${lesson.id}"]`);
   let furthest = 0,
-    lastReport = 0,
+    lastReport = null,
+    lastEndedItem = null,
+    pendingCompletion = null,
     busy = false;
   const updateMeter = (result) => {
     if (meter)
@@ -1466,9 +1416,15 @@ function setupVideoCompletion(container, courseId, lesson) {
     ended = false,
     playbackRate = video?.playbackRate || 1,
   ) => {
-    if (busy || (!force && Math.abs(position - lastReport) < 4.5)) return;
+    if (!Number.isFinite(duration) || duration <= 0) return;
+    if (ended && lastEndedItem === itemIndex) return;
+    if (busy) {
+      if (ended)
+        pendingCompletion = [position, duration, itemIndex, itemCount, force, ended, playbackRate];
+      return;
+    }
+    if (!force && lastReport !== null && Math.abs(position - lastReport) < 4.5) return;
     busy = true;
-    lastReport = position;
     try {
       const result = await api(`/courses/${courseId}/progress/lessons/${lesson.id}/video-watch`, {
         method: "POST",
@@ -1481,10 +1437,18 @@ function setupVideoCompletion(container, courseId, lesson) {
           ended,
         }),
       });
+      lastReport = position;
+      if (ended) lastEndedItem = itemIndex;
       updateMeter(result);
     } catch {
+      // Keep the last successful position so the next playback event can retry.
     } finally {
       busy = false;
+      if (pendingCompletion) {
+        const completion = pendingCompletion;
+        pendingCompletion = null;
+        void report(...completion);
+      }
     }
   };
   const progressReady = api(`/courses/${courseId}/progress/lessons/${lesson.id}/video-watch`)
@@ -1510,6 +1474,7 @@ function setupVideoCompletion(container, courseId, lesson) {
       if (video.currentTime > furthest + 1.5) video.currentTime = furthest;
     });
     video.addEventListener("timeupdate", () => {
+      if (video.currentTime < video.duration - 1.5) lastEndedItem = null;
       if (video.currentTime <= furthest + 1.5) furthest = Math.max(furthest, video.currentTime);
       report(furthest, video.duration, 0, 1);
     });
@@ -1528,25 +1493,25 @@ function setupVideoCompletion(container, courseId, lesson) {
             activeIndex = 0,
             itemCount = 1,
             activeDuration = 0,
+            activePosition = 0,
             timer;
           const loadItemProgress = async (index) => {
             const result = await api(
               `/courses/${courseId}/progress/lessons/${lesson.id}/video-watch?item_index=${index}`,
-            );
-            furthest = result.furthest_position_seconds;
-            lastReport = furthest;
-            updateMeter(result);
-            return result;
+            ).catch(() => null);
+            furthest = result?.furthest_position_seconds || 0;
+            lastReport = null;
+            if (result) updateMeter(result);
           };
           const poll = async () => {
             if (!player || busy) return;
-            const playlist = player.getPlaylist() || [];
+            const playlist = player.getPlaylist?.() || [];
             const nextCount = Math.max(1, playlist.length);
-            const nextIndex = Math.max(0, player.getPlaylistIndex() || 0);
+            const nextIndex = Math.max(0, player.getPlaylistIndex?.() || 0);
             if (nextIndex !== activeIndex || nextCount !== itemCount) {
               if (activeDuration > 0)
                 await report(
-                  player.getCurrentTime() || furthest,
+                  activePosition,
                   activeDuration,
                   activeIndex,
                   itemCount,
@@ -1557,13 +1522,23 @@ function setupVideoCompletion(container, courseId, lesson) {
               activeIndex = nextIndex;
               itemCount = nextCount;
               activeDuration = player.getDuration() || 0;
+              activePosition = 0;
+              lastEndedItem = null;
               await loadItemProgress(activeIndex);
               return;
             }
             const duration = player.getDuration() || activeDuration;
             const position = player.getCurrentTime() || 0;
-            if (duration > 0) activeDuration = duration;
-            if (player.getPlayerState() === 1) {
+            if (duration <= 0) return;
+            activeDuration = duration;
+            activePosition = position;
+            const state = player.getPlayerState();
+            if (lastReport === null && state !== 0) {
+              await report(position <= 1.5 ? 0 : position, duration, activeIndex, itemCount, true);
+              return;
+            }
+            if (state === 1) {
+              if (position < duration - 1.5) lastEndedItem = null;
               furthest = Math.max(furthest, position);
               await report(
                 position,
@@ -1574,7 +1549,7 @@ function setupVideoCompletion(container, courseId, lesson) {
                 false,
                 player.getPlaybackRate() || 1,
               );
-            } else if (player.getPlayerState() === 0 && duration > 0) {
+            } else if (state === 0) {
               furthest = duration;
               await report(
                 furthest,
@@ -1592,10 +1567,11 @@ function setupVideoCompletion(container, courseId, lesson) {
               onReady: async (event) => {
                 player = event.target;
                 try {
-                  itemCount = Math.max(1, (player.getPlaylist() || []).length);
-                  activeIndex = Math.max(0, player.getPlaylistIndex() || 0);
+                  itemCount = Math.max(1, (player.getPlaylist?.() || []).length);
+                  activeIndex = Math.max(0, player.getPlaylistIndex?.() || 0);
                   activeDuration = player.getDuration() || 0;
                   await loadItemProgress(activeIndex);
+                  await poll();
                   timer = window.setInterval(poll, 1000);
                 } catch {
                   if (meter) meter.textContent = videoWatchCopy[language];
@@ -1603,6 +1579,7 @@ function setupVideoCompletion(container, courseId, lesson) {
                 resolve();
               },
               onStateChange: (event) => {
+                if (event.data === 1 && lastReport === null) void poll();
                 if (event.data === 0 && activeDuration > 0) {
                   furthest = activeDuration;
                   report(
@@ -1814,23 +1791,32 @@ function coursePrice(price) {
       }).format(Number(price))
     : t("freeCourse");
 }
-async function openCourseInDashboard(courseId) {
-  await loadDashboard();
+function focusEnrolledCourse(courseId, { previewDialog, openLesson = true } = {}) {
   const card = document.getElementById(`course-${courseId}`);
-  if (!card) return;
+  if (!card) return false;
+
+  if (previewDialog?.open) previewDialog.close();
   const toggle = card.querySelector("[data-toggle]");
-  if (toggle) {
+  const heading = card.querySelector("h3");
+  const action = card.querySelector("[data-final-exam], [data-certificate]");
+  const target = openLesson ? toggle || heading || card : action || heading || card;
+  if (openLesson && toggle) {
     const panel = document.getElementById(toggle.dataset.toggle);
-    if (panel && !panel.classList.contains("open")) panel.classList.add("open");
-    toggle.textContent = "⌃";
-    toggle.setAttribute("aria-label", t("hideLesson"));
+    if (panel && !panel.classList.contains("open")) toggle.click();
   }
-  (card.querySelector(".lesson-item") || card).scrollIntoView({
-    behavior: "smooth",
-    block: "center",
-  });
+  if (target === heading || target === card) target.tabIndex = -1;
+  target.focus({ preventScroll: true });
+  (openLesson ? card : action || card).scrollIntoView({ behavior: "instant", block: "start" });
+  return true;
 }
-async function startCourse(courseId, price) {
+
+async function openCourseInDashboard(courseId, previewDialog) {
+  if (focusEnrolledCourse(courseId, { previewDialog })) return;
+  const opened = await loadDashboard({ courseId, previewDialog });
+  if (!opened) throw new Error(t("coursePreviewError"));
+}
+
+async function startCourse(courseId, price, previewDialog) {
   const rememberCourse = () =>
     sessionStorage.setItem(
       "studyflow-pending-course",
@@ -1841,6 +1827,7 @@ async function startCourse(courseId, price) {
     window.location.href = "/app/learner-login.html";
     return;
   }
+  if (focusEnrolledCourse(courseId, { previewDialog })) return;
   try {
     if (Number(price) > 0) {
       const payment = await api(`/payments/courses/${courseId}`, { method: "POST" });
@@ -1859,12 +1846,12 @@ async function startCourse(courseId, price) {
       return;
     }
     if (error.status === 409 && error.message.includes("Already enrolled")) {
-      await openCourseInDashboard(courseId);
+      await openCourseInDashboard(courseId, previewDialog);
       return;
     }
     throw error;
   }
-  await openCourseInDashboard(courseId);
+  await openCourseInDashboard(courseId, previewDialog);
 }
 async function resumePendingCourse() {
   const saved = sessionStorage.getItem("studyflow-pending-course");
@@ -1923,11 +1910,13 @@ function renderCourses(courses, filtered = false) {
     );
   grid.querySelectorAll("[data-course]").forEach((button) =>
     button.addEventListener("click", async () => {
+      button.disabled = true;
       try {
         await startCourse(button.dataset.course, button.dataset.price);
       } catch (error) {
-        if (error.message.includes("Already enrolled")) loadDashboard();
-        else alert(error.message);
+        alert(error.message);
+      } finally {
+        button.disabled = false;
       }
     }),
   );
@@ -1968,16 +1957,11 @@ async function openCourseDetails(courseId) {
       const button = event.currentTarget;
       button.disabled = true;
       try {
-        await startCourse(course.id, course.price_uzs);
-        if (!accessToken || Number(course.price_uzs) === 0) dialog.close();
+        await startCourse(course.id, course.price_uzs, dialog);
       } catch (error) {
-        if (error.message.includes("Already enrolled")) {
-          dialog.close();
-          await loadDashboard();
-        } else {
-          button.disabled = false;
-          alert(error.message);
-        }
+        alert(error.message);
+      } finally {
+        button.disabled = false;
       }
     });
   } catch (error) {
@@ -2018,7 +2002,6 @@ async function openFinalExam(courseId) {
   host.innerHTML = `<p>${escapeHtml(t("finalExam"))}…</p>`;
   dialog.showModal();
   try {
-    await ensurePasskey();
     const exam = await api(
       `/courses/${courseId}/final-exam?language=${encodeURIComponent(language)}`,
     );
@@ -2053,7 +2036,7 @@ async function openFinalExam(courseId) {
         if (result.passed) {
           setTimeout(() => {
             dialog.close();
-            loadDashboard();
+            loadDashboard({ courseId, openLesson: false });
           }, 900);
         }
       } catch (error) {
@@ -3055,7 +3038,7 @@ async function renderProfile(profile) {
   }
 }
 
-async function loadDashboard() {
+async function loadDashboard({ courseId, previewDialog, openLesson } = {}) {
   if (!accessToken) {
     updateAuthUI();
     return;
@@ -3064,32 +3047,31 @@ async function loadDashboard() {
   try {
     user = await api("/auth/me");
     updateAuthUI();
-    await loadCourses();
+    const catalog = loadCourses();
     if (user.account_type === "author") {
-      await loadInstructorCourses();
+      await Promise.all([catalog, loadInstructorCourses()]);
       return;
     }
     coursesArea.innerHTML = `<div class="course-placeholder">${escapeHtml(t("dashboardTitle"))}…</div>`;
-    const [enrollmentsResult, recommendationResult, plansResult] = await Promise.allSettled([
-      api(`/enrollments/me?language=${encodeURIComponent(language)}`),
+    const supplementary = Promise.allSettled([
       api("/recommendations/me?limit=4"),
-      api("/learning-plans/me"),
+      renderProfile(user),
+      refreshPasskeyStatus(),
+      catalog,
     ]);
-    if (enrollmentsResult.status === "rejected") throw enrollmentsResult.reason;
-    const enrollments = enrollmentsResult.value;
+    const enrollments = await api(`/enrollments/me?language=${encodeURIComponent(language)}`);
+    await renderEnrolledCourses(enrollments);
+    const opened = courseId && focusEnrolledCourse(courseId, { previewDialog, openLesson });
+    const [recommendationResult] = await supplementary;
     const recommendationData =
       recommendationResult.status === "fulfilled"
         ? recommendationResult.value
         : { recommendations: [], ai_powered: false };
-    const plans = plansResult.status === "fulfilled" ? plansResult.value : [];
-    await renderProfile(user);
-    await refreshPasskeyStatus();
     renderRecommendations(
       recommendationData.recommendations || [],
       recommendationData.ai_powered || false,
     );
-    renderPlans(plans || []);
-    await renderEnrolledCourses(enrollments || []);
+    return opened;
   } catch (error) {
     coursesArea.innerHTML = `<div class="course-placeholder">${escapeHtml(error.message || t("genericError"))}</div>`;
     if (error.status === 401) {
@@ -3149,7 +3131,7 @@ async function renderEnrolledCourses(enrollments) {
             return `<div class="lesson-item"><span class="lesson-status ${done ? "done" : ""}">${done ? "✓" : "○"}</span><div class="lesson-entry"><span class="lesson-name">${escapeHtml(lesson.title)}</span></div>${!done && videoRequired ? `<small class="video-watch-meter" data-watch-progress="${lesson.id}">${videoWatchCopy[language]}</small>` : ""}${done ? `<span class="completed-label">${t("completed")}</span>` : `<button class="button button-outline" data-complete="${lesson.id}" data-course="${enrollment.course_id}" ${videoRequired ? "disabled" : ""}>${videoRequired ? videoWatchCopy[language] : t("markComplete")}</button>`}<button class="button button-outline quiz-open" data-quiz-course="${enrollment.course_id}" data-quiz-lesson="${lesson.id}">${t("openQuiz")}</button><button class="lesson-toggle" data-toggle="lesson-${lesson.id}" aria-label="${t("openLesson")}">⌄</button><div class="lesson-content" id="lesson-${lesson.id}"><p class="lesson-copy">${escapeHtml(lesson.content)}</p></div><div class="quiz-area" id="quiz-${lesson.id}" hidden></div></div>`;
           })
           .join("");
-        return `<article class="enrolled-card" id="course-${enrollment.course_id}"><div class="enrolled-top"><div><div class="section-label">${t("progress")}</div><h3>${escapeHtml(enrollment.course_title)}</h3><p>${lessons.length} ${t("lessonCount")}</p></div><strong>${progress.progress_percent}%</strong></div><div class="progress-track course-progress" style="--progress:${progress.progress_percent}%"><span></span></div><div class="progress-summary"><span>${progress.completed_lessons}/${progress.total_lessons} ${t("completed")}</span><span>${progress.progress_percent}%</span></div><div class="lessons-list">${items || `<div class="panel-empty">${t("emptyLessons")}</div>`}</div><div class="course-actions"><form class="plan-form" data-plan-course="${enrollment.course_id}"><label>${t("studyDays")}<select name="weekly_study_days"><option value="2">2</option><option value="3" selected>3</option><option value="5">5</option><option value="7">7</option></select></label><label>${t("sessionMinutes")}<select name="session_minutes"><option value="20">20</option><option value="30" selected>30</option><option value="45">45</option><option value="60">60</option></select></label><button class="button button-outline" type="submit">${t("planButton")}</button></form><p class="form-error" data-plan-error="${enrollment.course_id}" hidden></p><div class="course-completion-actions">${progress.total_lessons > 0 && progress.completed_lessons === progress.total_lessons ? (exam ? (exam.passed ? `<button class="button button-outline certificate-button" data-certificate="${enrollment.course_id}" data-issued="${certificate ? "true" : "false"}">${certificate ? t("viewCertificate") : t("certificateButton")}</button>` : `<button class="button button-dark final-exam-button" data-final-exam="${enrollment.course_id}">${t("finalExam")}${exam.latest_score !== null ? ` · ${exam.latest_score}%` : ""}</button>`) : `<p class="exam-unavailable">${t("finalExamUnavailable")}</p>`) : progress.total_lessons > 0 ? `<p class="exam-unavailable">${escapeHtml(t("finalExamLocked"))}</p>` : ""}</div></div>${progress.total_lessons > 0 && progress.completed_lessons === progress.total_lessons ? `<form class="course-review-form" data-review-course="${enrollment.course_id}"><h4>${escapeHtml(t("reviewTitle"))}</h4><label><span>${escapeHtml(t("reviewRating"))}</span><select name="rating">${[5, 4, 3, 2, 1].map((rating) => `<option value="${rating}" ${Number(review?.rating || 5) === rating ? "selected" : ""}>${rating} ★</option>`).join("")}</select></label><label><span>${escapeHtml(t("reviewComment"))}</span><textarea name="comment" rows="2" maxlength="2000" placeholder="${escapeHtml(t("reviewPlaceholder"))}">${escapeHtml(review?.comment || "")}</textarea></label><button class="button button-outline" type="submit">${escapeHtml(t("submitReview"))}</button><p class="review-form-message" role="status"></p></form>` : ""}</article>`;
+        return `<article class="enrolled-card" id="course-${enrollment.course_id}"><div class="enrolled-top"><div><div class="section-label">${t("progress")}</div><h3>${escapeHtml(enrollment.course_title)}</h3><p>${lessons.length} ${t("lessonCount")}</p></div><strong>${progress.progress_percent}%</strong></div><div class="progress-track course-progress" style="--progress:${progress.progress_percent}%"><span></span></div><div class="progress-summary"><span>${progress.completed_lessons}/${progress.total_lessons} ${t("completed")}</span><span>${progress.progress_percent}%</span></div><div class="lessons-list">${items || `<div class="panel-empty">${t("emptyLessons")}</div>`}</div><div class="course-actions"><div class="course-completion-actions">${progress.total_lessons > 0 && progress.completed_lessons === progress.total_lessons ? (exam ? (exam.passed ? `<button class="button button-outline certificate-button" data-certificate="${enrollment.course_id}" data-issued="${certificate ? "true" : "false"}">${certificate ? t("viewCertificate") : t("certificateButton")}</button>` : `<button class="button button-dark final-exam-button" data-final-exam="${enrollment.course_id}">${t("finalExam")}${exam.latest_score !== null ? ` · ${exam.latest_score}%` : ""}</button>`) : `<p class="exam-unavailable">${t("finalExamUnavailable")}</p>`) : progress.total_lessons > 0 ? `<p class="exam-unavailable">${escapeHtml(t("finalExamLocked"))}</p>` : ""}</div></div>${progress.total_lessons > 0 && progress.completed_lessons === progress.total_lessons ? `<form class="course-review-form" data-review-course="${enrollment.course_id}"><h4>${escapeHtml(t("reviewTitle"))}</h4><label><span>${escapeHtml(t("reviewRating"))}</span><select name="rating">${[5, 4, 3, 2, 1].map((rating) => `<option value="${rating}" ${Number(review?.rating || 5) === rating ? "selected" : ""}>${rating} ★</option>`).join("")}</select></label><label><span>${escapeHtml(t("reviewComment"))}</span><textarea name="comment" rows="2" maxlength="2000" placeholder="${escapeHtml(t("reviewPlaceholder"))}">${escapeHtml(review?.comment || "")}</textarea></label><button class="button button-outline" type="submit">${escapeHtml(t("submitReview"))}</button><p class="review-form-message" role="status"></p></form>` : ""}</article>`;
       })
       .join("");
   if (entries.length) {
@@ -3246,7 +3228,7 @@ async function renderEnrolledCourses(enrollments) {
           `/courses/${button.dataset.course}/progress/lessons/${button.dataset.complete}/complete`,
           { method: "POST" },
         );
-        await loadDashboard();
+        await loadDashboard({ courseId: button.dataset.course, openLesson: false });
       } catch (error) {
         button.disabled = false;
         alert(error.message);
@@ -3314,29 +3296,6 @@ async function renderEnrolledCourses(enrollments) {
         "aria-label",
         panel.classList.contains("open") ? t("hideLesson") : t("openLesson"),
       );
-    }),
-  );
-  container.querySelectorAll("[data-plan-course]").forEach((form) =>
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const errorBox = container.querySelector(`[data-plan-error="${form.dataset.planCourse}"]`);
-      errorBox.hidden = true;
-      const values = Object.fromEntries(new FormData(form));
-      try {
-        await api("/learning-plans/generate", {
-          method: "POST",
-          body: JSON.stringify({
-            course_id: form.dataset.planCourse,
-            weekly_study_days: Number(values.weekly_study_days),
-            session_minutes: Number(values.session_minutes),
-          }),
-        });
-        await loadDashboard();
-        $("#planList").scrollIntoView({ behavior: "smooth", block: "center" });
-      } catch {
-        errorBox.textContent = t("planError");
-        errorBox.hidden = false;
-      }
     }),
   );
 }
@@ -3446,26 +3405,6 @@ function renderRecommendations(recommendations, aiPowered = false) {
       }
     }),
   );
-}
-function renderPlans(plans) {
-  const container = $("#planList");
-  if (!plans.length) {
-    container.innerHTML = `<div class="panel-empty">${t("emptyPlans")}</div>`;
-    return;
-  }
-  container.innerHTML = plans
-    .slice(0, 4)
-    .map(
-      (plan) =>
-        `<article class="plan-card"><h4>${escapeHtml(plan.course_title)}</h4><p>${plan.estimated_weeks} ${t("planWeeks")} · ${plan.plan_items.length} ${t("planSessions")} · ${plan.session_minutes} ${t("minutesSuffix")}</p><ol class="plan-items">${plan.plan_items
-          .slice(0, 5)
-          .map(
-            (item) =>
-              `<li>${escapeHtml(item.lesson_title)} · ${item.week_number} ${t("planWeeks")} · ${item.session_minutes} ${t("minutesSuffix")}</li>`,
-          )
-          .join("")}</ol></article>`,
-    )
-    .join("");
 }
 function updateLanguagePreference() {
   if (accessToken)
@@ -3681,6 +3620,7 @@ form.addEventListener("submit", async (event) => {
 });
 
 setLanguage(language, false);
-if (accessToken) loadDashboard().then(resumePendingCourse);
-else loadCourses();
+if (!accessToken) loadCourses();
+else if (sessionStorage.getItem("studyflow-pending-course")) resumePendingCourse();
+else loadDashboard();
 checkReturnedPayment();
