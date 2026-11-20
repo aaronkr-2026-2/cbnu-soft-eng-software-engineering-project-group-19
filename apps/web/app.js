@@ -91,6 +91,10 @@ const copy = {
     catalogConnectionError:
       "Ulanish uzildi yoki javob kechikdi. Internetni tekshirib, qayta urinib ko‘ring.",
     catalogRetry: "Qayta urinish",
+    backToMyCourses: "Kurslarimga qaytish",
+    loadingCourse: "Kurs yuklanmoqda…",
+    openCourse: "Kursni ochish",
+    switchToLearner: "O‘quvchi sifatida kirish",
     courseSearchLabel: "Kurslarni qidirish",
     filterLanguageLabel: "Til bo‘yicha",
     filterLevelLabel: "Daraja bo‘yicha",
@@ -190,6 +194,10 @@ const copy = {
     catalogConnectionError:
       "The connection was lost or timed out. Check your connection and try again.",
     catalogRetry: "Try again",
+    backToMyCourses: "Back to my courses",
+    loadingCourse: "Loading course…",
+    openCourse: "Open course",
+    switchToLearner: "Sign in as a learner",
     courseSearchLabel: "Search courses",
     filterLanguageLabel: "Language",
     filterLevelLabel: "Level",
@@ -286,6 +294,10 @@ const copy = {
     catalogConnectionError:
       "Соединение прервалось или истекло время ожидания. Проверьте подключение и попробуйте снова.",
     catalogRetry: "Повторить",
+    backToMyCourses: "К моим курсам",
+    loadingCourse: "Загрузка курса…",
+    openCourse: "Открыть курс",
+    switchToLearner: "Войти как учащийся",
     courseSearchLabel: "Поиск курсов",
     filterLanguageLabel: "Язык",
     filterLevelLabel: "Уровень",
@@ -382,6 +394,10 @@ const copy = {
     catalogConnectionError:
       "연결이 끊겼거나 시간이 초과됐어요. 인터넷 연결을 확인하고 다시 시도해 주세요.",
     catalogRetry: "다시 시도",
+    backToMyCourses: "내 강의로 돌아가기",
+    loadingCourse: "강의를 불러오는 중…",
+    openCourse: "강의 열기",
+    switchToLearner: "학습자로 로그인",
     courseSearchLabel: "강의 검색",
     filterLanguageLabel: "언어",
     filterLevelLabel: "수준",
@@ -1605,7 +1621,7 @@ function setupVideoCompletion(container, courseId, lesson) {
               cleanupObserver.disconnect();
             }
           });
-          cleanupObserver.observe(container.closest("#enrolledCourses") || document.body, {
+          cleanupObserver.observe(container.closest("#activeCourse") || document.body, {
             childList: true,
             subtree: true,
           });
@@ -1643,6 +1659,10 @@ const form = $("#authForm");
 let language = localStorage.getItem("studyflow-language") || "uz";
 const CATALOG_REQUEST_TIMEOUT_MS = 75_000;
 let catalogRequestId = 0;
+let dashboardRequestId = 0;
+let learnerEnrollments = [];
+let activeCourseId = null;
+let courseRequest = null;
 let courseSearchTimer = null;
 let authMode = "register";
 let accessToken = localStorage.getItem("studyflow-token");
@@ -1791,75 +1811,136 @@ function coursePrice(price) {
       }).format(Number(price))
     : t("freeCourse");
 }
-function focusEnrolledCourse(courseId, { previewDialog, openLesson = true } = {}) {
-  const card = document.getElementById(`course-${courseId}`);
-  if (!card) return false;
-
-  if (previewDialog?.open) previewDialog.close();
-  const toggle = card.querySelector("[data-toggle]");
-  const heading = card.querySelector("h3");
-  const action = card.querySelector("[data-final-exam], [data-certificate]");
-  const target = openLesson ? toggle || heading || card : action || heading || card;
-  if (openLesson && toggle) {
-    const panel = document.getElementById(toggle.dataset.toggle);
-    if (panel && !panel.classList.contains("open")) toggle.click();
-  }
-  if (target === heading || target === card) target.tabIndex = -1;
-  target.focus({ preventScroll: true });
-  (openLesson ? card : action || card).scrollIntoView({ behavior: "instant", block: "start" });
-  return true;
+function showMyCourses() {
+  courseRequest?.abort();
+  activeCourseId = null;
+  $("#activeCourse").replaceChildren();
+  $("#activeCourseView").hidden = true;
+  $("#enrolledCourses").hidden = false;
 }
 
-async function openCourseInDashboard(courseId, previewDialog) {
-  if (focusEnrolledCourse(courseId, { previewDialog })) return;
-  const opened = await loadDashboard({ courseId, previewDialog });
-  if (!opened) throw new Error(t("coursePreviewError"));
+function redirectToCourseLogin(courseId, price) {
+  sessionStorage.setItem("studyflow-pending-course", JSON.stringify({ courseId, price }));
+  accessToken = null;
+  user = null;
+  learnerEnrollments = [];
+  localStorage.removeItem("studyflow-token");
+  updateAuthUI();
+  window.location.href = "/app/learner-login.html";
 }
 
-async function startCourse(courseId, price, previewDialog) {
-  const rememberCourse = () =>
-    sessionStorage.setItem(
-      "studyflow-pending-course",
-      JSON.stringify({ courseId, price: Number(price) || 0 }),
-    );
+function listEnrollments(options) {
+  return api(`/enrollments/me?language=${encodeURIComponent(language)}`, options);
+}
+
+async function openLearnerCourse(courseId, { price, previewDialog, openLesson = true } = {}) {
   if (!accessToken) {
-    rememberCourse();
-    window.location.href = "/app/learner-login.html";
+    redirectToCourseLogin(courseId, price);
     return;
   }
-  if (focusEnrolledCourse(courseId, { previewDialog })) return;
+
+  courseRequest?.abort();
+  const request = new AbortController();
+  courseRequest = request;
+  activeCourseId = courseId;
+  const options = {
+    signal: AbortSignal.any([request.signal, AbortSignal.timeout(CATALOG_REQUEST_TIMEOUT_MS)]),
+  };
+  const view = $("#activeCourseView");
+  const host = $("#activeCourse");
+
   try {
-    if (Number(price) > 0) {
-      const payment = await api(`/payments/courses/${courseId}`, { method: "POST" });
-      window.location.assign(payment.checkout_url);
-      return;
-    }
-    await api(`/courses/${courseId}/enroll`, { method: "POST" });
-  } catch (error) {
-    if (error.status === 401) {
-      rememberCourse();
-      accessToken = null;
-      user = null;
-      localStorage.removeItem("studyflow-token");
+    // A catalog click can arrive before the initial dashboard has loaded.
+    if (!user) {
+      const account = await api("/auth/me", options);
+      if (request.signal.aborted) return;
+      user = account;
       updateAuthUI();
-      window.location.href = "/app/learner-login.html";
+    }
+    if (user.account_type !== "learner") {
+      redirectToCourseLogin(courseId, price);
       return;
     }
-    if (error.status === 409 && error.message.includes("Already enrolled")) {
-      await openCourseInDashboard(courseId, previewDialog);
+    if (previewDialog?.open) previewDialog.close();
+    $("#enrolledCourses").hidden = true;
+    view.hidden = false;
+    host.innerHTML = `<p class="panel-empty" role="status">${escapeHtml(t("loadingCourse"))}</p>`;
+    view.scrollIntoView({ behavior: "instant", block: "start" });
+
+    let enrollment = learnerEnrollments.find((item) => item.course_id === courseId);
+    if (!enrollment && price !== undefined) {
+      try {
+        enrollment = await api(`/courses/${courseId}/enroll`, { ...options, method: "POST" });
+        if (!request.signal.aborted) loadDashboard();
+      } catch (error) {
+        if (error.status === 402) {
+          const payment = await api(`/payments/courses/${courseId}`, {
+            ...options,
+            method: "POST",
+          });
+          if (!request.signal.aborted) window.location.assign(payment.checkout_url);
+          return;
+        }
+        if (error.status !== 409) throw error;
+      }
+    }
+    if (!enrollment) {
+      const enrollments = await listEnrollments(options);
+      enrollment = enrollments.find((item) => item.course_id === courseId);
+    }
+    if (!enrollment) throw new Error(t("coursePreviewError"));
+
+    const [lessons, progress] = await Promise.all([
+      api(`/courses/${courseId}/lessons?language=${encodeURIComponent(language)}`, options),
+      api(`/courses/${courseId}/progress/me`, options),
+    ]);
+    if (request.signal.aborted) return;
+    const examUnlocked =
+      progress.total_lessons > 0 && progress.completed_lessons === progress.total_lessons;
+    renderLearnerCourse(enrollment, lessons, progress, request.signal);
+    const firstToggle =
+      host.querySelector(".lesson-item:has([data-complete]) [data-toggle]") ||
+      host.querySelector("[data-toggle]");
+    const heading = host.querySelector("h3");
+    if ((openLesson || !examUnlocked) && firstToggle) firstToggle.click();
+    heading.focus({ preventScroll: true });
+    if (!examUnlocked) return;
+
+    const [exam, certificate, review] = await Promise.all([
+      api(`/courses/${courseId}/final-exam`, options).catch(() => null),
+      api(`/courses/${courseId}/certificate/me`, options).catch(() => null),
+      api(`/courses/${courseId}/reviews/me`, options).catch(() => null),
+    ]);
+    if (request.signal.aborted) return;
+    renderCourseCompletion(host, courseId, exam, certificate, review);
+    const action = host.querySelector("[data-final-exam], [data-certificate]");
+    if (!openLesson && action) {
+      action.focus({ preventScroll: true });
+      action.scrollIntoView({ behavior: "instant", block: "start" });
+    }
+  } catch (error) {
+    if (request.signal.aborted) return;
+    if (error.status === 401) {
+      redirectToCourseLogin(courseId, price);
       return;
     }
-    throw error;
+    if (previewDialog?.open) previewDialog.close();
+    $("#enrolledCourses").hidden = true;
+    view.hidden = false;
+    host.innerHTML = `<p class="form-error" role="alert">${escapeHtml(error.name === "TimeoutError" || error instanceof TypeError ? t("catalogConnectionError") : error.message || t("coursePreviewError"))}</p><button class="button button-outline" type="button" data-course-retry>${escapeHtml(t("catalogRetry"))}</button>`;
+    const retry = host.querySelector("[data-course-retry]");
+    retry.addEventListener("click", () => openLearnerCourse(courseId, { price, openLesson }));
+    retry.focus();
   }
-  await openCourseInDashboard(courseId, previewDialog);
 }
+
 async function resumePendingCourse() {
   const saved = sessionStorage.getItem("studyflow-pending-course");
   if (!saved || !accessToken) return;
   sessionStorage.removeItem("studyflow-pending-course");
   try {
     const course = JSON.parse(saved);
-    await startCourse(course.courseId, course.price);
+    await openLearnerCourse(course.courseId, { price: course.price });
   } catch (error) {
     alert(error.message || t("genericError"));
   }
@@ -1878,7 +1959,8 @@ async function checkReturnedPayment() {
     if (payment.status === "success") {
       sessionStorage.removeItem("studyflow-pending-payment");
       alert(t("paymentSuccess"));
-      await loadDashboard();
+      await openLearnerCourse(payment.course_id);
+      loadDashboard();
     } else if (["failed", "cancelled", "reverted"].includes(payment.status)) {
       sessionStorage.removeItem("studyflow-pending-payment");
       alert(t("paymentError"));
@@ -1912,7 +1994,7 @@ function renderCourses(courses, filtered = false) {
     button.addEventListener("click", async () => {
       button.disabled = true;
       try {
-        await startCourse(button.dataset.course, button.dataset.price);
+        await openLearnerCourse(button.dataset.course, { price: Number(button.dataset.price) });
       } catch (error) {
         alert(error.message);
       } finally {
@@ -1952,12 +2034,18 @@ async function openCourseDetails(courseId) {
       ? `${groupedLessons}${unassigned.length ? `<section class="course-outline-module"><h4>${escapeHtml(t("unassignedLessonsLabel"))}</h4>${lessonList(unassigned)}</section>` : ""}`
       : lessonList(course.lessons) ||
         `<p class="panel-empty">${escapeHtml(t("noCourseLessons"))}</p>`;
-    host.innerHTML = `${course.banner_url ? `<img class="course-preview-banner" src="${escapeHtml(course.banner_url)}" alt="${escapeHtml(course.title)}">` : ""}<div class="section-label">${escapeHtml(t("courseDetails"))}</div><h2>${escapeHtml(course.title)}</h2><p class="course-preview-description">${escapeHtml(course.description || "")}</p>${courseTranslationNotice(course)}<div class="course-preview-meta"><span>${escapeHtml(t(`language${course.language[0].toUpperCase()}${course.language.slice(1)}`))}</span><span>${escapeHtml(humanLevel(course.level))}</span><span>${course.lessons.length} ${escapeHtml(t("courseLessonCount"))}</span></div><div class="course-price course-preview-price">${escapeHtml(coursePrice(course.price_uzs))}</div>${course.price_uzs > 0 ? `<p class="payment-provider-note">${escapeHtml(t("paymentProviderLabel"))}</p>` : ""}<h3>${escapeHtml(t("courseOutline"))}</h3>${lessons}<div class="course-review-summary"><h3>${escapeHtml(t("reviewTitle"))} ${course.average_rating !== null ? `★ ${course.average_rating.toFixed(1)} · ${course.review_count} ${escapeHtml(t("reviewsCount"))}` : escapeHtml(t("noReviews"))}</h3>${course.reviews.length ? `<div class="public-review-list">${course.reviews.map((review) => `<article class="public-review"><div><b>${escapeHtml(review.reviewer_name)}</b><span>${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</span></div>${review.comment ? `<p>${escapeHtml(review.comment)}</p>` : ""}</article>`).join("")}</div>` : ""}</div><button id="enrollFromPreview" class="button button-dark" data-course="${course.id}">${escapeHtml(course.price_uzs > 0 ? t("buyCourse") : t("enrollFromPreview"))} ↗</button>`;
+    const startLabel =
+      user?.account_type === "author"
+        ? "switchToLearner"
+        : course.price_uzs > 0
+          ? "buyCourse"
+          : "enrollFromPreview";
+    host.innerHTML = `${course.banner_url ? `<img class="course-preview-banner" src="${escapeHtml(course.banner_url)}" alt="${escapeHtml(course.title)}">` : ""}<div class="section-label">${escapeHtml(t("courseDetails"))}</div><h2>${escapeHtml(course.title)}</h2><p class="course-preview-description">${escapeHtml(course.description || "")}</p>${courseTranslationNotice(course)}<div class="course-preview-meta"><span>${escapeHtml(t(`language${course.language[0].toUpperCase()}${course.language.slice(1)}`))}</span><span>${escapeHtml(humanLevel(course.level))}</span><span>${course.lessons.length} ${escapeHtml(t("courseLessonCount"))}</span></div><div class="course-price course-preview-price">${escapeHtml(coursePrice(course.price_uzs))}</div>${course.price_uzs > 0 ? `<p class="payment-provider-note">${escapeHtml(t("paymentProviderLabel"))}</p>` : ""}<h3>${escapeHtml(t("courseOutline"))}</h3>${lessons}<div class="course-review-summary"><h3>${escapeHtml(t("reviewTitle"))} ${course.average_rating !== null ? `★ ${course.average_rating.toFixed(1)} · ${course.review_count} ${escapeHtml(t("reviewsCount"))}` : escapeHtml(t("noReviews"))}</h3>${course.reviews.length ? `<div class="public-review-list">${course.reviews.map((review) => `<article class="public-review"><div><b>${escapeHtml(review.reviewer_name)}</b><span>${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</span></div>${review.comment ? `<p>${escapeHtml(review.comment)}</p>` : ""}</article>`).join("")}</div>` : ""}</div><button id="enrollFromPreview" class="button button-dark" data-course="${course.id}">${escapeHtml(t(startLabel))} ↗</button>`;
     $("#enrollFromPreview").addEventListener("click", async (event) => {
       const button = event.currentTarget;
       button.disabled = true;
       try {
-        await startCourse(course.id, course.price_uzs, dialog);
+        await openLearnerCourse(course.id, { price: course.price_uzs, previewDialog: dialog });
       } catch (error) {
         alert(error.message);
       } finally {
@@ -2036,7 +2124,8 @@ async function openFinalExam(courseId) {
         if (result.passed) {
           setTimeout(() => {
             dialog.close();
-            loadDashboard({ courseId, openLesson: false });
+            if (activeCourseId === courseId) openLearnerCourse(courseId, { openLesson: false });
+            loadDashboard();
           }, 900);
         }
       } catch (error) {
@@ -3038,49 +3127,77 @@ async function renderProfile(profile) {
   }
 }
 
-async function loadDashboard({ courseId, previewDialog, openLesson } = {}) {
+async function loadDashboard() {
   if (!accessToken) {
     updateAuthUI();
     return;
   }
+  const token = accessToken;
+  const requestId = ++dashboardRequestId;
+  const isCurrent = () => token === accessToken && requestId === dashboardRequestId;
   const coursesArea = $("#enrolledCourses");
   try {
-    user = await api("/auth/me");
+    const account = await api("/auth/me");
+    if (!isCurrent()) return;
+    user = account;
     updateAuthUI();
     const catalog = loadCourses();
     if (user.account_type === "author") {
       await Promise.all([catalog, loadInstructorCourses()]);
       return;
     }
-    coursesArea.innerHTML = `<div class="course-placeholder">${escapeHtml(t("dashboardTitle"))}…</div>`;
-    const supplementary = Promise.allSettled([
+    if (!coursesArea.hasChildNodes()) {
+      coursesArea.innerHTML = `<div class="course-placeholder">${escapeHtml(t("dashboardTitle"))}…</div>`;
+    }
+    Promise.allSettled([
       api("/recommendations/me?limit=4"),
       renderProfile(user),
       refreshPasskeyStatus(),
       catalog,
-    ]);
-    const enrollments = await api(`/enrollments/me?language=${encodeURIComponent(language)}`);
-    await renderEnrolledCourses(enrollments);
-    const opened = courseId && focusEnrolledCourse(courseId, { previewDialog, openLesson });
-    const [recommendationResult] = await supplementary;
-    const recommendationData =
-      recommendationResult.status === "fulfilled"
-        ? recommendationResult.value
-        : { recommendations: [], ai_powered: false };
-    renderRecommendations(
-      recommendationData.recommendations || [],
-      recommendationData.ai_powered || false,
+    ]).then(([result]) => {
+      if (!isCurrent()) return;
+      const data = result.status === "fulfilled" ? result.value : null;
+      renderRecommendations(data?.recommendations || [], data?.ai_powered || false);
+    });
+    const enrollments = await listEnrollments();
+    if (!isCurrent()) return;
+    learnerEnrollments = enrollments;
+    renderEnrollmentList(enrollments);
+
+    const entries = await Promise.all(
+      enrollments.map(async (enrollment) => {
+        const [progress, certificate] = await Promise.all([
+          api(`/courses/${enrollment.course_id}/progress/me`).catch(() => null),
+          api(`/courses/${enrollment.course_id}/certificate/me`).catch(() => null),
+        ]);
+        return { enrollment, progress, certificate };
+      }),
     );
-    return opened;
+    if (isCurrent()) renderLearningOverview(entries);
   } catch (error) {
+    if (!isCurrent()) return;
     coursesArea.innerHTML = `<div class="course-placeholder">${escapeHtml(error.message || t("genericError"))}</div>`;
     if (error.status === 401) {
       accessToken = null;
       user = null;
+      learnerEnrollments = [];
+      showMyCourses();
       localStorage.removeItem("studyflow-token");
       updateAuthUI();
     }
   }
+}
+
+function renderEnrollmentList(enrollments) {
+  const container = $("#enrolledCourses");
+  container.innerHTML = enrollments.length
+    ? enrollments
+        .map(
+          ({ course_id, course_title }) =>
+            `<article class="learner-list-card"><div><b>${escapeHtml(course_title)}</b></div><button type="button" class="button button-outline button-small" data-open-enrollment="${escapeHtml(course_id)}">${escapeHtml(t("openCourse"))}</button></article>`,
+        )
+        .join("")
+    : `<div class="course-placeholder">${escapeHtml(t("emptyEnrollments"))}</div>`;
 }
 function renderLearnerAssignment(lesson, assignment) {
   const submission = assignment.my_submission;
@@ -3093,90 +3210,56 @@ function renderLearnerAssignment(lesson, assignment) {
   return `<section class="learner-assignment"><h4>${escapeHtml(assignment.title)}</h4><p>${escapeHtml(assignment.instructions)}</p>${status}<form class="assignment-submit-form" data-assignment-submit data-course-id="${lesson.course_id}" data-lesson-id="${lesson.id}"><label><span>${escapeHtml(t("assignmentAnswerLabel"))}</span><textarea name="answer" rows="4" maxlength="20000" required>${escapeHtml(submission?.answer || "")}</textarea></label><button class="button button-outline" type="submit">${escapeHtml(t(submission ? "assignmentResubmitButton" : "assignmentSubmitButton"))}</button><p class="assignment-form-message" role="status"></p></form></section>`;
 }
 
-async function renderEnrolledCourses(enrollments) {
-  const container = $("#enrolledCourses");
-  const entries = await Promise.all(
-    enrollments.map(async (enrollment) => {
-      const [lessons, progress, certificate, review] = await Promise.all([
-        api(`/courses/${enrollment.course_id}/lessons?language=${encodeURIComponent(language)}`),
-        api(`/courses/${enrollment.course_id}/progress/me`),
-        api(`/courses/${enrollment.course_id}/certificate/me`).catch(() => null),
-        api(`/courses/${enrollment.course_id}/reviews/me`).catch(() => null),
-      ]);
-      const lessonAssignments = await Promise.all(
-        lessons.map((lesson) =>
-          api(
-            `/courses/${enrollment.course_id}/lessons/${lesson.id}/assignment?language=${encodeURIComponent(language)}`,
-          ).catch(() => null),
-        ),
-      );
-      const exam =
-        progress.total_lessons > 0 && progress.completed_lessons === progress.total_lessons
-          ? await api(`/courses/${enrollment.course_id}/final-exam`).catch(() => null)
-          : null;
-      return { enrollment, lessons, lessonAssignments, progress, certificate, exam, review };
-    }),
-  );
-  if (!entries.length)
-    container.innerHTML = `<div class="course-placeholder">${t("emptyEnrollments")}</div>`;
-  else
-    container.innerHTML = entries
-      .map(({ enrollment, lessons, progress, certificate, exam, review }) => {
-        const items = lessons
-          .map((lesson) => {
-            const done = progress.completed_lesson_ids.includes(lesson.id);
-            const videoRequired =
-              lesson.resource_type === "video" &&
-              Boolean(lesson.resource_url || lesson.external_video_url);
-            return `<div class="lesson-item"><span class="lesson-status ${done ? "done" : ""}">${done ? "✓" : "○"}</span><div class="lesson-entry"><span class="lesson-name">${escapeHtml(lesson.title)}</span></div>${!done && videoRequired ? `<small class="video-watch-meter" data-watch-progress="${lesson.id}">${videoWatchCopy[language]}</small>` : ""}${done ? `<span class="completed-label">${t("completed")}</span>` : `<button class="button button-outline" data-complete="${lesson.id}" data-course="${enrollment.course_id}" ${videoRequired ? "disabled" : ""}>${videoRequired ? videoWatchCopy[language] : t("markComplete")}</button>`}<button class="button button-outline quiz-open" data-quiz-course="${enrollment.course_id}" data-quiz-lesson="${lesson.id}">${t("openQuiz")}</button><button class="lesson-toggle" data-toggle="lesson-${lesson.id}" aria-label="${t("openLesson")}">⌄</button><div class="lesson-content" id="lesson-${lesson.id}"><p class="lesson-copy">${escapeHtml(lesson.content)}</p></div><div class="quiz-area" id="quiz-${lesson.id}" hidden></div></div>`;
-          })
-          .join("");
-        return `<article class="enrolled-card" id="course-${enrollment.course_id}"><div class="enrolled-top"><div><div class="section-label">${t("progress")}</div><h3>${escapeHtml(enrollment.course_title)}</h3><p>${lessons.length} ${t("lessonCount")}</p></div><strong>${progress.progress_percent}%</strong></div><div class="progress-track course-progress" style="--progress:${progress.progress_percent}%"><span></span></div><div class="progress-summary"><span>${progress.completed_lessons}/${progress.total_lessons} ${t("completed")}</span><span>${progress.progress_percent}%</span></div><div class="lessons-list">${items || `<div class="panel-empty">${t("emptyLessons")}</div>`}</div><div class="course-actions"><div class="course-completion-actions">${progress.total_lessons > 0 && progress.completed_lessons === progress.total_lessons ? (exam ? (exam.passed ? `<button class="button button-outline certificate-button" data-certificate="${enrollment.course_id}" data-issued="${certificate ? "true" : "false"}">${certificate ? t("viewCertificate") : t("certificateButton")}</button>` : `<button class="button button-dark final-exam-button" data-final-exam="${enrollment.course_id}">${t("finalExam")}${exam.latest_score !== null ? ` · ${exam.latest_score}%` : ""}</button>`) : `<p class="exam-unavailable">${t("finalExamUnavailable")}</p>`) : progress.total_lessons > 0 ? `<p class="exam-unavailable">${escapeHtml(t("finalExamLocked"))}</p>` : ""}</div></div>${progress.total_lessons > 0 && progress.completed_lessons === progress.total_lessons ? `<form class="course-review-form" data-review-course="${enrollment.course_id}"><h4>${escapeHtml(t("reviewTitle"))}</h4><label><span>${escapeHtml(t("reviewRating"))}</span><select name="rating">${[5, 4, 3, 2, 1].map((rating) => `<option value="${rating}" ${Number(review?.rating || 5) === rating ? "selected" : ""}>${rating} ★</option>`).join("")}</select></label><label><span>${escapeHtml(t("reviewComment"))}</span><textarea name="comment" rows="2" maxlength="2000" placeholder="${escapeHtml(t("reviewPlaceholder"))}">${escapeHtml(review?.comment || "")}</textarea></label><button class="button button-outline" type="submit">${escapeHtml(t("submitReview"))}</button><p class="review-form-message" role="status"></p></form>` : ""}</article>`;
-      })
-      .join("");
-  if (entries.length) {
-    const lessonById = new Map(
-      entries.flatMap(({ lessons }) => lessons.map((lesson) => [lesson.id, lesson])),
+function renderLearnerCourse(enrollment, lessons, progress, signal) {
+  const container = $("#activeCourse");
+  const courseId = enrollment.course_id;
+  const completed =
+    progress.total_lessons > 0 && progress.completed_lessons === progress.total_lessons;
+  const items = lessons
+    .map((lesson) => {
+      const done = progress.completed_lesson_ids.includes(lesson.id);
+      const videoRequired =
+        lesson.resource_type === "video" &&
+        Boolean(lesson.resource_url || lesson.external_video_url);
+      return `<div class="lesson-item"><span class="lesson-status ${done ? "done" : ""}">${done ? "✓" : "○"}</span><div class="lesson-entry"><span class="lesson-name">${escapeHtml(lesson.title)}</span></div>${!done && videoRequired ? `<small class="video-watch-meter" data-watch-progress="${lesson.id}">${videoWatchCopy[language]}</small>` : ""}${done ? `<span class="completed-label">${t("completed")}</span>` : `<button class="button button-outline" data-complete="${lesson.id}" data-course="${enrollment.course_id}" ${videoRequired ? "disabled" : ""}>${videoRequired ? videoWatchCopy[language] : t("markComplete")}</button>`}<button class="button button-outline quiz-open" data-quiz-course="${enrollment.course_id}" data-quiz-lesson="${lesson.id}">${t("openQuiz")}</button><button class="lesson-toggle" data-toggle="lesson-${lesson.id}" aria-label="${t("openLesson")}">⌄</button><div class="lesson-content" id="lesson-${lesson.id}"><p class="lesson-copy">${escapeHtml(lesson.content)}</p></div><div class="quiz-area" id="quiz-${lesson.id}" hidden></div></div>`;
+    })
+    .join("");
+  container.innerHTML = `<article class="enrolled-card" id="course-${enrollment.course_id}"><div class="enrolled-top"><div><div class="section-label">${t("progress")}</div><h3 tabindex="-1">${escapeHtml(enrollment.course_title)}</h3><p>${lessons.length} ${t("lessonCount")}</p></div><strong>${progress.progress_percent}%</strong></div><div class="progress-track course-progress" style="--progress:${progress.progress_percent}%"><span></span></div><div class="progress-summary"><span>${progress.completed_lessons}/${progress.total_lessons} ${t("completed")}</span><span>${progress.progress_percent}%</span></div><div class="lessons-list">${items || `<div class="panel-empty">${t("emptyLessons")}</div>`}</div><div class="course-actions"><div class="course-completion-actions">${progress.total_lessons > 0 ? `<p class="exam-unavailable">${escapeHtml(t(completed ? "loadingCourse" : "finalExamLocked"))}</p>` : ""}</div></div></article>`;
+
+  const lessonById = new Map(lessons.map((lesson) => [lesson.id, lesson]));
+  container.querySelectorAll(".lesson-content").forEach((host) => {
+    const lesson = lessonById.get(host.id.slice("lesson-".length));
+    host.insertAdjacentHTML(
+      "afterbegin",
+      renderLessonBanner(lesson) + contentTranslationNotice(lesson),
     );
-    const assignmentByLesson = new Map(
-      entries.flatMap(({ lessonAssignments }) =>
-        lessonAssignments.filter(Boolean).map((assignment) => [assignment.lesson_id, assignment]),
-      ),
-    );
-    container.querySelectorAll(".lesson-content[id^='lesson-']").forEach((host) => {
-      const lesson = lessonById.get(host.id.slice("lesson-".length));
-      if (lesson)
-        host.insertAdjacentHTML(
-          "afterbegin",
-          renderLessonBanner(lesson) + contentTranslationNotice(lesson),
-        );
-      if (lesson) host.insertAdjacentHTML("beforeend", renderLessonResource(lesson));
-      const assignment = lesson ? assignmentByLesson.get(lesson.id) : null;
-      if (assignment)
-        host.insertAdjacentHTML("beforeend", renderLearnerAssignment(lesson, assignment));
-      const parent = host.closest(".lesson-item");
-      if (lesson && parent)
-        setupVideoCompletion(
-          parent,
-          entries.find((entry) => entry.lessons.some((item) => item.id === lesson.id)).enrollment
-            .course_id,
-          lesson,
-        );
-    });
-  }
+    host.insertAdjacentHTML("beforeend", renderLessonResource(lesson));
+    setupVideoCompletion(host.closest(".lesson-item"), courseId, lesson);
+  });
+
+  bindLearnerCourseActions(container, courseId, signal);
+}
+
+function renderLearningOverview(entries) {
   const completeEntries = entries.filter(
     ({ progress }) =>
-      progress.total_lessons > 0 && progress.completed_lessons === progress.total_lessons,
+      progress?.total_lessons > 0 && progress.completed_lessons === progress.total_lessons,
   );
   const completedLessons = entries.reduce(
-    (sum, { progress }) => sum + progress.completed_lessons,
+    (sum, { progress }) => sum + (progress?.completed_lessons ?? 0),
     0,
   );
   const certificates = entries.filter(({ certificate }) => certificate);
   const summaryItems = [
     [entries.length, t("courseCountLabel")],
-    [completeEntries.length, t("completedCoursesCountLabel")],
-    [completedLessons, t("completedLessonsCountLabel")],
+    [
+      entries.every(({ progress }) => progress) ? completeEntries.length : "–",
+      t("completedCoursesCountLabel"),
+    ],
+    [
+      entries.every(({ progress }) => progress) ? completedLessons : "–",
+      t("completedLessonsCountLabel"),
+    ],
     [certificates.length, t("certificatesCountLabel")],
   ];
   $("#learningOverview").innerHTML = summaryItems
@@ -3188,8 +3271,8 @@ async function renderEnrolledCourses(enrollments) {
   $("#completedCourseList").innerHTML = completeEntries.length
     ? completeEntries
         .map(
-          ({ enrollment, progress, certificate, exam }) =>
-            `<article class="learner-list-card"><div><b>${escapeHtml(enrollment.course_title)}</b><span>${progress.completed_lessons}/${progress.total_lessons} ${escapeHtml(t("completed"))}</span></div><span class="learner-list-status">${escapeHtml(certificate ? t("viewCertificate") : exam?.passed ? t("certificateButton") : t("finalExam"))}</span><a class="button button-outline button-small" href="#course-${enrollment.course_id}">${escapeHtml(t("myCoursesAndLessons"))}</a></article>`,
+          ({ enrollment, progress }) =>
+            `<article class="learner-list-card"><div><b>${escapeHtml(enrollment.course_title)}</b><span>${progress.completed_lessons}/${progress.total_lessons} ${escapeHtml(t("completed"))}</span></div><button type="button" class="button button-outline button-small" data-open-enrollment="${escapeHtml(enrollment.course_id)}">${escapeHtml(t("openCourse"))}</button></article>`,
         )
         .join("")
     : `<p class="panel-empty">${escapeHtml(t("emptyCompletedCourses"))}</p>`;
@@ -3205,21 +3288,9 @@ async function renderEnrolledCourses(enrollments) {
         })
         .join("")
     : `<p class="panel-empty">${escapeHtml(t("emptyCertificates"))}</p>`;
-  container.querySelectorAll("[data-assignment-submit]").forEach((form) =>
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const message = form.querySelector(".assignment-form-message");
-      try {
-        await api(
-          `/courses/${form.dataset.courseId}/lessons/${form.dataset.lessonId}/assignment/submissions`,
-          { method: "POST", body: JSON.stringify({ answer: form.elements.answer.value }) },
-        );
-        await loadDashboard();
-      } catch (error) {
-        message.textContent = error.message || t("studioError");
-      }
-    }),
-  );
+}
+
+function bindLearnerCourseActions(container, courseId, signal) {
   container.querySelectorAll("[data-complete]").forEach((button) =>
     button.addEventListener("click", async () => {
       button.disabled = true;
@@ -3228,13 +3299,80 @@ async function renderEnrolledCourses(enrollments) {
           `/courses/${button.dataset.course}/progress/lessons/${button.dataset.complete}/complete`,
           { method: "POST" },
         );
-        await loadDashboard({ courseId: button.dataset.course, openLesson: false });
+        if (activeCourseId === courseId) openLearnerCourse(courseId, { openLesson: false });
+        loadDashboard();
       } catch (error) {
         button.disabled = false;
         alert(error.message);
       }
     }),
   );
+  container
+    .querySelectorAll("[data-quiz-course]")
+    .forEach((button) =>
+      button.addEventListener("click", () =>
+        openQuiz(button.dataset.quizCourse, button.dataset.quizLesson),
+      ),
+    );
+  container.querySelectorAll("[data-toggle]").forEach((button) =>
+    button.addEventListener("click", () => {
+      const panel = document.getElementById(button.dataset.toggle);
+      panel.classList.toggle("open");
+      button.textContent = panel.classList.contains("open") ? "⌃" : "⌄";
+      if (panel.classList.contains("open") && !panel.dataset.assignmentLoaded) {
+        panel.dataset.assignmentLoaded = "true";
+        const lessonId = panel.id.slice("lesson-".length);
+        api(
+          `/courses/${courseId}/lessons/${lessonId}/assignment?language=${encodeURIComponent(language)}`,
+          { signal: AbortSignal.any([signal, AbortSignal.timeout(CATALOG_REQUEST_TIMEOUT_MS)]) },
+        )
+          .then((assignment) => {
+            if (!assignment || !panel.isConnected) return;
+            panel.insertAdjacentHTML(
+              "beforeend",
+              renderLearnerAssignment({ id: lessonId, course_id: courseId }, assignment),
+            );
+            bindLearnerAssignment(panel.querySelector("[data-assignment-submit]"), courseId);
+          })
+          .catch(() => {
+            delete panel.dataset.assignmentLoaded;
+          });
+      }
+      button.setAttribute(
+        "aria-label",
+        panel.classList.contains("open") ? t("hideLesson") : t("openLesson"),
+      );
+    }),
+  );
+}
+function bindLearnerAssignment(form, courseId) {
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const message = form.querySelector(".assignment-form-message");
+    try {
+      await api(
+        `/courses/${form.dataset.courseId}/lessons/${form.dataset.lessonId}/assignment/submissions`,
+        { method: "POST", body: JSON.stringify({ answer: form.elements.answer.value }) },
+      );
+      if (form.isConnected) await openLearnerCourse(courseId);
+    } catch (error) {
+      message.textContent = error.message || t("studioError");
+    }
+  });
+}
+
+function renderCourseCompletion(container, courseId, exam, certificate, review) {
+  container.querySelector(".course-completion-actions").innerHTML = exam
+    ? exam.passed
+      ? `<button class="button button-outline certificate-button" data-certificate="${courseId}" data-issued="${certificate ? "true" : "false"}">${t(certificate ? "viewCertificate" : "certificateButton")}</button>`
+      : `<button class="button button-dark final-exam-button" data-final-exam="${courseId}">${t("finalExam")}${exam.latest_score !== null ? ` · ${exam.latest_score}%` : ""}</button>`
+    : `<p class="exam-unavailable">${escapeHtml(t("finalExamUnavailable"))}</p>`;
+  container
+    .querySelector(".enrolled-card")
+    .insertAdjacentHTML(
+      "beforeend",
+      `<form class="course-review-form" data-review-course="${courseId}"><h4>${escapeHtml(t("reviewTitle"))}</h4><label><span>${escapeHtml(t("reviewRating"))}</span><select name="rating">${[5, 4, 3, 2, 1].map((rating) => `<option value="${rating}" ${Number(review?.rating || 5) === rating ? "selected" : ""}>${rating} ★</option>`).join("")}</select></label><label><span>${escapeHtml(t("reviewComment"))}</span><textarea name="comment" rows="2" maxlength="2000" placeholder="${escapeHtml(t("reviewPlaceholder"))}">${escapeHtml(review?.comment || "")}</textarea></label><button class="button button-outline" type="submit">${escapeHtml(t("submitReview"))}</button><p class="review-form-message" role="status"></p></form>`,
+    );
   container
     .querySelectorAll("[data-final-exam]")
     .forEach((button) =>
@@ -3257,6 +3395,7 @@ async function renderEnrolledCourses(enrollments) {
         showCertificate(certificate);
         button.dataset.issued = "true";
         button.textContent = t("viewCertificate");
+        loadDashboard();
       } catch (error) {
         alert(error.message || t("certificateError"));
       } finally {
@@ -3278,24 +3417,6 @@ async function renderEnrolledCourses(enrollments) {
       } catch (error) {
         message.textContent = error.message || t("studioError");
       }
-    }),
-  );
-  container
-    .querySelectorAll("[data-quiz-course]")
-    .forEach((button) =>
-      button.addEventListener("click", () =>
-        openQuiz(button.dataset.quizCourse, button.dataset.quizLesson),
-      ),
-    );
-  container.querySelectorAll("[data-toggle]").forEach((button) =>
-    button.addEventListener("click", () => {
-      const panel = document.getElementById(button.dataset.toggle);
-      panel.classList.toggle("open");
-      button.textContent = panel.classList.contains("open") ? "⌃" : "⌄";
-      button.setAttribute(
-        "aria-label",
-        panel.classList.contains("open") ? t("hideLesson") : t("openLesson"),
-      );
     }),
   );
 }
@@ -3397,8 +3518,8 @@ function renderRecommendations(recommendations, aiPowered = false) {
     button.addEventListener("click", async () => {
       button.disabled = true;
       try {
-        await api(`/courses/${button.dataset.recommend}/enroll`, { method: "POST" });
-        await loadDashboard();
+        await openLearnerCourse(button.dataset.recommend, { price: 0 });
+        button.disabled = false;
       } catch (error) {
         button.disabled = false;
         alert(error.message);
@@ -3442,8 +3563,20 @@ langPicker.addEventListener("change", async () => {
   setLanguage(langPicker.value, false);
   if (accessToken) {
     await updateLanguagePreference();
+    learnerEnrollments = [];
+    if (activeCourseId) openLearnerCourse(activeCourseId);
     loadDashboard();
   } else loadCourses();
+});
+$("#myLearning").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-open-enrollment]");
+  if (button) openLearnerCourse(button.dataset.openEnrollment);
+});
+$("a[href='#enrolledCoursesSection']").addEventListener("click", showMyCourses);
+$("#backToMyCourses").addEventListener("click", () => {
+  showMyCourses();
+  $("#enrolledCoursesSection").scrollIntoView({ behavior: "instant", block: "start" });
+  $("#enrolledCoursesSection > h3").focus({ preventScroll: true });
 });
 $("#finalExamClose").addEventListener("click", () => $("#finalExamDialog").close());
 $("#courseDetailsClose").addEventListener("click", () => $("#courseDetailsDialog").close());
@@ -3457,6 +3590,9 @@ $("#loginButton").addEventListener("click", () =>
     : (window.location.href = "/app/learner-login.html"),
 );
 $("#logoutButton").addEventListener("click", () => {
+  showMyCourses();
+  learnerEnrollments = [];
+  $("#enrolledCourses").replaceChildren();
   accessToken = null;
   user = null;
   localStorage.removeItem("studyflow-token");
@@ -3621,6 +3757,8 @@ form.addEventListener("submit", async (event) => {
 
 setLanguage(language, false);
 if (!accessToken) loadCourses();
-else if (sessionStorage.getItem("studyflow-pending-course")) resumePendingCourse();
-else loadDashboard();
+else {
+  loadDashboard();
+  resumePendingCourse();
+}
 checkReturnedPayment();

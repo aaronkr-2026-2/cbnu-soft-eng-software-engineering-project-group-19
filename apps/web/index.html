@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./style.css?v=course-navigation-1" />
+    <link rel="stylesheet" href="./style.css?v=course-workspace-1" />
     <link rel="stylesheet" href="./media-content.css" />
   </head>
   <body>
@@ -255,7 +255,7 @@
           </div>
         </div>
         <nav class="learner-menu" aria-label="Learning menu">
-          <a href="#enrolledCourses" data-i18n="myCoursesAndLessons"></a>
+          <a href="#enrolledCoursesSection" data-i18n="myCoursesAndLessons"></a>
           <a href="#completedCourses" data-i18n="completedCoursesMenu"></a>
           <a href="#myCertificates" data-i18n="myCertificatesMenu"></a>
           <a href="#myProfile" data-i18n="profileMenu"></a>
@@ -312,8 +312,17 @@
         </section>
         <div id="learningOverview" class="learning-overview" aria-live="polite"></div>
         <section class="learner-content-section" id="enrolledCoursesSection">
-          <h3 data-i18n="myCoursesAndLessons"></h3>
+          <h3 tabindex="-1" data-i18n="myCoursesAndLessons"></h3>
           <div id="enrolledCourses" class="enrolled-grid"></div>
+          <div id="activeCourseView" hidden>
+            <button
+              id="backToMyCourses"
+              type="button"
+              class="button button-outline button-small"
+              data-i18n="backToMyCourses"
+            ></button>
+            <div id="activeCourse"></div>
+          </div>
         </section>
         <section class="learner-content-section" id="completedCourses">
           <h3 data-i18n="completedCoursesTitle"></h3>
@@ -407,6 +416,6 @@
         ></button>
       </div>
     </dialog>
-    <script src="/app/app.js?v=course-navigation-1" defer></script>
+    <script src="/app/app.js?v=course-workspace-1" defer></script>
   </body>
 </html>

@@ -975,7 +975,12 @@ body[dir="rtl"] {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
-.enrolled-card,
+#activeCourseView {
+  scroll-margin-top: 70px;
+}
+#backToMyCourses {
+  margin-bottom: 12px;
+}
 .final-exam-button,
 .certificate-button {
   scroll-margin-top: 24px;
