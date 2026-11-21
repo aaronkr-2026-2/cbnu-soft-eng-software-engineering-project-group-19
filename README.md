@@ -59,7 +59,7 @@ The backend uses FastAPI, SQLAlchemy, Alembic, and PostgreSQL. The frontend is a
 - **Course authoring:** Create courses with ordered modules and lessons. Assign lessons to modules, manage the course outline, and add lesson materials, quizzes, and written assignments.
 - **Assignments:** Learners submit written work for enrolled courses; authors review submissions, give feedback, and award points.
 - **Assessment:** Take lesson quizzes, review prior attempts, and take an author-configured final exam after completing course lessons. The pass mark defaults to 70% and can be changed by the author.
-- **Certificates:** Passing the final exam unlocks a uniquely coded certificate that can be printed or saved as a PDF.
+- **Certificates:** Passing the final exam unlocks a uniquely coded certificate.
 - **Public certificate checks:** Anyone can verify a certificate code without an account; the result comes from the certificate record in the database.
 - **Step-up security:** Device passkeys are required before final-exam submission and first certificate issuance. The device may use a PIN, fingerprint, or face verification; the site does not receive biometric data or learn which device method was used.
 - **Profile:** Edit profile details and upload a profile image.
@@ -349,6 +349,17 @@ Passkey proof values are short-lived and single-use. Do not log them or store th
 2. Enter the certificate's verification code.
 3. Compare the returned recipient, course, and issue date with the certificate presented.
 4. Treat a code as valid only when the API finds its certificate record.
+
+### Certificate PDF samples
+
+On the [live site](https://scholward-academy.vercel.app/), select a language and open **My Certificates** to download an issued certificate again. The PDF includes a QR code and a link to the [public verification page](https://scholward-academy.vercel.app/app/verify.html).
+
+The samples below use fictional learner information. Their QR codes open the verification form.
+
+- [English PDF](docs/assets/scholward-certificate-sample-en.pdf)
+- [Russian PDF](docs/assets/scholward-certificate-sample-ru.pdf)
+- [Korean PDF](docs/assets/scholward-certificate-sample-ko.pdf)
+- [Uzbek PDF](docs/assets/scholward-certificate-sample-uz.pdf)
 
 ## Data model overview
 
