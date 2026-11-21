@@ -3604,6 +3604,10 @@ body[dir="rtl"] {
   line-height: 1.58;
 }
 
+.about-name {
+  margin-bottom: 14px;
+}
+
 .about-features {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 235px), 1fr));

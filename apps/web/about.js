@@ -3,6 +3,9 @@ const aboutCopy = {
     aboutTitle: "Dastur haqida",
     aboutIntro:
       "SCHOLWARD Academy — veb-sayt va mobil ilova orqali o‘z maromingizda o‘rganish platformasi. Ikkalasida ham bitta hisob bilan kurslaringizni ochib, o‘qishni davom ettirishingiz mumkin.",
+    aboutNameTitle: "Nom nimani anglatadi?",
+    aboutNameBody:
+      "SCHOLWARD nomida «Schol» o‘qish va bilimni, «Ward» esa qo‘llab-quvvatlashni ifodalaydi. «Academy» bu g‘oyalarni birlashtiradigan ta’lim makonini anglatadi.",
     aboutCoursesTitle: "Kurslar va video darslar",
     aboutCoursesBody:
       "O‘zbek, ingliz, rus yoki koreys tilidagi kursni tanlang. Video darslarni ilova ichida ko‘ring va saqlangan joydan davom eting.",
@@ -22,6 +25,9 @@ const aboutCopy = {
     aboutTitle: "About SCHOLWARD Academy",
     aboutIntro:
       "SCHOLWARD Academy is a learning platform for studying at your own pace on the web and on your phone. Use the same account on both to open your courses and continue where you left off.",
+    aboutNameTitle: "What does the name mean?",
+    aboutNameBody:
+      "In SCHOLWARD, “Schol” stands for study and knowledge, and “Ward” for support. “Academy” is the place where these ideas come together.",
     aboutCoursesTitle: "Courses and video lessons",
     aboutCoursesBody:
       "Choose a course in Uzbek, English, Russian, or Korean. Watch video lessons in the app and resume from your saved position.",
@@ -41,6 +47,9 @@ const aboutCopy = {
     aboutTitle: "О SCHOLWARD Academy",
     aboutIntro:
       "SCHOLWARD Academy — платформа для самостоятельного обучения на сайте и в мобильном приложении. Ваши курсы и прогресс доступны на обоих устройствах через один аккаунт.",
+    aboutNameTitle: "Что означает название?",
+    aboutNameBody:
+      "В названии SCHOLWARD часть «Schol» отсылает к учёбе и знаниям, а «Ward» — к поддержке. «Academy» обозначает учебное пространство, которое объединяет эти идеи.",
     aboutCoursesTitle: "Курсы и видеоуроки",
     aboutCoursesBody:
       "Выбирайте курсы на узбекском, английском, русском или корейском языке. Смотрите видеоуроки в приложении и продолжайте с сохранённого места.",
@@ -60,6 +69,9 @@ const aboutCopy = {
     aboutTitle: "SCHOLWARD Academy 소개",
     aboutIntro:
       "SCHOLWARD Academy는 웹과 모바일에서 자신의 속도로 공부할 수 있는 학습 플랫폼입니다. 같은 계정으로 강의를 열고 학습을 이어갈 수 있습니다.",
+    aboutNameTitle: "이름에는 어떤 의미가 있나요?",
+    aboutNameBody:
+      "SCHOLWARD의 ‘Schol’은 배움과 지식을, ‘Ward’는 든든한 지원을 뜻합니다. ‘Academy’는 이 두 가치를 하나로 모으는 배움의 공간입니다.",
     aboutCoursesTitle: "강의와 동영상 수업",
     aboutCoursesBody:
       "우즈베크어, 영어, 러시아어, 한국어 강의를 선택하세요. 앱에서 동영상 수업을 시청하고 저장된 위치에서 이어보세요.",

@@ -114,6 +114,7 @@ function FounderProfile() {
 }
 
 const aboutFeatures = [
+  ["aboutNameTitle", "aboutNameBody"],
   ["aboutCoursesTitle", "aboutCoursesBody"],
   ["aboutAssessmentTitle", "aboutAssessmentBody"],
   ["aboutProgressTitle", "aboutProgressBody"],

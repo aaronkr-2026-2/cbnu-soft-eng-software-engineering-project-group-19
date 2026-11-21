@@ -6,6 +6,7 @@ import smtplib
 import uuid
 from contextlib import closing
 from email.message import EmailMessage
+from email.utils import formataddr, parseaddr
 from http.client import HTTPException as HTTPClientError, HTTPSConnection
 from pathlib import Path
 from urllib.parse import urlencode
@@ -43,6 +44,7 @@ from app.models import User
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 AVATAR_DIR = Path(__file__).resolve().parents[2] / "storage" / "avatars"
 MAX_AVATAR_BYTES = 2 * 1024 * 1024
+PASSWORD_RESET_SENDER_NAME = "SCHOLWARD Academy"
 
 
 def to_user_response(user: User) -> UserResponse:
@@ -304,22 +306,26 @@ def request_password_reset(
     reset_query = urlencode({"token": token, "account_type": user.account_type})
     reset_url = f"{frontend_url}/reset-password.html?{reset_query}"
     message = EmailMessage()
-    message["Subject"] = "Reset your SCHOLWARD Academy password"
-    message["From"] = brevo_from or resend_from or smtp_from
+    message["Subject"] = f"Reset your {PASSWORD_RESET_SENDER_NAME} password"
     message["To"] = user.email
     message.set_content(
-        "We received a request to reset your SCHOLWARD Academy password. "
+        f"We received a request to reset your {PASSWORD_RESET_SENDER_NAME} password. "
         f"Open this link within 30 minutes: {reset_url}\n\n"
         "If you did not request this, ignore this email."
     )
     try:
+        _, sender_email = parseaddr(brevo_from or resend_from or smtp_from)
+        if not sender_email:
+            raise ValueError("Invalid password reset sender")
+        sender_header = formataddr((PASSWORD_RESET_SENDER_NAME, sender_email))
+        message["From"] = sender_header
         if brevo_api_key:
             send_reset_email_over_https(
                 "api.brevo.com",
                 "/v3/smtp/email",
                 {"api-key": brevo_api_key},
                 {
-                    "sender": {"name": "SCHOLWARD Academy", "email": brevo_from},
+                    "sender": {"name": PASSWORD_RESET_SENDER_NAME, "email": sender_email},
                     "to": [{"email": user.email}],
                     "subject": message["Subject"],
                     "textContent": message.get_content(),
@@ -331,7 +337,7 @@ def request_password_reset(
                 "/emails",
                 {"Authorization": f"Bearer {resend_api_key}"},
                 {
-                    "from": resend_from,
+                    "from": sender_header,
                     "to": [user.email],
                     "subject": message["Subject"],
                     "text": message.get_content(),

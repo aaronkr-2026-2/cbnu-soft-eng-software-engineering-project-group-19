@@ -1110,7 +1110,7 @@ def test_email_password_reset_accepts_new_password_and_rejects_reused_link(clien
     monkeypatch.setenv("SMTP_PORT", "587")
     monkeypatch.setenv("SMTP_USERNAME", "studyflow@example.com")
     monkeypatch.setenv("SMTP_PASSWORD", "test-app-password")
-    monkeypatch.setenv("SMTP_FROM", "studyflow@example.com")
+    monkeypatch.setenv("SMTP_FROM", "Old Sender <studyflow@example.com>")
     monkeypatch.setattr(auth_router.smtplib, "SMTP", FakeSMTP)
 
     request = client.post(
@@ -1120,7 +1120,13 @@ def test_email_password_reset_accepts_new_password_and_rejects_reused_link(clien
     assert request.status_code == 200, request.text
     assert len(sent_messages) == 1
 
-    reset_url = re.search(r"https?://\S+", sent_messages[0].get_content()).group(0)
+    message = sent_messages[0]
+    assert message["Subject"] == "Reset your SCHOLWARD Academy password"
+    (sender,) = message["From"].addresses
+    assert sender.display_name == "SCHOLWARD Academy"
+    assert sender.addr_spec == "studyflow@example.com"
+    assert "SCHOLWARD Academy" in message.get_content()
+    reset_url = re.search(r"https?://\S+", message.get_content()).group(0)
     reset_token = parse_qs(urlparse(reset_url).query)["token"][0]
     reset = client.post(
         "/auth/password-reset/confirm",
