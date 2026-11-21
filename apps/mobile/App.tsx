@@ -155,7 +155,7 @@ function CatalogCover({ course }: { course: Course }) {
       {uri && !failed ? (
         <CourseImage
           source={uri}
-          contentFit="cover"
+          contentFit="contain"
           cachePolicy="memory-disk"
           style={styles.fill}
           onError={() => setFailed(true)}

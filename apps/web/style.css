@@ -61,11 +61,20 @@ a {
 .brand-mark {
   flex: 0 0 auto;
   display: block;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
+}
+.brand-name {
+  display: grid;
+  gap: 2px;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
 }
 .brand-academy {
   color: var(--accent-ink);
+  font-size: 0.66em;
+  font-weight: 750;
+  letter-spacing: 0.035em;
 }
 .nav-links {
   display: flex;
@@ -2864,7 +2873,7 @@ body[dir="rtl"] {
 }
 .course-card-art {
   position: relative;
-  aspect-ratio: 2.1;
+  aspect-ratio: 5 / 2;
   overflow: hidden;
   display: grid;
   place-items: center;
@@ -2873,16 +2882,17 @@ body[dir="rtl"] {
 .course-card-image {
   display: block;
   width: 100%;
-  aspect-ratio: 2.1;
-  object-fit: cover;
+  aspect-ratio: 5 / 2;
+  object-fit: contain;
   background: #f4e1ce;
 }
 .course-preview-banner {
   display: block;
   width: 100%;
   max-height: 250px;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 14px;
+  background: #f4e1ce;
   margin-bottom: 20px;
 }
 .youtube-watch {
@@ -2941,15 +2951,6 @@ body[dir="rtl"] {
   box-shadow: 0 10px 24px #27351b18;
   backdrop-filter: blur(8px);
 }
-.course-art-wordmark {
-  position: absolute;
-  left: 14px;
-  bottom: 12px;
-  color: #3243329e;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-}
 .course-card-content {
   display: flex;
   flex: 1;
@@ -2980,8 +2981,11 @@ body[dir="rtl"] {
   font-size: 13px;
   line-height: 1.6;
 }
-.catalog-card-actions {
+.course-card .course-price {
   margin-top: auto;
+  margin-bottom: 10px;
+}
+.catalog-card-actions {
   padding-top: 12px;
   border-top: 1px solid var(--line);
 }
@@ -3211,10 +3215,6 @@ body[dir="rtl"] {
   }
   .course-grid {
     grid-template-columns: 1fr;
-  }
-  .course-card-art,
-  .course-card-image {
-    aspect-ratio: 2;
   }
   .course-art-mark {
     width: 48px;
