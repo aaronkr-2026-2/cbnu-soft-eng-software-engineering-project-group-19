@@ -38,7 +38,11 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     message: string,
-    readonly messageKey?: "learnerRequired" | "invalidCredentials" | "wrongCurrentPassword",
+    readonly messageKey?:
+      | "learnerRequired"
+      | "invalidCredentials"
+      | "wrongCurrentPassword"
+      | "invalidResetEmail",
   ) {
     super(message);
   }
@@ -100,6 +104,20 @@ export async function signIn(email: string, password: string): Promise<Session> 
   } catch (error) {
     if (error instanceof ApiError && [401, 403, 422].includes(error.status))
       throw new ApiError(error.status, "Invalid learner credentials", "invalidCredentials");
+    throw error;
+  }
+}
+
+export async function requestPasswordReset(email: string) {
+  try {
+    await request<{ message: string }>("/auth/password-reset/request", {
+      method: "POST",
+      body: { email },
+    });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 422) {
+      throw new ApiError(error.status, error.message, "invalidResetEmail");
+    }
     throw error;
   }
 }

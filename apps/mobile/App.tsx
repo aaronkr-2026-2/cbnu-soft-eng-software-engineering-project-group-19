@@ -27,6 +27,7 @@ import {
   loadCourse,
   loadProgress,
   loadSession,
+  requestPasswordReset,
   resourceUrl,
   signIn,
 } from "./api";
@@ -244,18 +245,46 @@ function Login({
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<unknown>();
+  const [resetMode, setResetMode] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const submitting = useRef(false);
+
+  const switchResetMode = useCallback((value: boolean) => {
+    if (submitting.current) return;
+    setError(undefined);
+    setPassword("");
+    setResetMode(value);
+    setResetSent(false);
+  }, []);
+
+  useEffect(() => {
+    if (!resetMode) return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      switchResetMode(false);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [resetMode, switchResetMode]);
 
   async function submit() {
-    if (pending || !email.trim() || !password) return;
+    const address = email.trim();
+    if (submitting.current || !address || (resetMode ? resetSent : !password)) return;
+    submitting.current = true;
     setPending(true);
     setError(undefined);
     try {
-      const session = await signIn(email.trim(), password);
-      await SecureStore.setItemAsync(SESSION_KEY, session.token);
-      onLogin(session);
+      if (resetMode) {
+        await requestPasswordReset(address);
+        setResetSent(true);
+      } else {
+        const session = await signIn(address, password);
+        await SecureStore.setItemAsync(SESSION_KEY, session.token);
+        onLogin(session);
+      }
     } catch (failure) {
       setError(failure);
     } finally {
+      submitting.current = false;
       setPending(false);
     }
   }
@@ -267,45 +296,86 @@ function Login({
     >
       <Content>
         <Text accessibilityRole="header" style={styles.title}>
-          {t("learnerAccount")}
+          {t(resetMode ? "resetPassword" : "learnerAccount")}
         </Text>
-        <Text style={styles.body}>{t("loginHelp")}</Text>
-        {passwordChanged && (
+        {!resetSent && (
+          <Text style={styles.body}>{t(resetMode ? "resetPasswordHelp" : "loginHelp")}</Text>
+        )}
+        {passwordChanged && !resetMode && (
           <View style={styles.passwordSuccess}>
             <Text accessibilityRole="alert" style={styles.body}>
               {t("passwordChanged")}
             </Text>
           </View>
         )}
-        <TextInput
-          style={styles.input}
-          accessibilityLabel={t("email")}
-          placeholder={t("email")}
-          placeholderTextColor={color.muted}
-          autoComplete="email"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput
-          style={styles.input}
-          accessibilityLabel={t("password")}
-          placeholder={t("password")}
-          placeholderTextColor={color.muted}
-          autoComplete="current-password"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          onSubmitEditing={submit}
-        />
+        {resetSent ? (
+          <View style={styles.passwordSuccess}>
+            <Text accessibilityRole="alert" style={styles.body}>
+              {t("resetLinkSent")}
+            </Text>
+          </View>
+        ) : (
+          <TextInput
+            style={styles.input}
+            accessibilityLabel={t("email")}
+            placeholder={t("email")}
+            placeholderTextColor={color.muted}
+            autoComplete="email"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            editable={!pending}
+            value={email}
+            onChangeText={setEmail}
+            onSubmitEditing={resetMode ? submit : undefined}
+          />
+        )}
+        {!resetMode && (
+          <TextInput
+            style={styles.input}
+            accessibilityLabel={t("password")}
+            placeholder={t("password")}
+            placeholderTextColor={color.muted}
+            autoComplete="current-password"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            onSubmitEditing={submit}
+          />
+        )}
         {error !== undefined && <ErrorNotice error={error} />}
-        <Button
-          title={pending ? t("signingIn") : t("signIn")}
-          onPress={submit}
-          disabled={pending || !email.trim() || !password}
-        />
-        <Button title={t("backToCatalog")} onPress={cancel} disabled={pending} secondary />
+        {!resetSent && (
+          <Button
+            title={t(
+              resetMode
+                ? pending
+                  ? "sendingResetLink"
+                  : "sendResetLink"
+                : pending
+                  ? "signingIn"
+                  : "signIn",
+            )}
+            onPress={submit}
+            disabled={pending || !email.trim() || (!resetMode && !password)}
+          />
+        )}
+        {resetMode ? (
+          <Button
+            title={t("backToSignIn")}
+            onPress={() => switchResetMode(false)}
+            disabled={pending}
+            secondary
+          />
+        ) : (
+          <>
+            <Button
+              title={t("forgotPassword")}
+              onPress={() => switchResetMode(true)}
+              disabled={pending}
+              secondary
+            />
+            <Button title={t("backToCatalog")} onPress={cancel} disabled={pending} secondary />
+          </>
+        )}
       </Content>
     </KeyboardAvoidingView>
   );
