@@ -2815,6 +2815,7 @@ body[dir="rtl"] {
   border-radius: 28px;
   background: #fbf4eb;
   box-shadow: 0 16px 42px #30251f0c;
+  scroll-margin-top: 100px;
 }
 .catalog-heading {
   display: grid;
@@ -3177,6 +3178,7 @@ body[dir="rtl"] {
     margin: 0 12px 40px;
     padding: 12px;
     border-radius: 20px;
+    scroll-margin-top: 116px;
   }
   .catalog-heading {
     grid-template-columns: minmax(0, 1fr);
