@@ -263,7 +263,7 @@ function CertificateCard({
       </Text>
       <Button
         title={t("viewCertificate")}
-        onPress={() => onOpen(certificateWebLink(certificate.certificate_code))}
+        onPress={() => onOpen(certificateWebLink(certificate.certificate_code, language))}
         secondary
       />
     </View>

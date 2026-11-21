@@ -315,9 +315,14 @@ function optionalResponse<T>(promise: Promise<T>, missingStatus: number) {
   });
 }
 
-function getCertificate(token: string, course: string, signal: AbortSignal) {
+function getCertificate(
+  token: string,
+  course: string,
+  language: CourseLanguage,
+  signal: AbortSignal,
+) {
   return optionalResponse(
-    request<Certificate>(`/courses/${course}/certificate/me`, { token, signal }),
+    request<Certificate>(`/courses/${course}/certificate/me?lang=${language}`, { token, signal }),
     404,
   );
 }
@@ -333,7 +338,7 @@ export async function getCourseCompletion(
       request<Exam>(`/courses/${course}/final-exam?language=${language}`, { token, signal }),
       409,
     ),
-    getCertificate(token, course, signal),
+    getCertificate(token, course, language, signal),
   ]);
   return { exam, certificate };
 }
@@ -345,7 +350,7 @@ export async function getCertificates(
 ) {
   const enrollments = await getEnrollments(token, language, signal);
   const certificates = await Promise.all(
-    enrollments.map(({ course_id }) => getCertificate(token, course_id, signal)),
+    enrollments.map(({ course_id }) => getCertificate(token, course_id, language, signal)),
   );
   return certificates
     .filter((certificate) => certificate !== null)
@@ -360,6 +365,6 @@ export function courseWebLink(course: string, destination: { lesson: string } | 
   return `${WEB_APP}?course=${encodeURIComponent(course)}&${query}`;
 }
 
-export function certificateWebLink(code: string) {
-  return `${WEB_APP}verify.html?code=${encodeURIComponent(code)}`;
+export function certificateWebLink(code: string, language: CourseLanguage) {
+  return `https://scholward-academy.vercel.app/app/verify.html?code=${encodeURIComponent(code)}&lang=${language}`;
 }
