@@ -73,6 +73,9 @@ const messages = {
   free: ["Bepul", "Free", "Бесплатно", "무료"],
   openCourse: ["Kursni ochish", "Open course", "Открыть курс", "강의 열기"],
   resumeLearning: ["Davom ettirish", "Continue learning", "Продолжить обучение", "학습 계속하기"],
+  quizMistakes: ["Xatolar tahlili", "Review mistakes", "Разбор ошибок", "오답 복습"],
+  yourAnswer: ["Sizning javobingiz", "Your answer", "Ваш ответ", "내 답안"],
+  correctAnswer: ["To‘g‘ri javob", "Correct answer", "Правильный ответ", "정답"],
   lessonNote: ["Dars eslatmasi", "Lesson note", "Заметка к уроку", "수업 메모"],
   noteHint: [
     "Bu qurilmada saqlanadi · {max} tagacha belgi",

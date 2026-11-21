@@ -553,6 +553,85 @@ def test_author_can_open_saved_lesson_quiz_for_editing(client):
     assert editable_quiz.json()["questions"][0]["correct_index"] == 1
 
 
+def test_quiz_grades_mistakes_and_keeps_explanations_out_of_unsubmitted_quiz(client):
+    register(client, "review-author@example.com", "author")
+    register(client, "review-learner@example.com")
+    author = login(client, "review-author@example.com", "author")
+    learner = login(client, "review-learner@example.com")
+    course_id = create_course(client, author)["id"]
+    course = f"/courses/{course_id}"
+    lesson = client.post(
+        f"{course}/lessons",
+        headers=author,
+        json={"title": "Addition", "content": "Add two numbers", "position": 1},
+    )
+    assert lesson.status_code == 201, lesson.text
+    quiz = f"{course}/lessons/{lesson.json()['id']}/quiz"
+    questions = [
+        {
+            "prompt": "Two plus two?",
+            "choices": ["3", "4"],
+            "correct_index": 1,
+            "explanation": "  Count two more after two to reach four.  ",
+        },
+        {"prompt": "Two plus three?", "choices": ["5", "6"], "correct_index": 0, "points": 2},
+    ]
+    payload = {"title": "Addition quiz", "questions": questions}
+    assert client.post(quiz, headers=author, json=payload).status_code == 201
+    assert client.post(f"{course}/publish", headers=author).status_code == 200
+    assert client.get(quiz, headers=learner).status_code == 403
+    assert client.post(f"{course}/enroll", headers=learner).status_code == 201
+    visible_questions = client.get(quiz, headers=learner).json()["questions"]
+    assert all(
+        "correct_index" not in question and "explanation" not in question
+        for question in visible_questions
+    )
+    first, second = [question["id"] for question in visible_questions]
+
+    def send(first_answer, second_answer):
+        return client.post(
+            f"{quiz}/attempts",
+            headers=learner,
+            json={
+                "answers": [
+                    {"question_id": second, "selected_index": second_answer},
+                    {"question_id": first, "selected_index": first_answer},
+                ],
+            },
+        )
+
+    invalid = send(0, 2)
+    assert invalid.status_code == 422
+    assert "mistakes" not in invalid.json()
+    attempt = send(0, 0)
+    assert attempt.status_code == 201, attempt.text
+    assert attempt.json()["score_percent"] == 66.67
+    assert attempt.json()["mistakes"] == [
+        {
+            "question_id": first,
+            "selected_index": 0,
+            "correct_index": 1,
+            "explanation": "Count two more after two to reach four.",
+        }
+    ]
+    wrong_without_explanation = send(1, 1)
+    assert wrong_without_explanation.status_code == 201
+    assert wrong_without_explanation.json()["mistakes"][0]["explanation"] is None
+    assert send(1, 0).json()["mistakes"] == []
+
+    questions[0]["explanation"] = "Two pairs make four."
+    updated = client.put(quiz, headers=author, json=payload)
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["questions"][0]["id"] == first
+    management = client.get(f"{quiz}/manage", headers=author)
+    assert management.json()["questions"][0]["explanation"] == "Two pairs make four."
+    questions[0]["correct_index"] = 0
+    assert client.put(quiz, headers=author, json=payload).status_code == 409
+    history = client.get(f"{quiz}/attempts/me", headers=learner).json()
+    assert len(history) == 3 and all("mistakes" not in item for item in history)
+    assert send(0, 0).json()["mistakes"][0]["explanation"] == "Two pairs make four."
+
+
 def test_final_exam_requires_completed_lessons_and_certificate_is_single(client):
     register(client, "course-author@example.com", "author")
     register(client, "course-learner@example.com")

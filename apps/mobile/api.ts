@@ -252,6 +252,13 @@ export type QuizAttempt = {
   passed: boolean;
   submitted_at: string;
 };
+export type QuizMistake = {
+  question_id: string;
+  selected_index: number;
+  correct_index: number;
+  explanation: string | null;
+};
+export type QuizSubmission = QuizAttempt & { mistakes?: QuizMistake[] };
 export type Certificate = {
   certificate_code: string;
   course_title: string;
@@ -287,7 +294,7 @@ export function getQuizAttempts(
 }
 
 export function submitQuiz(token: string, course: string, lesson: string, answers: Answer[]) {
-  return request<QuizAttempt>(`/courses/${course}/lessons/${lesson}/quiz/attempts`, {
+  return request<QuizSubmission>(`/courses/${course}/lessons/${lesson}/quiz/attempts`, {
     token,
     method: "POST",
     body: { answers },

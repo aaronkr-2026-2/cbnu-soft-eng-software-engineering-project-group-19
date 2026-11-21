@@ -1681,6 +1681,36 @@ const resumeLearningCopy = {
   ko: "학습 계속하기",
 };
 const NOTE_LIMIT = 500;
+const quizFeedbackCopy = {
+  uz: {
+    quizMistakes: "Xatolar tahlili",
+    yourAnswer: "Sizning javobingiz",
+    correctAnswer: "To‘g‘ri javob",
+    reviewQuizLesson: "Darsga qaytish",
+    answerExplanation: "Javob izohi (ixtiyoriy)",
+  },
+  en: {
+    quizMistakes: "Review mistakes",
+    yourAnswer: "Your answer",
+    correctAnswer: "Correct answer",
+    reviewQuizLesson: "Back to the lesson",
+    answerExplanation: "Answer explanation (optional)",
+  },
+  ru: {
+    quizMistakes: "Разбор ошибок",
+    yourAnswer: "Ваш ответ",
+    correctAnswer: "Правильный ответ",
+    reviewQuizLesson: "Вернуться к уроку",
+    answerExplanation: "Пояснение к ответу (необязательно)",
+  },
+  ko: {
+    quizMistakes: "오답 복습",
+    yourAnswer: "내 답안",
+    correctAnswer: "정답",
+    reviewQuizLesson: "수업으로 돌아가기",
+    answerExplanation: "답안 해설 (선택 사항)",
+  },
+};
 const lessonNoteCopy = {
   uz: {
     title: "Dars eslatmasi",
@@ -1723,6 +1753,7 @@ const lessonNoteCopy = {
 function t(key) {
   if (key === "resumeLearning") return resumeLearningCopy[language];
   return (
+    quizFeedbackCopy[language]?.[key] ||
     quizUiCopy[language]?.[key] ||
     featureCopy[language]?.[key] ||
     dashboardCopy[language]?.[key] ||
@@ -2316,6 +2347,7 @@ function renderQuizEditor(course, lesson, quiz) {
       <label><span>${escapeHtml(t("questionLabel"))}</span><input name="prompt" minlength="3" value="${escapeHtml(question.prompt || "")}" required /></label>
       <label><span>${escapeHtml(t("choicesLabel"))}</span><small>${escapeHtml(t("choiceOrderHint"))}</small><textarea name="choices" rows="4" placeholder="A javobi&#10;B javobi&#10;C javobi&#10;D javobi" required>${(question.choices || []).map(escapeHtml).join("\n")}</textarea></label>
       <div class="studio-form-row"><label><span>${escapeHtml(t("correctIndexLabel"))}</span><select name="correct_index" required>${Array.from({ length: Math.max(4, (question.choices || []).length) }, (_, index) => `<option value="${index}" ${index === (question.correct_index ?? 0) ? "selected" : ""}>${choiceLetter(index)}</option>`).join("")}</select></label><label><span>${escapeHtml(t("pointsLabel"))}</span><input name="points" type="number" min="1" max="100" value="${question.points ?? 1}" required /></label></div>
+      <label><span>${escapeHtml(t("answerExplanation"))}</span><textarea name="explanation" rows="3" maxlength="1000">${escapeHtml(question.explanation || "")}</textarea></label>
       <button class="button button-outline" type="button" data-remove-question>${escapeHtml(t("removeQuestionButton"))}</button>
     </fieldset>`,
       )
@@ -3070,6 +3102,7 @@ async function loadInstructorCourses() {
               choices,
               correct_index: Number(block.querySelector('[name="correct_index"]').value),
               points: Number(block.querySelector('[name="points"]').value),
+              explanation: block.querySelector('[name="explanation"]').value.trim() || null,
             };
           });
           if (
@@ -3642,12 +3675,9 @@ async function openQuiz(courseId, lessonId) {
           `<fieldset class="quiz-question"><legend>${index + 1}. ${escapeHtml(question.prompt)}</legend><div class="quiz-choices">${question.choices.map((choice, choiceIndex) => `<label><input type="radio" name="${question.id}" value="${choiceIndex}" required><span><b>${choiceLetter(choiceIndex)}.</b> ${escapeHtml(choice)}</span></label>`).join("")}</div></fieldset>`,
       )
       .join("");
-    panel.innerHTML = `<div class="quiz-heading"><div><h4>${escapeHtml(quiz.title || t("quizTitle"))}</h4><p>${t("passingScore")}: ${quiz.passing_score}%</p></div></div><p class="quiz-hint">${t("selectAnswers")} ${escapeHtml(t("shuffleNote"))}</p><form class="quiz-form" data-quiz-id="${quiz.id}">${questions}<button class="button button-dark" type="submit">${t("submitQuiz")}</button><p class="quiz-result" role="status"></p></form><div class="attempt-history" id="attempts-${lessonId}"></div>`;
-    renderQuizHistory(
-      lessonId,
-      await api(`/courses/${courseId}/lessons/${lessonId}/quiz/attempts/me`),
-    );
-    panel.querySelector("[data-quiz-id]").addEventListener("submit", async (event) => {
+    panel.innerHTML = `<div class="quiz-heading"><div><h4>${escapeHtml(quiz.title || t("quizTitle"))}</h4><p>${t("passingScore")}: ${quiz.passing_score}%</p></div></div><p class="quiz-hint">${t("selectAnswers")} ${escapeHtml(t("shuffleNote"))}</p><form class="quiz-form" data-quiz-id="${quiz.id}">${questions}<button class="button button-dark" type="submit">${t("submitQuiz")}</button><p class="quiz-result" role="status"></p></form><section class="quiz-feedback" hidden></section><div class="attempt-history" id="attempts-${lessonId}"></div>`;
+    const form = panel.querySelector("[data-quiz-id]");
+    form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const quizForm = event.currentTarget;
       if (!quizForm.reportValidity()) return;
@@ -3657,7 +3687,10 @@ async function openQuiz(courseId, lessonId) {
         selected_index: question.choiceOrder[Number(answerMap.get(question.id))],
       }));
       const submit = quizForm.querySelector("button[type=submit]");
+      if (submit.disabled) return;
       submit.disabled = true;
+      const feedback = panel.querySelector(".quiz-feedback");
+      feedback.hidden = true;
       try {
         const attempt = await api(`/courses/${courseId}/lessons/${lessonId}/quiz/attempts`, {
           method: "POST",
@@ -3666,20 +3699,59 @@ async function openQuiz(courseId, lessonId) {
         const result = quizForm.querySelector(".quiz-result");
         result.className = `quiz-result ${attempt.passed ? "passed" : "not-passed"}`;
         result.textContent = `${t("result")}: ${attempt.score_percent}% · ${attempt.correct_count}/${attempt.total_questions} ${t("correctAnswers")} — ${t(attempt.passed ? "passed" : "notPassed")}`;
-        renderQuizHistory(
-          lessonId,
-          await api(`/courses/${courseId}/lessons/${lessonId}/quiz/attempts/me`),
-        );
+        renderQuizMistakes(feedback, attempt.mistakes ?? [], presentedQuestions, lessonId);
+        const attempts = await api(
+          `/courses/${courseId}/lessons/${lessonId}/quiz/attempts/me`,
+        ).catch(() => null);
+        if (attempts && panel.contains(quizForm)) renderQuizHistory(lessonId, attempts);
       } catch (error) {
         quizForm.querySelector(".quiz-result").textContent = error.message || t("quizError");
       } finally {
         submit.disabled = false;
       }
     });
+    api(`/courses/${courseId}/lessons/${lessonId}/quiz/attempts/me`)
+      .then((attempts) => {
+        if (form.isConnected && !form.querySelector(".quiz-result").textContent) {
+          renderQuizHistory(lessonId, attempts);
+        }
+      })
+      .catch(() => {});
   } catch (error) {
     panel.innerHTML = `<p class="panel-empty">${error.status === 404 ? t("noQuiz") : t("quizError")}</p>`;
   }
 }
+
+function renderQuizMistakes(container, mistakes, questions, lessonId) {
+  const byQuestion = new Map(mistakes.map((mistake) => [mistake.question_id, mistake]));
+  const items = questions.flatMap((question, index) => {
+    const mistake = byQuestion.get(question.id);
+    if (!mistake) return [];
+    const selected = question.choices[question.choiceOrder.indexOf(mistake.selected_index)];
+    const correct = question.choices[question.choiceOrder.indexOf(mistake.correct_index)];
+    if (selected === undefined || correct === undefined) return [];
+    const explanation = mistake.explanation
+      ? `<p class="quiz-feedback-explanation">${escapeHtml(mistake.explanation)}</p>`
+      : "";
+    return [
+      `<article><b>${index + 1}. ${escapeHtml(question.prompt)}</b><p><strong>${escapeHtml(t("yourAnswer"))}</strong> ${escapeHtml(selected)}</p><p><strong>${escapeHtml(t("correctAnswer"))}</strong> ${escapeHtml(correct)}</p>${explanation}</article>`,
+    ];
+  });
+  container.hidden = !items.length;
+  if (!items.length) {
+    container.replaceChildren();
+    return;
+  }
+  container.innerHTML = `<h5>${escapeHtml(t("quizMistakes"))}</h5>${items.join("")}<button type="button" class="button button-outline button-small">${escapeHtml(t("reviewQuizLesson"))}</button>`;
+  container.querySelector("button").addEventListener("click", () => {
+    const lesson = document.getElementById(`lesson-${lessonId}`);
+    const toggle = lesson.closest(".lesson-item").querySelector("[data-toggle]");
+    if (!lesson.classList.contains("open")) toggle.click();
+    toggle.focus({ preventScroll: true });
+    lesson.scrollIntoView({ behavior: "instant", block: "start" });
+  });
+}
+
 function renderQuizHistory(lessonId, attempts) {
   const container = document.getElementById(`attempts-${lessonId}`);
   if (!container) return;

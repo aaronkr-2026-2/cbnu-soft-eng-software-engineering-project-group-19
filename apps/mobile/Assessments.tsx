@@ -10,7 +10,7 @@ import {
   getQuizAttempts,
   submitQuiz,
 } from "./api";
-import type { Certificate, CourseLanguage, QuizAttempt } from "./api";
+import type { Certificate, CourseLanguage, QuizAttempt, QuizSubmission } from "./api";
 import { color, styles } from "./styles";
 import { translate, useLocale, useTranslate } from "./localization";
 import { Button, Content, ErrorNotice, useRefreshOnReturn, useResource } from "./ui";
@@ -58,7 +58,7 @@ export function QuizScreen({
   const quiz = useResource(loadQuiz);
   const history = useResource(loadHistory);
   const [selected, setSelected] = useState<Record<string, number>>({});
-  const [result, setResult] = useState<QuizAttempt | null>(null);
+  const [result, setResult] = useState<QuizSubmission | null>(null);
   const [submitError, setSubmitError] = useState<unknown>();
   const [sending, setSending] = useState(false);
   const inFlight = useRef(false);
@@ -142,6 +142,40 @@ export function QuizScreen({
               >
                 {attemptText(result, language)}
               </Text>
+              {!!result.mistakes?.length && (
+                <>
+                  <Text accessibilityRole="header" style={styles.listTitle}>
+                    {t("quizMistakes")}
+                  </Text>
+                  {result.mistakes.map((mistake) => {
+                    const question = quizData.questions.find(
+                      ({ id }) => id === mistake.question_id,
+                    );
+                    const selectedAnswer = question?.choices[mistake.selected_index];
+                    const correctAnswer = question?.choices[mistake.correct_index];
+                    if (!question || selectedAnswer === undefined || correctAnswer === undefined) {
+                      return null;
+                    }
+                    return (
+                      <View key={question.id} style={[styles.card, styles.cardBody]}>
+                        <Text style={styles.listTitle}>{question.prompt}</Text>
+                        <Text style={styles.body}>
+                          <Text style={styles.category}>{t("yourAnswer")} </Text>
+                          {selectedAnswer}
+                        </Text>
+                        <Text style={styles.body}>
+                          <Text style={styles.category}>{t("correctAnswer")} </Text>
+                          {correctAnswer}
+                        </Text>
+                        {mistake.explanation && (
+                          <Text style={styles.body}>{mistake.explanation}</Text>
+                        )}
+                      </View>
+                    );
+                  })}
+                  <Button title={t("backToLesson")} onPress={back} secondary />
+                </>
+              )}
               <Button
                 title={t("retakeQuiz")}
                 onPress={() => {

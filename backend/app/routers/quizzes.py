@@ -10,7 +10,9 @@ from app.core.passkeys import consume_passkey_proof
 from app.core.localization import get_final_exam_content_translation, get_quiz_content_translation
 from app.core.schemes.quiz import (
     QuizAttemptCreate,
+    QuizAttemptFeedbackResponse,
     QuizAttemptResponse,
+    QuizMistakeResponse,
     FinalExamAttemptCreate,
     FinalExamAttemptResponse,
     FinalExamQuestionResponse,
@@ -119,6 +121,7 @@ def to_quiz_manage_response(quiz: Quiz, db: Session) -> QuizManageResponse:
                 prompt=question.prompt,
                 choices=question.choices,
                 correct_index=question.correct_index,
+                explanation=question.explanation,
                 points=question.points,
                 position=question.position,
             )
@@ -282,6 +285,7 @@ def create_quiz(
                 prompt=question_data.prompt,
                 choices=question_data.choices,
                 correct_index=question_data.correct_index,
+                explanation=question_data.explanation or None,
                 points=question_data.points,
                 position=position,
             )
@@ -369,10 +373,32 @@ def update_quiz(
     if quiz is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz not found")
     if db.query(QuizAttempt.id).filter(QuizAttempt.quiz_id == quiz.id).first() is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="This quiz has learner attempts. Delete it to reset the attempt history before editing.",
+        saved_questions = (
+            db.query(QuizQuestion)
+            .filter(QuizQuestion.quiz_id == quiz.id)
+            .order_by(QuizQuestion.position)
+            .all()
         )
+        grading_changed = (
+            quiz.title != quiz_data.title
+            or quiz.passing_score != quiz_data.passing_score
+            or len(saved_questions) != len(quiz_data.questions)
+            or any(
+                (saved.prompt, saved.choices, saved.correct_index, saved.points)
+                != (edited.prompt, edited.choices, edited.correct_index, edited.points)
+                for saved, edited in zip(saved_questions, quiz_data.questions)
+            )
+        )
+        if grading_changed:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Only explanations can be edited after learners have attempted the quiz.",
+            )
+        for saved, edited in zip(saved_questions, quiz_data.questions):
+            if "explanation" in edited.model_fields_set:
+                saved.explanation = edited.explanation or None
+        db.commit()
+        return to_quiz_response(quiz, db)
 
     quiz.title = quiz_data.title
     quiz.passing_score = quiz_data.passing_score
@@ -387,6 +413,7 @@ def update_quiz(
                 prompt=question_data.prompt,
                 choices=question_data.choices,
                 correct_index=question_data.correct_index,
+                explanation=question_data.explanation or None,
                 points=question_data.points,
                 position=position,
             )
@@ -423,7 +450,7 @@ def delete_quiz(
 
 @router.post(
     "/courses/{course_id}/lessons/{lesson_id}/quiz/attempts",
-    response_model=QuizAttemptResponse,
+    response_model=QuizAttemptFeedbackResponse,
     status_code=status.HTTP_201_CREATED,
 )
 def submit_quiz_attempt(
@@ -432,7 +459,7 @@ def submit_quiz_attempt(
     attempt_data: QuizAttemptCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> QuizAttemptResponse:
+) -> QuizAttemptFeedbackResponse:
     _, lesson = get_lesson_context(course_id, lesson_id, db)
     if not is_enrolled(course_id, current_user.id, db):
         raise HTTPException(
@@ -461,6 +488,7 @@ def submit_quiz_attempt(
 
     earned_points = 0
     correct_count = 0
+    mistakes = []
     total_points = sum(question.points for question in questions)
     for question_id, selected_index in selected_answers.items():
         question = question_by_id[uuid.UUID(question_id)]
@@ -472,6 +500,15 @@ def submit_quiz_attempt(
         if selected_index == question.correct_index:
             correct_count += 1
             earned_points += question.points
+        else:
+            mistakes.append(
+                QuizMistakeResponse(
+                    question_id=question.id,
+                    selected_index=selected_index,
+                    correct_index=question.correct_index,
+                    explanation=question.explanation,
+                )
+            )
 
     score_percent = round(earned_points / total_points * 100, 2) if total_points else 0.0
     attempt = QuizAttempt(
@@ -487,7 +524,10 @@ def submit_quiz_attempt(
     db.add(attempt)
     db.commit()
     db.refresh(attempt)
-    return to_attempt_response(attempt, len(questions))
+    return QuizAttemptFeedbackResponse(
+        **to_attempt_response(attempt, len(questions)).model_dump(),
+        mistakes=mistakes,
+    )
 
 
 @router.get(

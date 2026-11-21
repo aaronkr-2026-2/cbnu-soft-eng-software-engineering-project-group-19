@@ -1,7 +1,8 @@
 from datetime import datetime
+from typing import Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, StringConstraints, model_validator
 
 
 class QuizQuestionCreate(BaseModel):
@@ -9,6 +10,9 @@ class QuizQuestionCreate(BaseModel):
     choices: list[str] = Field(min_length=2, max_length=8)
     correct_index: int = Field(ge=0)
     points: int = Field(default=1, ge=1, le=100)
+    explanation: (
+        Annotated[str, StringConstraints(strip_whitespace=True, max_length=1000)] | None
+    ) = None
 
     @model_validator(mode="after")
     def correct_index_is_valid(self):
@@ -47,6 +51,7 @@ class QuizResponse(BaseModel):
 
 class QuizManageQuestionResponse(QuizQuestionResponse):
     correct_index: int
+    explanation: str | None = None
 
 
 class QuizManageResponse(BaseModel):
@@ -76,6 +81,17 @@ class QuizAttemptResponse(BaseModel):
     score_percent: float
     passed: bool
     submitted_at: datetime
+
+
+class QuizMistakeResponse(BaseModel):
+    question_id: UUID
+    selected_index: int
+    correct_index: int
+    explanation: str | None = None
+
+
+class QuizAttemptFeedbackResponse(QuizAttemptResponse):
+    mistakes: list[QuizMistakeResponse]
 
 
 class FinalExamQuestionResponse(BaseModel):
