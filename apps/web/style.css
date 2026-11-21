@@ -521,6 +521,26 @@ a {
   forced-color-adjust: none;
 }
 
+.icon-menu::before {
+  background:
+    linear-gradient(currentColor 0 0) center 23% / 86% 2px no-repeat,
+    linear-gradient(currentColor 0 0) center / 86% 2px no-repeat,
+    linear-gradient(currentColor 0 0) center 77% / 86% 2px no-repeat;
+}
+
+.icon-globe::before {
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  background:
+    linear-gradient(currentColor 0 0) center / 100% 1px no-repeat,
+    radial-gradient(
+      ellipse 28% 70% at center,
+      transparent 66%,
+      currentColor 72% 86%,
+      transparent 94%
+    );
+}
+
 .icon-arrow::before {
   clip-path: polygon(
     36% 12%,
@@ -2889,20 +2909,62 @@ body[dir="rtl"] {
     padding-inline: 16px;
   }
   .landing-topbar {
+    min-height: 64px;
     height: auto;
-    min-height: 66px;
-    flex-wrap: wrap;
     gap: 8px;
-    padding-block: 8px;
+    padding: 8px 12px;
+  }
+  .landing-topbar .brand {
+    flex: 0 0 auto;
+    gap: 6px;
+    font-size: 15px;
+  }
+  .landing-topbar .brand-mark {
+    width: 32px;
+    height: 32px;
   }
   .landing-topbar .top-actions {
-    margin-left: auto;
+    gap: 5px;
+    margin-inline-start: auto;
   }
+  .landing-topbar .language-picker,
   .landing-topbar .mobile-nav-toggle {
-    min-height: 44px;
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 10px;
+    font-size: 18px;
   }
-  .landing-topbar #signupButton {
+  .landing-topbar .language-picker:focus-within,
+  .landing-topbar .mobile-nav-toggle[aria-expanded="true"] {
+    border-color: var(--accent-ink);
+    background: var(--paper);
+  }
+  .landing-topbar .language-picker select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    font-size: 16px;
+  }
+  .landing-topbar #loginButton,
+  .landing-topbar #logoutButton {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 7px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .landing-topbar #signupButton,
+  .landing-topbar.is-signed-in #loginButton {
     display: none;
+  }
+  .intro-section {
+    scroll-margin-top: 76px;
   }
   .hero {
     grid-template-columns: minmax(0, 1fr);
@@ -2926,7 +2988,7 @@ body[dir="rtl"] {
     margin: 0 12px 40px;
     padding: 12px;
     border-radius: 20px;
-    scroll-margin-top: 116px;
+    scroll-margin-top: 76px;
   }
   .catalog-heading {
     grid-template-columns: minmax(0, 1fr);

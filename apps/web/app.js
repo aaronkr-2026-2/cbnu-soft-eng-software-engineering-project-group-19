@@ -1888,6 +1888,7 @@ function updateAuthUI() {
   );
   $("#signupButton").hidden = Boolean(accessToken);
   $("#logoutButton").hidden = !accessToken;
+  $(".landing-topbar").classList.toggle("is-signed-in", Boolean(accessToken));
   $("#myLearning").hidden = !isLearner;
   $("#myCourses").hidden = !isAuthor;
   $("#heroSection").hidden = isAuthor;
@@ -4025,16 +4026,21 @@ $("#registerTab").addEventListener("click", () => setAuthMode("register"));
 );
 const mobileNavToggle = $("#mobileNavToggle");
 const mainNav = $("#mainNav");
-mobileNavToggle.addEventListener("click", () => {
-  const isOpen = mainNav.classList.toggle("is-open");
-  mobileNavToggle.setAttribute("aria-expanded", String(isOpen));
-});
-mainNav.querySelectorAll("a").forEach((link) =>
-  link.addEventListener("click", () => {
-    mainNav.classList.remove("is-open");
-    mobileNavToggle.setAttribute("aria-expanded", "false");
-  }),
+function setMobileMenu(open) {
+  mainNav.classList.toggle("is-open", open);
+  mobileNavToggle.setAttribute("aria-expanded", String(open));
+}
+mobileNavToggle.addEventListener("click", () =>
+  setMobileMenu(!mainNav.classList.contains("is-open")),
 );
+mainNav
+  .querySelectorAll("a")
+  .forEach((link) => link.addEventListener("click", () => setMobileMenu(false)));
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || !mainNav.classList.contains("is-open")) return;
+  setMobileMenu(false);
+  mobileNavToggle.focus();
+});
 $("#registerPasskeyButton").addEventListener("click", async (event) => {
   const button = event.currentTarget;
   button.disabled = true;

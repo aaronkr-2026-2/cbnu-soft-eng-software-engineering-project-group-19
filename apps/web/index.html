@@ -21,7 +21,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./style.css?v=scholward-11" />
+    <link rel="stylesheet" href="./style.css?v=scholward-12" />
     <link rel="stylesheet" href="./media-content.css" />
     <link rel="stylesheet" href="/app/certificate.css?v=4" />
   </head>
@@ -36,14 +36,6 @@
           alt=""
         /><span class="brand-name">SCHOLWARD <span class="brand-academy">Academy</span></span></a
       >
-      <button
-        type="button"
-        id="mobileNavToggle"
-        class="mobile-nav-toggle"
-        aria-expanded="false"
-        aria-controls="mainNav"
-        data-i18n="menuButton"
-      ></button>
       <nav id="mainNav" class="nav-links" aria-label="Main navigation">
         <a href="#how" data-i18n="navHow"></a>
         <a href="#courses" data-i18n="navCourses"></a>
@@ -55,7 +47,8 @@
       </nav>
       <div class="top-actions">
         <label class="language-picker"
-          ><span class="sr-only" data-i18n="languageLabel"></span><span aria-hidden="true">◎</span
+          ><span class="sr-only" data-i18n="languageLabel"></span
+          ><span class="ui-icon icon-globe" aria-hidden="true"></span
           ><select id="language" aria-label="Language">
             <option value="uz">O‘zbekcha</option>
             <option value="en">English</option>
@@ -75,6 +68,16 @@
           data-i18n="logout"
           hidden
         ></button>
+        <button
+          type="button"
+          id="mobileNavToggle"
+          class="mobile-nav-toggle"
+          aria-expanded="false"
+          aria-controls="mainNav"
+        >
+          <span class="ui-icon icon-menu" aria-hidden="true"></span>
+          <span class="sr-only" data-i18n="menuButton">Menu</span>
+        </button>
       </div>
     </header>
 
@@ -394,6 +397,6 @@
       <div id="finalExamBody" class="final-exam-body"></div>
     </dialog>
     <script src="/app/certificate.js?v=5" defer></script>
-    <script src="/app/app.js?v=scholward-14" defer></script>
+    <script src="/app/app.js?v=scholward-15" defer></script>
   </body>
 </html>
