@@ -29,7 +29,7 @@ const copy = {
     heroBody:
       "Qiziqishingizga mos kurslarni toping, amaliy mashqlarni bajaring va yutuqlaringizni kuzating.",
     startLearning: "O‘rganishni boshlash",
-    seeHow: "Qanday ishlashini ko‘ring",
+    browseCatalog: "Kurslarni ko‘rish",
     learnerNote: "Har kuni o‘z ustida ishlayotganlar bilan birga o‘rganing",
     dailyGoal: "Bugungi maqsad",
     dailyGoalValue: "25 daqiqa o‘qish",
@@ -131,7 +131,7 @@ const copy = {
     heroBody:
       "Find courses that match your interests, practise what you learn, and track your progress.",
     startLearning: "Start learning",
-    seeHow: "See how it works",
+    browseCatalog: "Browse courses",
     learnerNote: "Learn alongside people growing a little every day",
     dailyGoal: "Today’s goal",
     dailyGoalValue: "25 minutes of study",
@@ -231,7 +231,7 @@ const copy = {
     heroTitle: "Учитесь в своём темпе.",
     heroBody: "Находите интересные курсы, выполняйте практические задания и следите за прогрессом.",
     startLearning: "Начать обучение",
-    seeHow: "Как это работает",
+    browseCatalog: "Посмотреть курсы",
     learnerNote: "Учитесь вместе с теми, кто развивается каждый день",
     dailyGoal: "Цель на сегодня",
     dailyGoalValue: "25 минут занятий",
@@ -330,7 +330,7 @@ const copy = {
     heroTitle: "나만의 속도로 배워 보세요.",
     heroBody: "관심 있는 강의를 찾고, 실습을 하며, 학습 진도를 확인하세요.",
     startLearning: "학습 시작하기",
-    seeHow: "이용 방법 보기",
+    browseCatalog: "강의 둘러보기",
     learnerNote: "매일 조금씩 성장하는 학습자들과 함께하세요",
     dailyGoal: "오늘의 목표",
     dailyGoalValue: "25분 학습",
@@ -2190,20 +2190,50 @@ async function checkReturnedPayment() {
     alert(t("paymentError"));
   }
 }
+function renderCatalogCard(course, index, showEnrollment) {
+  const id = escapeHtml(course.id);
+  const cover = course.banner_url
+    ? `<img class="course-card-image" src="${escapeHtml(course.banner_url)}" alt="" loading="lazy">`
+    : `<div class="course-card-art course-card-art-${index % 4}" aria-hidden="true">
+        <span class="course-art-orbit"></span>
+        <span class="course-art-mark">${escapeHtml(course.title.trim().slice(0, 1).toUpperCase())}</span>
+      </div>`;
+  const enrollment = showEnrollment
+    ? `<button class="button button-dark button-small" data-course="${id}" data-price="${escapeHtml(course.price_uzs)}">
+        ${escapeHtml(t(course.price_uzs > 0 ? "buyCourse" : "enroll"))} <span aria-hidden="true">↗</span>
+      </button>`
+    : "";
+  return `<article class="course-card">
+    ${cover}
+    <div class="course-card-content">
+      <div class="course-meta">
+        <span>${escapeHtml(course.category || t("courseCategoryLabel"))}</span>
+        <span>${escapeHtml(humanLevel(course.level))}</span>
+      </div>
+      <h3>${escapeHtml(course.title)}</h3>
+      ${course.description ? `<p>${escapeHtml(course.description)}</p>` : ""}
+      ${courseTranslationNotice(course)}
+      <div class="course-card-footer">
+        <div class="course-price">${escapeHtml(coursePrice(course.price_uzs))}</div>
+        <div class="catalog-card-actions">
+          <button class="button button-outline button-small" data-details="${id}">${escapeHtml(t("viewCourse"))}</button>
+          ${enrollment}
+        </div>
+      </div>
+    </div>
+  </article>`;
+}
+
 function renderCourses(courses, filtered = false) {
   const grid = $("#courseGrid");
   if (!courses.length) {
     grid.innerHTML = `<div class="course-placeholder">${t(filtered ? "noMatchingCourses" : "emptyCourses")}</div>`;
     return;
   }
+  const showEnrollment = user?.account_type !== "author";
   grid.innerHTML = courses
-    .map(
-      (course, index) =>
-        `<article class="course-card">${course.banner_url ? `<img class="course-card-image" src="${escapeHtml(course.banner_url)}" alt="${escapeHtml(course.title)}" loading="lazy">` : `<div class="course-card-art course-card-art-${index % 4}" aria-hidden="true"><span class="course-art-orbit"></span><span class="course-art-mark">${escapeHtml(course.title.trim().slice(0, 1).toUpperCase())}</span></div>`}<div class="course-card-content"><div class="course-meta"><span>${escapeHtml(course.category || t("courseCategoryLabel"))}</span><span>${humanLevel(course.level)}</span></div><h3>${escapeHtml(course.title)}</h3><p>${escapeHtml(course.description || "")}</p>${courseTranslationNotice(course)}<div class="course-price">${escapeHtml(coursePrice(course.price_uzs))}</div><div class="catalog-card-actions"><button class="button button-outline button-small" data-details="${course.id}">${t("viewCourse")}</button><button class="button button-dark button-small" data-course="${course.id}" data-price="${course.price_uzs}">${course.price_uzs > 0 ? t("buyCourse") : t("enroll")} <span aria-hidden="true">↗</span></button></div></div></article>`,
-    )
+    .map((course, index) => renderCatalogCard(course, index, showEnrollment))
     .join("");
-  if (user?.account_type === "author")
-    grid.querySelectorAll("[data-course]").forEach((button) => button.remove());
   grid
     .querySelectorAll("[data-details]")
     .forEach((button) =>

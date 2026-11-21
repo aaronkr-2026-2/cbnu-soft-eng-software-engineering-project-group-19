@@ -13,6 +13,7 @@ import {
   Pressable,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -181,6 +182,8 @@ function Catalog({
   resumeCard: ReactNode;
 }) {
   const t = useTranslate();
+  const { width } = useWindowDimensions();
+  const showTwoColumns = width >= 720;
   const load = useCallback((signal: AbortSignal) => getCatalog(language, signal), [language]);
   const { value, loading, error, refresh } = useResource(load);
   const [query, setQuery] = useState("");
@@ -224,35 +227,45 @@ function Catalog({
       {resumeCard}
       {error !== undefined && <ErrorNotice error={error} retry={refresh} />}
       {!loading && value && matches.length === 0 && (
-        <Text style={styles.muted}>{t("noMatchingCourses")}</Text>
-      )}
-      {matches.map((course) => (
-        <View key={course.id} style={styles.card}>
-          <CatalogCover key={course.banner_url ?? ""} course={course} />
-          <View style={styles.cardBody}>
-            <View style={styles.catalogCardMeta}>
-              <Text style={styles.category}>{course.category}</Text>
-              <Text style={styles.catalogPrice}>
-                {course.price_uzs > 0
-                  ? new Intl.NumberFormat(language, { style: "currency", currency: "UZS" }).format(
-                      course.price_uzs,
-                    )
-                  : t("free")}
-              </Text>
-            </View>
-            <Text accessibilityRole="header" style={styles.cardTitle}>
-              {course.title}
-            </Text>
-            {course.description && <Text style={styles.muted}>{course.description}</Text>}
-            <Button
-              title={t("openCourse")}
-              onPress={() =>
-                openCourse({ id: course.id, title: course.title, price: course.price_uzs })
-              }
-            />
-          </View>
+        <View style={styles.notice}>
+          <Text accessibilityLiveRegion="polite" style={styles.muted}>
+            {t("noMatchingCourses")}
+          </Text>
         </View>
-      ))}
+      )}
+      <View style={[styles.catalogGrid, showTwoColumns && styles.catalogGridWide]}>
+        {matches.map((course) => (
+          <View
+            key={course.id}
+            style={[styles.card, styles.catalogCard, showTwoColumns && styles.catalogCardWide]}
+          >
+            <CatalogCover key={course.banner_url ?? ""} course={course} />
+            <View style={styles.cardBody}>
+              <View style={styles.catalogCardMeta}>
+                <Text style={styles.category}>{course.category}</Text>
+                <Text style={styles.catalogPrice}>
+                  {course.price_uzs > 0
+                    ? new Intl.NumberFormat(language, {
+                        style: "currency",
+                        currency: "UZS",
+                      }).format(course.price_uzs)
+                    : t("free")}
+                </Text>
+              </View>
+              <Text accessibilityRole="header" style={styles.cardTitle}>
+                {course.title}
+              </Text>
+              {course.description && <Text style={styles.muted}>{course.description}</Text>}
+              <Button
+                title={t("openCourse")}
+                onPress={() =>
+                  openCourse({ id: course.id, title: course.title, price: course.price_uzs })
+                }
+              />
+            </View>
+          </View>
+        ))}
+      </View>
     </Content>
   );
 }
@@ -613,9 +626,12 @@ function CourseScreen({
             disabled={working}
             onPress={() => setOpenedLessonId(undefined)}
           />
-          <Text accessibilityRole="header" style={styles.title}>
-            {lesson.title}
-          </Text>
+          <View style={styles.lessonHeading}>
+            <Text style={styles.lessonCourse}>{selection.title}</Text>
+            <Text accessibilityRole="header" style={styles.title}>
+              {lesson.title}
+            </Text>
+          </View>
           {media ? (
             <Button
               title={t("openMaterial")}
@@ -654,7 +670,11 @@ function CourseScreen({
               />
             </View>
           )}
-          <Text style={styles.body}>{lesson.content}</Text>
+          <View style={styles.lessonReading}>
+            <Text selectable style={styles.lessonText}>
+              {lesson.content}
+            </Text>
+          </View>
           {!!lesson.materials?.length && (
             <View style={styles.notice}>
               <Text accessibilityRole="header" style={styles.listTitle}>
@@ -775,6 +795,13 @@ function CourseScreen({
     </Content>
   );
 }
+
+const learnerTabs = [
+  { id: "catalog", label: "catalog", accessibilityLabel: "catalog" },
+  { id: "mine", label: "myCourses", accessibilityLabel: "myCourses" },
+  { id: "certificates", label: "certificatesTab", accessibilityLabel: "myCertificates" },
+  { id: "about", label: "aboutTab", accessibilityLabel: "aboutTitle" },
+] as const;
 
 function StudyFlow({
   language,
@@ -1031,79 +1058,33 @@ function StudyFlow({
             />
           )}
           <View style={styles.tabBar}>
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityState={{ selected: tab === "catalog" }}
-              style={[styles.tab, tab === "catalog" && styles.activeTab]}
-              onPress={() => {
-                setTab("catalog");
-              }}
-            >
-              <Text
-                style={styles.tabLabel}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.8}
-              >
-                {t("catalog")}
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityState={{ selected: tab === "mine" }}
-              style={[styles.tab, tab === "mine" && styles.activeTab]}
-              onPress={() => {
-                setTab("mine");
-                if (!session) setLogin(true);
-              }}
-            >
-              <Text
-                style={styles.tabLabel}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.8}
-              >
-                {t("myCourses")}
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityLabel={t("myCertificates")}
-              accessibilityState={{ selected: tab === "certificates" }}
-              style={[styles.tab, tab === "certificates" && styles.activeTab]}
-              onPress={() => {
-                setTab("certificates");
-                if (!session) setLogin(true);
-              }}
-            >
-              <Text
-                style={styles.tabLabel}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.8}
-              >
-                {t("certificatesTab")}
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityLabel={t("aboutTitle")}
-              accessibilityState={{ selected: tab === "about" }}
-              style={[styles.tab, tab === "about" && styles.activeTab]}
-              onPress={() => {
-                if (tab !== "about") lastLearnerTab.current = tab;
-                setTab("about");
-              }}
-            >
-              <Text
-                style={styles.tabLabel}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.8}
-              >
-                {t("aboutTab")}
-              </Text>
-            </Pressable>
+            {learnerTabs.map((item) => {
+              const selected = tab === item.id;
+              return (
+                <Pressable
+                  key={item.id}
+                  accessibilityRole="tab"
+                  accessibilityLabel={t(item.accessibilityLabel)}
+                  accessibilityState={{ selected }}
+                  style={({ pressed }) => [
+                    styles.tab,
+                    selected && styles.activeTab,
+                    pressed && styles.dimmed,
+                  ]}
+                  onPress={() => {
+                    if (item.id === "about" && tab !== "about") lastLearnerTab.current = tab;
+                    setTab(item.id);
+                    if ((item.id === "mine" || item.id === "certificates") && !session)
+                      setLogin(true);
+                  }}
+                >
+                  <View style={[styles.tabIndicator, selected && styles.activeTabIndicator]} />
+                  <Text style={[styles.tabLabel, selected && styles.activeTabLabel]}>
+                    {t(item.label)}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </>
       )}
