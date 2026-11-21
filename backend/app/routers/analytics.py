@@ -1,20 +1,26 @@
 import uuid
+from collections import Counter, defaultdict
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func
+from sqlalchemy import func, select, union
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import require_author
-from app.core.schemes.analytics import CourseAnalyticsResponse
+from app.core.schemes.analytics import CourseAnalyticsResponse, LessonAnalyticsResponse
 from app.database import get_db
 from app.models import (
+    AssignmentSubmission,
     Course,
     CourseReview,
     Enrollment,
     FinalExamAttempt,
     Lesson,
+    LessonAssignment,
     LessonProgress,
+    Quiz,
+    QuizAttempt,
     User,
+    VideoWatchProgress,
 )
 
 router = APIRouter(prefix="/courses/{course_id}/analytics", tags=["Course Analytics"])
@@ -32,24 +38,65 @@ def get_course_analytics(
     if course is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
 
-    enrollment_ids = [
-        row[0]
-        for row in db.query(Enrollment.user_id).filter(Enrollment.course_id == course_id).all()
-    ]
-    enrollment_count = len(enrollment_ids)
-    lesson_count = db.query(Lesson.id).filter(Lesson.course_id == course_id).count()
+    enrolled = select(Enrollment.user_id).where(Enrollment.course_id == course_id)
+    enrollment_count = db.scalar(select(func.count()).select_from(enrolled.subquery())) or 0
+    lessons = db.execute(
+        select(Lesson.id, Lesson.title, Lesson.position)
+        .where(Lesson.course_id == course_id)
+        .order_by(Lesson.position, Lesson.created_at)
+    ).all()
+    completed_by_learner: dict[uuid.UUID, set[uuid.UUID]] = defaultdict(set)
+    lesson_completions: Counter[uuid.UUID] = Counter()
+    next_lesson_counts: Counter[uuid.UUID] = Counter()
     completed_learners = 0
-    if lesson_count and enrollment_ids:
-        completion_rows = (
-            db.query(LessonProgress.user_id, func.count(func.distinct(LessonProgress.lesson_id)))
+    started_learners = 0
+    if lessons and enrollment_count:
+        ordered_ids = [lesson.id for lesson in lessons]
+        lesson_ids = set(ordered_ids)
+        completion_rows = db.execute(
+            select(LessonProgress.user_id, LessonProgress.lesson_id)
             .join(Lesson, Lesson.id == LessonProgress.lesson_id)
-            .filter(Lesson.course_id == course_id, LessonProgress.user_id.in_(enrollment_ids))
-            .group_by(LessonProgress.user_id)
-            .all()
+            .where(Lesson.course_id == course_id, LessonProgress.user_id.in_(enrolled))
         )
-        completed_learners = sum(
-            1 for _, completed_count in completion_rows if completed_count == lesson_count
+        for learner_id, lesson_id in completion_rows:
+            if lesson_id not in lesson_ids:
+                continue
+            completed_by_learner[learner_id].add(lesson_id)
+            lesson_completions[lesson_id] += 1
+
+        activity_users = union(
+            select(VideoWatchProgress.user_id)
+            .join(Lesson, Lesson.id == VideoWatchProgress.lesson_id)
+            .where(
+                Lesson.course_id == course_id,
+                (VideoWatchProgress.watched_seconds > 0)
+                | (VideoWatchProgress.last_position_seconds > 0),
+            ),
+            select(QuizAttempt.user_id)
+            .join(Quiz, Quiz.id == QuizAttempt.quiz_id)
+            .join(Lesson, Lesson.id == Quiz.lesson_id)
+            .where(Lesson.course_id == course_id),
+            select(AssignmentSubmission.user_id)
+            .join(LessonAssignment, LessonAssignment.id == AssignmentSubmission.assignment_id)
+            .join(Lesson, Lesson.id == LessonAssignment.lesson_id)
+            .where(Lesson.course_id == course_id),
+        ).subquery()
+        active_learners = set(completed_by_learner)
+        active_learners.update(
+            db.scalars(
+                select(activity_users.c.user_id).where(activity_users.c.user_id.in_(enrolled))
+            )
         )
+        started_learners = len(active_learners)
+        for learner_id in active_learners:
+            completed = completed_by_learner.get(learner_id, set())
+            if len(completed) == len(ordered_ids):
+                completed_learners += 1
+            else:
+                first_incomplete = next(
+                    lesson_id for lesson_id in ordered_ids if lesson_id not in completed
+                )
+                next_lesson_counts[first_incomplete] += 1
 
     review_count, average_rating = (
         db.query(func.count(CourseReview.id), func.avg(CourseReview.rating))
@@ -75,6 +122,17 @@ def get_course_analytics(
         completion_rate=round(completed_learners / enrollment_count * 100, 1)
         if enrollment_count
         else 0.0,
+        started_learners=started_learners,
+        lessons=[
+            LessonAnalyticsResponse(
+                lesson_id=lesson.id,
+                title=lesson.title,
+                position=lesson.position,
+                completed_learners=lesson_completions[lesson.id],
+                next_lesson_learners=next_lesson_counts[lesson.id],
+            )
+            for lesson in lessons
+        ],
         average_rating=round(float(average_rating), 1) if average_rating is not None else None,
         review_count=review_count or 0,
         final_exam_attempts=exam_attempts,

@@ -665,6 +665,95 @@ def test_quiz_locks_after_attempt_and_still_reviews_mistakes(client, monkeypatch
     assert len(history) == 4 and all("mistakes" not in item for item in history)
 
 
+def test_course_analytics_counts_completions_and_first_incomplete_lesson(client):
+    register(client, "analytics-owner@example.com", "author")
+    author = login(client, "analytics-owner@example.com", "author")
+    register(client, "analytics-other@example.com", "author")
+    other_author = login(client, "analytics-other@example.com", "author")
+    course = f"/courses/{create_course(client, author)['id']}"
+    analytics_url = f"{course}/analytics"
+    empty = client.get(analytics_url, headers=author).json()
+    assert empty["lessons"] == []
+    assert empty["started_learners"] == 0
+    assert client.get(analytics_url, headers=other_author).status_code == 404
+
+    def add_lesson(title, position):
+        response = client.post(
+            f"{course}/lessons",
+            headers=author,
+            json={"title": title, "content": "Lesson content", "position": position},
+        )
+        assert response.status_code == 201, response.text
+        return response.json()["id"]
+
+    last = add_lesson("Second lesson", 2)
+    first = add_lesson("First lesson", 1)
+    quiz_url = f"{course}/lessons/{last}/quiz"
+    quiz = client.post(
+        quiz_url,
+        headers=author,
+        json={
+            "title": "Demo quiz",
+            "questions": [{"prompt": "Choose yes", "choices": ["Yes", "No"], "correct_index": 0}],
+        },
+    )
+    assert quiz.status_code == 201, quiz.text
+    assert client.post(f"{course}/publish", headers=author).status_code == 200
+
+    def enroll(name):
+        email = f"analytics-{name}@example.com"
+        register(client, email)
+        learner = login(client, email)
+        assert client.post(f"{course}/enroll", headers=learner).status_code == 201
+        return learner
+
+    def complete(learner, lesson):
+        response = client.post(f"{course}/progress/lessons/{lesson}/complete", headers=learner)
+        assert response.status_code == 200, response.text
+
+    finished = enroll("finished")
+    complete(finished, first)
+    complete(finished, last)
+    for name in ["paused", "continuing"]:
+        complete(enroll(name), first)
+    quiz_only = enroll("quiz")
+    question_id = quiz.json()["questions"][0]["id"]
+    assert (
+        client.post(
+            f"{quiz_url}/attempts",
+            headers=quiz_only,
+            json={"answers": [{"question_id": question_id, "selected_index": 1}]},
+        ).status_code
+        == 201
+    )
+    never_started = enroll("inactive")
+    assert client.get(analytics_url, headers=never_started).status_code == 403
+
+    response = client.get(analytics_url, headers=author)
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert result["enrollment_count"] == 5
+    assert result["started_learners"] == 4
+    assert result["completed_learners"] == 1
+    assert result["completion_rate"] == 20
+    assert result["lessons"] == [
+        {
+            "lesson_id": first,
+            "title": "First lesson",
+            "position": 1,
+            "completed_learners": 3,
+            "next_lesson_learners": 1,
+        },
+        {
+            "lesson_id": last,
+            "title": "Second lesson",
+            "position": 2,
+            "completed_learners": 1,
+            "next_lesson_learners": 2,
+        },
+    ]
+
+
 def test_final_exam_requires_completed_lessons_and_certificate_is_single(client):
     register(client, "course-author@example.com", "author")
     register(client, "course-learner@example.com")

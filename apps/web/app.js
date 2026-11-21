@@ -433,6 +433,13 @@ const dashboardCopy = {
     analyticsCompleted: "Tugatgan",
     analyticsRating: "O‘rtacha baho",
     analyticsExamPass: "Imtihondan o‘tish",
+    analyticsLessons: "Darslar bo‘yicha statistika",
+    analyticsStarted: "Faolligi qayd etilgan",
+    analyticsNextLesson: "Keyingi dars",
+    analyticsMostLearners: "Eng ko‘p",
+    analyticsNextHelp:
+      "Har bir o‘quvchi uchun tartib bo‘yicha birinchi tugallanmagan dars hisoblanadi. Kursda faolligi qayd etilgan o‘quvchilar hisobga olinadi.",
+    analyticsNoActivity: "Kursda hali o‘quvchi faolligi qayd etilmagan.",
     reviewTitle: "Kurs bahosi",
     reviewRating: "Baho (1–5)",
     reviewComment: "Fikr-mulohaza",
@@ -595,6 +602,13 @@ const dashboardCopy = {
     analyticsCompleted: "Completed",
     analyticsRating: "Avg. rating",
     analyticsExamPass: "Exam pass rate",
+    analyticsLessons: "Lesson statistics",
+    analyticsStarted: "Learners with recorded activity",
+    analyticsNextLesson: "Next lesson",
+    analyticsMostLearners: "Most learners",
+    analyticsNextHelp:
+      "Each learner with recorded activity is counted at their first incomplete lesson in course order.",
+    analyticsNoActivity: "No learner activity has been recorded yet.",
     reviewTitle: "Course review",
     reviewRating: "Rating (1–5)",
     reviewComment: "Your review",
@@ -757,6 +771,13 @@ const dashboardCopy = {
     analyticsCompleted: "Завершили",
     analyticsRating: "Средняя оценка",
     analyticsExamPass: "Сдали экзамен",
+    analyticsLessons: "Статистика по урокам",
+    analyticsStarted: "Учащиеся с активностью",
+    analyticsNextLesson: "Следующий урок",
+    analyticsMostLearners: "Больше всего",
+    analyticsNextHelp:
+      "Для каждого активного учащегося учитывается первый незавершённый урок по порядку.",
+    analyticsNoActivity: "Активность учащихся пока не зафиксирована.",
     reviewTitle: "Оценка курса",
     reviewRating: "Оценка (1–5)",
     reviewComment: "Ваш отзыв",
@@ -918,6 +939,13 @@ const dashboardCopy = {
     analyticsCompleted: "수료",
     analyticsRating: "평균 평점",
     analyticsExamPass: "시험 합격률",
+    analyticsLessons: "수업별 통계",
+    analyticsStarted: "활동이 기록된 학습자",
+    analyticsNextLesson: "다음 수업",
+    analyticsMostLearners: "가장 많음",
+    analyticsNextHelp:
+      "활동 기록이 있는 학습자는 강의 순서상 아직 완료하지 않은 첫 수업에 집계됩니다.",
+    analyticsNoActivity: "아직 기록된 학습 활동이 없습니다.",
     reviewTitle: "강의 후기",
     reviewRating: "평점 (1–5)",
     reviewComment: "후기",
@@ -2517,6 +2545,25 @@ function renderFinalExamEditor(course, exam) {
   </form>`;
 }
 
+function renderLessonAnalytics(analytics) {
+  const lessons = analytics.lessons;
+  if (!lessons?.length) return "";
+  const highestCount = Math.max(...lessons.map((lesson) => lesson.next_lesson_learners));
+  const leaders = lessons.filter(
+    (lesson) => highestCount > 0 && lesson.next_lesson_learners === highestCount,
+  );
+  const format = new Intl.NumberFormat(language);
+  const most =
+    leaders.length === 1
+      ? `<span>${escapeHtml(t("analyticsMostLearners"))} · ${escapeHtml(leaders[0].title)} (${format.format(highestCount)})</span>`
+      : "";
+  const rows = lessons.map((lesson) => {
+    const highest = highestCount > 0 && lesson.next_lesson_learners === highestCount;
+    return `<tr${highest ? ' class="lesson-analytics-highlight"' : ""}><th scope="row">${escapeHtml(lesson.title)}</th><td>${format.format(lesson.completed_learners)}</td><td>${format.format(lesson.next_lesson_learners)}${highest ? `<span class="sr-only"> · ${escapeHtml(t("analyticsMostLearners"))}</span>` : ""}</td></tr>`;
+  });
+  return `<details class="lesson-analytics"><summary><strong>${escapeHtml(t("analyticsLessons"))}</strong>${most}</summary><p>${escapeHtml(t("analyticsStarted"))} · ${format.format(analytics.started_learners)}</p><p>${escapeHtml(t(analytics.started_learners ? "analyticsNextHelp" : "analyticsNoActivity"))}</p><table><thead><tr><th scope="col">${escapeHtml(t("lessonTitleLabel"))}</th><th scope="col">${escapeHtml(t("analyticsCompleted"))}</th><th scope="col">${escapeHtml(t("analyticsNextLesson"))}</th></tr></thead><tbody>${rows.join("")}</tbody></table></details>`;
+}
+
 async function loadInstructorCourses() {
   const container = $("#ownedCourses");
   container.innerHTML = `<div class="panel-empty">${escapeHtml(t("instructorTitle"))}…</div>`;
@@ -2589,6 +2636,7 @@ async function loadInstructorCourses() {
           "",
         )}</select></label></div><div class="studio-form-actions"><button class="button button-dark" type="submit">${escapeHtml(t("saveEditsButton"))}</button><button class="button button-outline" type="button" data-cancel-edit>${escapeHtml(t("cancelEditButton"))}</button></div><p class="studio-form-message" role="status"></p></form>
       <div class="course-analytics"><div><b>${analytics.enrollment_count}</b><small>${escapeHtml(t("analyticsEnrolled"))}</small></div><div><b>${analytics.completed_learners}/${analytics.enrollment_count}</b><small>${escapeHtml(t("analyticsCompleted"))} · ${analytics.completion_rate}%</small></div><div><b>${analytics.average_rating !== null ? `${analytics.average_rating} ★` : "—"}</b><small>${escapeHtml(t("analyticsRating"))} · ${analytics.review_count}</small></div><div><b>${analytics.final_exam_attempts ? `${analytics.final_exam_pass_rate}%` : "—"}</b><small>${escapeHtml(t("analyticsExamPass"))} · ${analytics.final_exam_passes}/${analytics.final_exam_attempts}</small></div></div>
+      ${renderLessonAnalytics(analytics)}
       <div class="owned-modules"><div class="section-label">${escapeHtml(t("moduleLabel"))}</div>${modules.length ? modules.map((module) => `<form class="studio-form module-edit-form" data-module-edit="${course.id}" data-module-id="${module.id}"><label><span>${escapeHtml(t("moduleTitleLabel"))}</span><input name="title" minlength="2" maxlength="200" value="${escapeHtml(module.title)}" required /></label><label><span>${escapeHtml(t("modulePositionLabel"))}</span><input name="position" type="number" min="1" value="${module.position}" required /></label><button class="button button-dark" type="submit">${escapeHtml(t("saveModuleButton"))}</button><button class="button button-outline" type="button" data-delete-module="${module.id}" data-course-id="${course.id}">${escapeHtml(t("deleteModuleButton"))}</button></form>`).join("") : `<p class="panel-empty">${escapeHtml(t("noCourseModules"))}</p>`}<form class="studio-form module-create-form" data-module-course="${course.id}"><label><span>${escapeHtml(t("moduleTitleLabel"))}</span><input name="title" minlength="2" maxlength="200" required /></label><label><span>${escapeHtml(t("modulePositionLabel"))}</span><input name="position" type="number" min="1" value="${modules.length + 1}" required /></label><button class="button button-dark" type="submit">${escapeHtml(t("addModuleButton"))}</button><p class="studio-form-message" role="status"></p></form></div>
       <form class="studio-form lesson-create-form" data-lesson-course="${course.id}"><div class="section-label">${escapeHtml(t("lessonTitleLabel"))}</div><label><span>${escapeHtml(t("lessonTitleLabel"))}</span><input name="title" minlength="3" maxlength="200" required /></label><label><span>${escapeHtml(t("lessonContentLabel"))}</span><textarea name="content" rows="3" required></textarea></label><label><span>${escapeHtml(t("moduleLabel"))}</span><select name="module_id"><option value="">${escapeHtml(t("unassignedLessonsLabel"))}</option>${modules.map((module) => `<option value="${module.id}">${escapeHtml(module.position)}. ${escapeHtml(module.title)}</option>`).join("")}</select></label><label><span>${escapeHtml(t("lessonPositionLabel"))}</span><input name="position" type="number" min="1" value="${lessonData.length + 1}" required /></label><button class="button button-dark" type="submit">${escapeHtml(t("addLessonButton"))}</button><p class="studio-form-message" role="status"></p></form>
       <div class="owned-lessons"><div class="section-label">${escapeHtml(t("quizForLesson"))}</div><p class="quiz-per-lesson-note">${escapeHtml(t("quizPerLessonNote"))}</p>${lessonData.length ? lessonData.map(({ lesson, quiz, assignment, submissions }) => `<div class="owned-lesson"><div class="owned-lesson-head"><div><b>${escapeHtml(lesson.position)}. ${escapeHtml(lesson.title)}</b><small>${quiz ? `${escapeHtml(t("quizReady"))} · ${quiz.questions.length}` : escapeHtml(t("noQuiz"))}</small></div><div class="owned-course-actions">${quiz ? `<button type="button" class="button button-outline" data-edit-quiz="${lesson.id}">${escapeHtml(t("editQuizButton"))}</button><button type="button" class="button button-outline" data-delete-quiz="${quiz.id}" data-course-id="${course.id}" data-lesson-id="${lesson.id}">${escapeHtml(t("deleteQuizButton"))}</button>` : ""}<button type="button" class="button button-outline" data-generate-banner="${lesson.id}" data-course-id="${course.id}">${escapeHtml(bannerUiCopy[language].generate)}</button><button type="button" class="button button-outline" data-select-lesson-banner="${lesson.id}" data-course-id="${course.id}">${escapeHtml(bannerUiCopy[language].upload)}</button><input type="file" data-lesson-banner-file="${lesson.id}" accept="image/png,image/jpeg,image/webp" hidden>${lesson.banner_url ? `<img class="owned-lesson-banner" src="${escapeHtml(lesson.banner_url)}" alt="${escapeHtml(lesson.title)}">` : ""}<button type="button" class="button button-outline" data-edit-lesson="${lesson.id}">${escapeHtml(t("editLessonButton"))}</button><button type="button" class="button button-outline" data-delete-lesson="${lesson.id}" data-course-id="${course.id}">${escapeHtml(t("deleteLessonButton"))}</button></div></div><form class="studio-form lesson-edit-form" data-lesson-edit="${course.id}" data-lesson-id="${lesson.id}" hidden><label><span>${escapeHtml(t("lessonTitleLabel"))}</span><input name="title" minlength="3" maxlength="200" value="${escapeHtml(lesson.title)}" required /></label><label><span>${escapeHtml(t("lessonContentLabel"))}</span><textarea name="content" rows="3" required>${escapeHtml(lesson.content)}</textarea></label><label><span>${escapeHtml(t("moduleLabel"))}</span><select name="module_id"><option value="">${escapeHtml(t("unassignedLessonsLabel"))}</option>${modules.map((module) => `<option value="${module.id}" ${lesson.module_id === module.id ? "selected" : ""}>${escapeHtml(module.position)}. ${escapeHtml(module.title)}</option>`).join("")}</select></label><label><span>${escapeHtml(t("lessonPositionLabel"))}</span><input name="position" type="number" min="1" value="${lesson.position}" required /></label><div class="studio-form-actions"><button class="button button-dark" type="submit">${escapeHtml(t("saveEditsButton"))}</button><button class="button button-outline" type="button" data-cancel-edit>${escapeHtml(t("cancelEditButton"))}</button></div><p class="studio-form-message" role="status"></p></form>${renderQuizEditor(course, lesson, quiz)}${renderAssignmentEditor(course, lesson, assignment, submissions)}${renderLessonMaterialsEditor(course, lesson)}</div>`).join("") : `<p class="panel-empty">${escapeHtml(t("emptyLessons"))}</p>`}</div>
