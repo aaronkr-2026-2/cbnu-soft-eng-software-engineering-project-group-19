@@ -9,6 +9,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Linking,
+  Modal,
   Platform,
   Pressable,
   Text,
@@ -185,12 +186,10 @@ function CatalogCover({ course }: { course: Course }) {
 
 function Catalog({
   language,
-  changeLanguage,
   openCourse,
   resumeCard,
 }: {
   language: CourseLanguage;
-  changeLanguage: (value: CourseLanguage) => void;
   openCourse: (selection: Selection) => void;
   resumeCard: ReactNode;
 }) {
@@ -221,21 +220,6 @@ function Catalog({
           onChangeText={setQuery}
           clearButtonMode="while-editing"
         />
-        <View style={styles.filters}>
-          {(Object.keys(languages) as CourseLanguage[]).map((key) => (
-            <Pressable
-              key={key}
-              accessibilityRole="button"
-              accessibilityState={{ selected: language === key }}
-              onPress={() => changeLanguage(key)}
-              style={[styles.filter, key === language && styles.selectedFilter]}
-            >
-              <Text style={[styles.filterText, key === language && styles.selectedFilterText]}>
-                {languages[key]}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
       </View>
       {resumeCard}
       {error !== undefined && <ErrorNotice error={error} retry={refresh} />}
@@ -816,6 +800,77 @@ const learnerTabs = [
   { id: "about", label: "aboutTab", accessibilityLabel: "aboutTitle" },
 ] as const;
 
+function HeaderLanguage({
+  language,
+  changeLanguage,
+}: {
+  language: CourseLanguage;
+  changeLanguage: (value: CourseLanguage) => void;
+}) {
+  const t = useTranslate();
+  const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
+  return (
+    <>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${t("chooseLanguage")}, ${languages[language]}`}
+        accessibilityState={{ expanded: open }}
+        onPress={() => setOpen(true)}
+        style={({ pressed }) => [styles.headerLanguage, pressed && styles.dimmed]}
+      >
+        <View accessible={false} style={styles.languageGlobe}>
+          <View style={styles.languageGlobeMeridian} />
+          <View style={styles.languageGlobeEquator} />
+        </View>
+      </Pressable>
+      {open && (
+        <Modal transparent animationType="fade" onRequestClose={close}>
+          <SafeAreaView style={styles.languageLayer}>
+            <Pressable accessible={false} onPress={close} style={styles.languageBackdrop} />
+            <View accessibilityViewIsModal style={styles.languagePanel}>
+              <View style={styles.languagePanelHeader}>
+                <Text accessibilityRole="header" style={styles.languageTitle}>
+                  {t("chooseLanguage")}
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("closeLanguageMenu")}
+                  onPress={close}
+                  style={styles.languageClose}
+                >
+                  <Text style={styles.languageCloseText}>×</Text>
+                </Pressable>
+              </View>
+              {(Object.entries(languages) as [CourseLanguage, string][]).map(([code, name]) => (
+                <Pressable
+                  key={code}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: code === language }}
+                  onPress={() => {
+                    close();
+                    if (code !== language) changeLanguage(code);
+                  }}
+                  style={({ pressed }) => [
+                    styles.languageOption,
+                    code === language && styles.languageSelected,
+                    pressed && styles.dimmed,
+                  ]}
+                >
+                  <Text style={styles.languageOptionText}>{name}</Text>
+                  {code === language && (
+                    <View accessible={false} style={styles.languageSelectedDot} />
+                  )}
+                </Pressable>
+              ))}
+            </View>
+          </SafeAreaView>
+        </Modal>
+      )}
+    </>
+  );
+}
+
 function StudyFlow({
   language,
   changeLanguage,
@@ -995,9 +1050,12 @@ function StudyFlow({
             <Text style={styles.brandAccent}>Academy</Text>
           </View>
         </View>
-        {!session && !login && !restoring && (
-          <Button title={t("signIn")} onPress={() => setLogin(true)} secondary />
-        )}
+        <View style={styles.headerActions}>
+          <HeaderLanguage language={language} changeLanguage={changeLanguage} />
+          {!session && !login && !restoring && (
+            <Button title={t("signIn")} onPress={() => setLogin(true)} secondary />
+          )}
+        </View>
       </View>
       {languageError && (
         <Text accessibilityRole="alert" style={styles.error}>
@@ -1065,7 +1123,6 @@ function StudyFlow({
             <Catalog
               key={language}
               language={language}
-              changeLanguage={changeLanguage}
               openCourse={openCourse}
               resumeCard={resumeCard}
             />

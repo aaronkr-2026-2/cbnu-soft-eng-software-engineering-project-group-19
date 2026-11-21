@@ -4,6 +4,13 @@ import type { CourseLanguage } from "./api";
 const languageIndex: Record<CourseLanguage, number> = { uz: 0, en: 1, ru: 2, ko: 3 };
 
 const messages = {
+  chooseLanguage: ["Tilni tanlang", "Choose language", "Выберите язык", "언어 선택"],
+  closeLanguageMenu: [
+    "Til menyusini yopish",
+    "Close language menu",
+    "Закрыть выбор языка",
+    "언어 메뉴 닫기",
+  ],
   aboutTab: ["Haqida", "About", "О нас", "소개"],
   certificatesTab: ["Sertifikatlar", "Certificates", "Сертификаты", "수료증"],
   aboutTitle: [

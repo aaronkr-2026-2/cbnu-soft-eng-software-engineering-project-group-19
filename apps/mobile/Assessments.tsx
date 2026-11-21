@@ -152,7 +152,7 @@ export function QuizScreen({
                       onPress={() =>
                         setSelected((previous) => ({ ...previous, [question.id]: index }))
                       }
-                      style={[styles.listItem, checked && styles.selectedFilter]}
+                      style={[styles.listItem, checked && styles.selectedQuizChoice]}
                     >
                       <Text style={styles.category}>{String.fromCharCode(65 + index)}.</Text>
                       <Text style={[styles.body, styles.fill]}>{choice}</Text>
