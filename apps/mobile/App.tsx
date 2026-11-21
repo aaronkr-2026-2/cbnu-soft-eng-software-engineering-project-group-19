@@ -940,12 +940,16 @@ function StudyFlow({
     <SafeAreaView style={styles.screen}>
       <StatusBar style="dark" />
       <View pointerEvents="none" style={styles.backgroundDecoration}>
-        <View style={styles.backgroundBlue} />
+        <View style={styles.backgroundClay} />
         <View style={styles.backgroundSand} />
       </View>
       <View style={styles.header}>
         <View style={styles.brand}>
-          <Text style={styles.logo}>S</Text>
+          <Image
+            source={require("./assets/scholward-mark.png")}
+            style={styles.logo}
+            accessible={false}
+          />
           <View style={styles.wordmarkGroup}>
             <Text style={styles.wordmark}>SCHOLWARD</Text>
             <Text style={styles.brandAccent}>Academy</Text>

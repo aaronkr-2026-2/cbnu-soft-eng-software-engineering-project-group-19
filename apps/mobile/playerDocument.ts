@@ -92,7 +92,10 @@ export function playerDocument(
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<style>html,body{margin:0;height:100%;overflow:hidden;background:#111}#video{width:100%;height:100%;border:0;display:block}</style>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111}
+#video{position:absolute;inset:0;width:100%;height:100%;max-width:100%;border:0;display:block;object-fit:contain}
+</style>
 </head><body>${media}<script>
 const media = document.getElementById("video");
 const send = (message) => window.ReactNativeWebView?.postMessage(JSON.stringify(message));
@@ -159,7 +162,10 @@ if (${source.youtube}) {
         onStateChange: ({ data }) => {
           if (!player) return;
           if (data === 0) poll(true, true);
-          else if (data === 1 || data === 2) poll(true, false);
+          else if (data === 1 || data === 2) {
+            if (data === 1) send({ type: "ready" });
+            poll(true, false);
+          }
         },
         onError: ({ data }) => send({ type: "error", code: data }),
       },
@@ -179,6 +185,7 @@ if (${source.youtube}) {
   });
   let played = false;
   media.addEventListener("play", () => { played = true; report(true); });
+  media.addEventListener("playing", () => send({ type: "ready" }));
   media.addEventListener("pause", () => { if (!media.ended) report(true); });
   media.addEventListener("seeked", () => { if (played) report(true); });
   media.addEventListener("timeupdate", () => { if (!media.paused && !media.seeking) report(false); });

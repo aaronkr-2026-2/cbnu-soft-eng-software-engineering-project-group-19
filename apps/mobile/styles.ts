@@ -1,14 +1,14 @@
 import { StyleSheet } from "react-native";
 
 export const color = {
-  ink: "#162740",
-  muted: "#4b5d75",
-  line: "#d5dfed",
+  ink: "#30251f",
+  muted: "#665346",
+  line: "#e7d5c4",
   paper: "#faf7ef",
   white: "#ffffff",
-  lime: "#c8deff",
-  leaf: "#21467c",
-  pale: "#eaf2ff",
+  lime: "#efd7c5",
+  leaf: "#87432f",
+  pale: "#faeee3",
   error: "#982b26",
 };
 
@@ -23,14 +23,14 @@ export const styles = StyleSheet.create({
     left: 0,
     overflow: "hidden",
   },
-  backgroundBlue: {
+  backgroundClay: {
     position: "absolute",
     right: -140,
     top: -105,
     width: 420,
     height: 420,
     borderRadius: 210,
-    backgroundColor: "#e0ecff",
+    backgroundColor: "#f3e1d3",
   },
   backgroundSand: {
     position: "absolute",
@@ -54,18 +54,7 @@ export const styles = StyleSheet.create({
     gap: 12,
   },
   brand: { flexDirection: "row", alignItems: "center", gap: 10, flexShrink: 1 },
-  logo: {
-    width: 35,
-    height: 35,
-    lineHeight: 35,
-    textAlign: "center",
-    overflow: "hidden",
-    borderRadius: 10,
-    backgroundColor: color.leaf,
-    color: color.white,
-    fontSize: 22,
-    fontWeight: "900",
-  },
+  logo: { width: 36, height: 36 },
   wordmarkGroup: { flexShrink: 1 },
   wordmark: { color: color.ink, fontWeight: "900", fontSize: 18, letterSpacing: -0.5 },
   brandAccent: { color: color.leaf, fontSize: 13, fontWeight: "700" },
@@ -127,9 +116,9 @@ export const styles = StyleSheet.create({
     minHeight: 44,
     justifyContent: "center",
     borderRadius: 12,
-    borderColor: "#557299",
+    borderColor: "#9b715d",
     borderWidth: 1,
-    backgroundColor: "#284568",
+    backgroundColor: "#573b2d",
   },
   selectedFilter: { backgroundColor: color.lime, borderColor: color.lime },
   filterText: { color: color.white, fontSize: 14, fontWeight: "700", textAlign: "center" },
@@ -142,7 +131,7 @@ export const styles = StyleSheet.create({
     overflow: "hidden",
   },
   aboutHero: {
-    backgroundColor: "#162740",
+    backgroundColor: "#30251f",
     borderRadius: 24,
     padding: 24,
     gap: 12,
@@ -154,7 +143,7 @@ export const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: -1,
   },
-  aboutLead: { color: "#dceaff", fontSize: 16, lineHeight: 24 },
+  aboutLead: { color: "#f5e5d4", fontSize: 16, lineHeight: 24 },
   aboutFeature: {
     backgroundColor: color.white,
     borderRadius: 16,

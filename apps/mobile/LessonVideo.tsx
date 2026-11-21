@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
 import { WebView } from "react-native-webview";
 import { ApiError, WEB_APP, getVideoProgress, reportVideoProgress } from "./api";
 import type { CourseLanguage, Lesson, PlaybackSample, VideoProgress } from "./api";
@@ -11,6 +11,24 @@ import type { MessageKey } from "./localization";
 import { Button } from "./ui";
 
 const START_FROM_BEGINNING = { item: 0, seconds: 0 };
+const MIN_PLAYER_HEIGHT = 200;
+const VIDEO_ASPECT_RATIO = 16 / 9;
+
+function isPlayerDocument(url: string) {
+  return url === WEB_APP || url === WEB_APP.slice(0, -1) || url === "about:blank";
+}
+
+function isAndroidEmbedRequest(url: string, embedUrl: string) {
+  // Android WebView does not reliably distinguish iframe requests from top-level navigation.
+  if (Platform.OS !== "android") return false;
+  try {
+    const requested = new URL(url);
+    const embed = new URL(embedUrl);
+    return requested.origin === embed.origin && requested.pathname === embed.pathname;
+  } catch {
+    return false;
+  }
+}
 
 function displayTime(seconds: number) {
   const minutes = Math.floor(seconds / 60);
@@ -73,6 +91,7 @@ export function LessonVideo({
       video && start ? { html: playerDocument(video, start, language), baseUrl: WEB_APP } : null,
     [video, start, language],
   );
+  const [playerHeight, setPlayerHeight] = useState(MIN_PLAYER_HEIGHT);
   const [ready, setReady] = useState(false);
   const [playerError, setPlayerError] = useState<MessageKey | null>(null);
   const [trackingError, setTrackingError] = useState(false);
@@ -171,26 +190,38 @@ export function LessonVideo({
     setReload((value) => value + 1);
   }
 
+  function markReady() {
+    setReady(true);
+    setPlayerError(null);
+  }
+
   return (
-    <View style={playerStyles.section}>
-      <View style={playerStyles.frame}>
+    <View
+      style={playerStyles.section}
+      onLayout={({ nativeEvent }) =>
+        setPlayerHeight(Math.max(MIN_PLAYER_HEIGHT, nativeEvent.layout.width / VIDEO_ASPECT_RATIO))
+      }
+    >
+      <View style={[playerStyles.frame, { height: playerHeight }]}>
         <WebView
           key={reload}
           source={source}
           originWhitelist={["*"]}
           onShouldStartLoadWithRequest={({ url, isTopFrame }) =>
-            isTopFrame === false
-              ? url.startsWith("https:") || url === "about:blank"
-              : url === WEB_APP || url === "about:blank"
+            isPlayerDocument(url) ||
+            (video.youtube &&
+              (isTopFrame === false
+                ? url.startsWith("https:")
+                : isAndroidEmbedRequest(url, video.uri)))
           }
           onMessage={({ nativeEvent: { url, data } }) => {
-            if (url && url !== WEB_APP && url !== "about:blank") return;
+            if (url && !isPlayerDocument(url)) return;
             try {
               const message = JSON.parse(data);
               if (message.type === "ready") {
-                setReady(true);
-                setPlayerError(null);
+                markReady();
               } else if (message.type === "progress" && validSample(message.sample)) {
+                markReady();
                 void record(message.sample);
               } else if (message.type === "error") {
                 setPlayerError(
@@ -209,6 +240,7 @@ export function LessonVideo({
           allowsFullscreenVideo
           mediaPlaybackRequiresUserAction
           scrollEnabled={false}
+          scalesPageToFit={false}
           style={playerStyles.web}
           containerStyle={playerStyles.web}
           setSupportMultipleWindows={false}
@@ -218,7 +250,10 @@ export function LessonVideo({
         <>
           <Text style={styles.muted}>
             {video.playlist
-              ? t("resumePlaylist", { item: start.item + 1, time: displayTime(start.seconds) })
+              ? t("resumePlaylist", {
+                  item: start.item + 1,
+                  time: displayTime(start.seconds),
+                })
               : t("resumePosition", { time: displayTime(start.seconds) })}
           </Text>
           <Button title={t("restartVideo")} onPress={restart} secondary />
@@ -256,8 +291,6 @@ const playerStyles = StyleSheet.create({
   section: { gap: 10 },
   frame: {
     width: "100%",
-    minHeight: 200,
-    aspectRatio: 16 / 9,
     borderRadius: 12,
     overflow: "hidden",
     backgroundColor: "#111",

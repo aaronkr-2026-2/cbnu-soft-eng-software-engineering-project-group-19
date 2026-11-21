@@ -3,7 +3,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: radial-gradient(ellipse at 18% 6%, #dceaff, transparent 62%), var(--paper);
+  background: radial-gradient(ellipse at 18% 6%, #f5e5d4, transparent 62%), var(--paper);
 }
 .portal-card {
   position: relative;
@@ -12,7 +12,7 @@
   border: 1px solid var(--line);
   border-radius: 20px;
   background: var(--white);
-  box-shadow: 0 22px 70px rgba(22, 39, 64, 0.12);
+  box-shadow: 0 22px 70px rgba(48, 37, 31, 0.12);
 }
 .portal-language {
   display: flex;
@@ -101,7 +101,7 @@
   padding: 6px 10px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: #eaf2ff;
+  background: #faeee3;
   color: var(--accent-ink);
   font: inherit;
   font-weight: 700;

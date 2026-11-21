@@ -2,10 +2,24 @@
   "expo": {
     "name": "SCHOLWARD Academy",
     "slug": "studyflow-mobile",
-    "version": "0.1.0",
+    "version": "0.1.4",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "platforms": ["ios", "android"],
-    "plugins": ["expo-secure-store", "expo-image"]
+    "plugins": ["expo-secure-store", "expo-image"],
+    "ios": {
+      "bundleIdentifier": "com.mirzakhidovic.studyflow"
+    },
+    "android": {
+      "package": "com.mirzakhidovic.studyflow",
+      "versionCode": 5
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b5ef6008-d2d7-4fcf-84ce-d88504cd47e1"
+      }
+    },
+    "owner": "mirzakhidovic.o2",
+    "icon": "./assets/scholward-icon.png"
   }
 }
