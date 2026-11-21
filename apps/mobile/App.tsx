@@ -1,3 +1,4 @@
+import { Image as CourseImage } from "expo-image";
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -29,7 +30,7 @@ import {
   resourceUrl,
   signIn,
 } from "./api";
-import type { CourseLanguage, Lesson, Selection, Session, VideoProgress } from "./api";
+import type { Course, CourseLanguage, Lesson, Selection, Session, VideoProgress } from "./api";
 import { color, styles } from "./styles";
 import { Button, Content, ErrorNotice, useResource } from "./ui";
 import { CertificatesScreen, CourseCompletion, QuizScreen } from "./Assessments";
@@ -97,6 +98,32 @@ function AboutScreen() {
   );
 }
 
+function CatalogCover({ course }: { course: Course }) {
+  const [failed, setFailed] = useState(false);
+  const uri = course.banner_url && resourceUrl(course.banner_url);
+  return (
+    <View
+      style={styles.banner}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      {uri && !failed ? (
+        <CourseImage
+          source={uri}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          style={styles.fill}
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <Text style={styles.bannerMark}>
+          {Array.from(course.title.trim())[0]?.toUpperCase() || "S"}
+        </Text>
+      )}
+    </View>
+  );
+}
+
 function Catalog({
   language,
   changeLanguage,
@@ -147,40 +174,31 @@ function Catalog({
       {!loading && value && matches.length === 0 && (
         <Text style={styles.muted}>{t("noMatchingCourses")}</Text>
       )}
-      {matches.map((course) => {
-        const banner = course.banner_url && resourceUrl(course.banner_url);
-        return (
-          <View key={course.id} style={styles.card}>
-            {banner ? (
-              <Image
-                accessibilityIgnoresInvertColors
-                source={{ uri: banner }}
-                style={styles.banner}
-              />
-            ) : null}
-            <View style={styles.cardBody}>
-              <Text style={styles.category}>{course.category}</Text>
-              <Text accessibilityRole="header" style={styles.cardTitle}>
-                {course.title}
-              </Text>
-              {course.description && <Text style={styles.body}>{course.description}</Text>}
-              <Text style={styles.category}>
-                {course.price_uzs > 0
-                  ? new Intl.NumberFormat(language, { style: "currency", currency: "UZS" }).format(
-                      course.price_uzs,
-                    )
-                  : t("free")}
-              </Text>
-              <Button
-                title={t("openCourse")}
-                onPress={() =>
-                  openCourse({ id: course.id, title: course.title, price: course.price_uzs })
-                }
-              />
-            </View>
+      {matches.map((course) => (
+        <View key={course.id} style={styles.card}>
+          <CatalogCover key={course.banner_url ?? ""} course={course} />
+          <View style={styles.cardBody}>
+            <Text style={styles.category}>{course.category}</Text>
+            <Text accessibilityRole="header" style={styles.cardTitle}>
+              {course.title}
+            </Text>
+            {course.description && <Text style={styles.body}>{course.description}</Text>}
+            <Text style={styles.category}>
+              {course.price_uzs > 0
+                ? new Intl.NumberFormat(language, { style: "currency", currency: "UZS" }).format(
+                    course.price_uzs,
+                  )
+                : t("free")}
+            </Text>
+            <Button
+              title={t("openCourse")}
+              onPress={() =>
+                openCourse({ id: course.id, title: course.title, price: course.price_uzs })
+              }
+            />
           </View>
-        );
-      })}
+        </View>
+      ))}
     </Content>
   );
 }
@@ -568,9 +586,8 @@ function StudyFlow({
   const [restoring, setRestoring] = useState(true);
   const [restoreError, setRestoreError] = useState<unknown>();
   const [session, setSession] = useState<Session | null>(null);
-  const [tab, setTab] = useState<"catalog" | "mine" | "certificates">("catalog");
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [aboutOpen, setAboutOpen] = useState(false);
+  const [tab, setTab] = useState<"catalog" | "mine" | "certificates" | "about">("catalog");
+  const lastLearnerTab = useRef<"catalog" | "mine" | "certificates">("catalog");
   const [login, setLogin] = useState(false);
   const [selection, setSelection] = useState<Selection | null>(null);
 
@@ -594,14 +611,13 @@ function StudyFlow({
   }, [restore]);
 
   useEffect(() => {
-    if (!menuOpen && !aboutOpen) return;
+    if (tab !== "about" || login) return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      if (aboutOpen) setAboutOpen(false);
-      else setMenuOpen(false);
+      setTab(lastLearnerTab.current);
       return true;
     });
     return () => subscription.remove();
-  }, [menuOpen, aboutOpen]);
+  }, [login, tab]);
 
   const expireSession = useCallback(() => {
     setSession(null);
@@ -610,7 +626,6 @@ function StudyFlow({
   }, []);
 
   function openCourse(course: Selection) {
-    setMenuOpen(false);
     setSelection(course);
     if (!session) setLogin(true);
   }
@@ -642,52 +657,10 @@ function StudyFlow({
             studyflow<Text style={styles.brandAccent}>.ai</Text>
           </Text>
         </View>
-        {aboutOpen ? (
-          <Button title={t("back")} onPress={() => setAboutOpen(false)} secondary />
-        ) : (
-          !login &&
-          !selection &&
-          !restoring && (
-            <View style={styles.headerActions}>
-              {!session && (
-                <Button
-                  title={t("signIn")}
-                  onPress={() => {
-                    setMenuOpen(false);
-                    setLogin(true);
-                  }}
-                  secondary
-                />
-              )}
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ expanded: menuOpen }}
-                onPress={() => setMenuOpen((open) => !open)}
-                style={styles.menuButton}
-              >
-                <Text style={styles.menuButtonText}>{t("menuButton")}</Text>
-              </Pressable>
-            </View>
-          )
+        {!session && !login && !restoring && (
+          <Button title={t("signIn")} onPress={() => setLogin(true)} secondary />
         )}
       </View>
-      {menuOpen && !login && !selection && !restoring && (
-        <View style={styles.menuPanel}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              setMenuOpen(false);
-              setAboutOpen(true);
-            }}
-            style={styles.menuItem}
-          >
-            <Text style={[styles.listTitle, styles.fill]}>{t("aboutTitle")}</Text>
-            <Text accessibilityElementsHidden style={styles.category}>
-              →
-            </Text>
-          </Pressable>
-        </View>
-      )}
       {languageError && (
         <Text accessibilityRole="alert" style={styles.error}>
           {t("saveLanguageError")}
@@ -696,9 +669,7 @@ function StudyFlow({
       {restoreError !== undefined && (
         <ErrorNotice error={restoreError} retry={() => void restore()} />
       )}
-      {aboutOpen ? (
-        <AboutScreen />
-      ) : restoring ? (
+      {restoring ? (
         <ActivityIndicator
           accessibilityLabel={t("accountLoading")}
           style={styles.fill}
@@ -723,7 +694,9 @@ function StudyFlow({
         />
       ) : (
         <>
-          {tab === "certificates" && session ? (
+          {tab === "about" ? (
+            <AboutScreen />
+          ) : tab === "certificates" && session ? (
             <CertificatesScreen
               token={session.token}
               language={language}
@@ -751,7 +724,6 @@ function StudyFlow({
               accessibilityState={{ selected: tab === "catalog" }}
               style={[styles.tab, tab === "catalog" && styles.activeTab]}
               onPress={() => {
-                setMenuOpen(false);
                 setTab("catalog");
               }}
             >
@@ -762,7 +734,6 @@ function StudyFlow({
               accessibilityState={{ selected: tab === "mine" }}
               style={[styles.tab, tab === "mine" && styles.activeTab]}
               onPress={() => {
-                setMenuOpen(false);
                 setTab("mine");
                 if (!session) setLogin(true);
               }}
@@ -774,12 +745,23 @@ function StudyFlow({
               accessibilityState={{ selected: tab === "certificates" }}
               style={[styles.tab, tab === "certificates" && styles.activeTab]}
               onPress={() => {
-                setMenuOpen(false);
                 setTab("certificates");
                 if (!session) setLogin(true);
               }}
             >
               <Text style={styles.filterText}>{t("myCertificates")}</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityLabel={t("aboutTitle")}
+              accessibilityState={{ selected: tab === "about" }}
+              style={[styles.tab, tab === "about" && styles.activeTab]}
+              onPress={() => {
+                if (tab !== "about") lastLearnerTab.current = tab;
+                setTab("about");
+              }}
+            >
+              <Text style={styles.filterText}>{t("aboutTab")}</Text>
             </Pressable>
           </View>
         </>

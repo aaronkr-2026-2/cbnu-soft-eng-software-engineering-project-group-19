@@ -4,7 +4,7 @@ import type { CourseLanguage } from "./api";
 const languageIndex: Record<CourseLanguage, number> = { uz: 0, en: 1, ru: 2, ko: 3 };
 
 const messages = {
-  menuButton: ["Menyu", "Menu", "Меню", "메뉴"],
+  aboutTab: ["Haqida", "About", "О нас", "소개"],
   aboutTitle: ["Dastur haqida", "About StudyFlow", "О StudyFlow", "StudyFlow 소개"],
   aboutIntro: [
     "StudyFlow — veb-sayt va mobil ilova orqali o‘z maromingizda o‘rganish platformasi. Ikkalasida ham bitta hisob bilan kurslaringizni ochib, o‘qishni davom ettirishingiz mumkin.",
@@ -50,10 +50,10 @@ const messages = {
   ],
 
   founderBio: [
-    "StudyFlow loyihasini boshlagan va uning veb hamda mobil ilovalarini rivojlantiradi. Loyihada kurslar, video darslar, testlar va sertifikatlar orqali o‘quvchilarga o‘z maromida o‘rganish imkonini yaratishga e’tibor qaratadi.",
-    "He founded StudyFlow and develops its web and mobile apps. His work on the project focuses on helping learners study at their own pace through courses, video lessons, assessments, and certificates.",
-    "Он основал StudyFlow и развивает веб-версию и мобильное приложение. В проекте он стремится помочь учащимся заниматься в своём темпе с помощью курсов, видеоуроков, тестов и сертификатов.",
-    "StudyFlow를 설립하고 웹과 모바일 앱을 개발하고 있습니다. 강의, 동영상 수업, 평가, 수료증을 통해 학습자가 자신의 속도로 공부할 수 있도록 하는 데 집중합니다.",
+    "Texnik loyiha tajribasi — MUKHAMMADAZIZ YULDOSHBOEV StudyFlow asoschisi. Uning loyiha tajribasi web va mobil ilova, kurs va darslar, testlar hamda sertifikat olish oqimini bir platformaga birlashtirishni qamrab oladi.",
+    "Technical project experience — MUKHAMMADAZIZ YULDOSHBOEV is the founder of StudyFlow. His project experience includes bringing web and mobile apps, courses and lessons, assessments, and certificate issuance together in one platform.",
+    "Опыт работы над техническим проектом — MUKHAMMADAZIZ YULDOSHBOEV является основателем StudyFlow. Его опыт работы над проектом охватывает объединение сайта и мобильного приложения, курсов и уроков, тестов и выдачи сертификатов в одной платформе.",
+    "기술 프로젝트 경험 — MUKHAMMADAZIZ YULDOSHBOEV는 StudyFlow의 설립자입니다. 웹과 모바일 앱, 강의와 수업, 평가, 수료증 발급을 하나의 플랫폼으로 통합한 프로젝트 경험이 있습니다.",
   ],
   founderRole: [
     "StudyFlow asoschisi",

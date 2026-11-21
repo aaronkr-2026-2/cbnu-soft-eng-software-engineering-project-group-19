@@ -6,6 +6,6 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "platforms": ["ios", "android"],
-    "plugins": ["expo-secure-store"]
+    "plugins": ["expo-secure-store", "expo-image"]
   }
 }
