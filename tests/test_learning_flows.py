@@ -22,6 +22,7 @@ from app.routers import passkeys as passkeys_router
 from app.routers import progress as progress_router
 from app.routers import quizzes as quizzes_router
 from app.core import lesson_storage
+from app.core.site import frontend_url_for_origin
 from app.database import get_db
 from app.models import LessonResourceChunk, LessonResourceFile
 from tests.helpers import login, register
@@ -102,6 +103,36 @@ def test_local_passkeys_require_localhost_origin(monkeypatch):
         AuthenticatorTransport.USB,
     ]
     assert passkeys_router._credential_transports(None) is None
+
+
+def test_production_passkey_aliases_keep_separate_scopes(client, monkeypatch):
+    old_site = "https://studyflow-web-1hab.vercel.app"
+    new_site = "https://scholward-academy.vercel.app"
+    monkeypatch.setattr(passkeys_router, "WEBAUTHN_ORIGIN", old_site)
+    email = "passkey-alias@example.com"
+    register(client, email)
+    headers = login(client, email)
+
+    for site in (old_site, new_site):
+        options = client.post(
+            "/auth/passkeys/registration/options", headers={**headers, "Origin": site}
+        )
+        assert options.status_code == 200, options.text
+        assert json.loads(options.json()["publicKey"])["rp"]["id"] == urlparse(site).hostname
+        status = client.get("/auth/passkeys/me", headers=headers, params={"origin": site})
+        assert status.status_code == 200, status.text
+
+    untrusted = "https://scholward-academy.vercel.app.example.net"
+    assert frontend_url_for_origin(old_site, new_site) == new_site
+    assert frontend_url_for_origin(old_site, untrusted) == old_site
+    status = client.get("/auth/passkeys/me", headers=headers, params={"origin": untrusted})
+    assert status.status_code == 403
+    overridden = client.post(
+        "/auth/passkeys/registration/options",
+        headers={**headers, "Origin": untrusted},
+        params={"origin": new_site},
+    )
+    assert overridden.status_code == 403
 
 
 def test_passkey_registration_and_signed_verification(client, monkeypatch):
@@ -1117,10 +1148,12 @@ def test_email_password_reset_accepts_new_password_and_rejects_reused_link(clien
     monkeypatch.setenv("SMTP_USERNAME", "studyflow@example.com")
     monkeypatch.setenv("SMTP_PASSWORD", "test-app-password")
     monkeypatch.setenv("SMTP_FROM", "Old Sender <studyflow@example.com>")
+    monkeypatch.setenv("FRONTEND_BASE_URL", "https://studyflow-web-1hab.vercel.app")
     monkeypatch.setattr(auth_router.smtplib, "SMTP", FakeSMTP)
 
     request = client.post(
         "/auth/password-reset/request",
+        headers={"Origin": "https://scholward-academy.vercel.app"},
         json={"email": "reset-user@example.com"},
     )
     assert request.status_code == 200, request.text
@@ -1133,6 +1166,7 @@ def test_email_password_reset_accepts_new_password_and_rejects_reused_link(clien
     assert sender.addr_spec == "studyflow@example.com"
     assert "SCHOLWARD Academy" in message.get_content()
     reset_url = re.search(r"https?://\S+", message.get_content()).group(0)
+    assert urlparse(reset_url).hostname == "scholward-academy.vercel.app"
     reset_token = parse_qs(urlparse(reset_url).query)["token"][0]
     reset = client.post(
         "/auth/password-reset/confirm",

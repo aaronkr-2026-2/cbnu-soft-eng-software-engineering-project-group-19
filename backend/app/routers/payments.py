@@ -6,11 +6,12 @@ import uuid
 from datetime import datetime, timezone
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
+from app.core.site import frontend_url_for_origin
 from app.database import get_db
 from app.models import Course, CoursePayment, Enrollment, User
 
@@ -108,6 +109,7 @@ def _to_response(payment: CoursePayment, enrolled: bool) -> PaymentStatusRespons
 )
 def create_course_checkout(
     course_id: uuid.UUID,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> CheckoutResponse:
@@ -128,6 +130,7 @@ def create_course_checkout(
         .strip()
         .rstrip("/")
     )
+    app_url = frontend_url_for_origin(app_url, request.headers.get("origin"))
     if (
         not app_url.startswith("https://")
         and "localhost" not in app_url

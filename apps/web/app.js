@@ -3283,7 +3283,7 @@ function serializeCredential(credential) {
   };
 }
 async function getPasskeyStatus() {
-  return api("/auth/passkeys/me");
+  return api(`/auth/passkeys/me?origin=${encodeURIComponent(window.location.origin)}`);
 }
 async function registerPasskey() {
   if (!window.PublicKeyCredential || !navigator.credentials)

@@ -31,6 +31,7 @@ from app.core.passkeys import (
     WEBAUTHN_RP_NAME,
     proof_expiry,
 )
+from app.core.site import SCHOLWARD_SITE_ORIGINS
 from app.database import get_db
 from app.models import PasskeyChallenge, PasskeyCredential, PasskeyProof, User
 
@@ -39,19 +40,26 @@ LOCAL_WEBAUTHN_ORIGINS = {"http://localhost:8000"}
 
 
 def _request_webauthn_scope(
-    request: Request, *, allow_status_origin_fallback: bool = False
+    request: Request,
+    *,
+    allow_status_origin_fallback: bool = False,
+    status_origin: str | None = None,
 ) -> tuple[str, str]:
     browser_origin = request.headers.get("origin")
-    origin = (browser_origin or str(request.base_url)).rstrip("/")
+    # A same-origin GET may arrive through Vercel without an Origin header.
+    explicit_origin = browser_origin or status_origin
+    origin = (explicit_origin or str(request.base_url)).rstrip("/")
     configured_origin = WEBAUTHN_ORIGIN.rstrip("/")
+    allowed_origins = LOCAL_WEBAUTHN_ORIGINS | {configured_origin}
+    if configured_origin in SCHOLWARD_SITE_ORIGINS:
+        allowed_origins |= SCHOLWARD_SITE_ORIGINS
     if origin == "http://127.0.0.1:8000":
         raise HTTPException(
             status_code=400,
             detail="Passkeys require the local hostname. Open http://localhost:8000/app and sign in again.",
         )
-    if origin != configured_origin and origin not in LOCAL_WEBAUTHN_ORIGINS:
-        if allow_status_origin_fallback and browser_origin is None:
-            # A proxied same-origin GET may have no Origin and use the upstream host.
+    if origin not in allowed_origins:
+        if allow_status_origin_fallback and explicit_origin is None:
             origin = configured_origin
         else:
             raise HTTPException(
@@ -124,8 +132,11 @@ def passkey_status(
     request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    origin: str | None = None,
 ) -> dict[str, Any]:
-    rp_id, _ = _request_webauthn_scope(request, allow_status_origin_fallback=True)
+    rp_id, _ = _request_webauthn_scope(
+        request, allow_status_origin_fallback=True, status_origin=origin
+    )
     credentials = (
         db.query(PasskeyCredential)
         .filter(PasskeyCredential.user_id == current_user.id, PasskeyCredential.rp_id == rp_id)

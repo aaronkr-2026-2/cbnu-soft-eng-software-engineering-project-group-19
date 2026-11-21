@@ -38,6 +38,7 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
+from app.core.site import frontend_url_for_origin
 from app.database import get_db
 from app.models import User
 
@@ -284,7 +285,10 @@ def request_password_reset(
     smtp_password = "".join((os.getenv("SMTP_PASSWORD") or "").split())
     render_url = os.getenv("RENDER_EXTERNAL_URL")
     default_frontend_url = f"{render_url}/app" if render_url else "http://127.0.0.1:8000/app"
-    frontend_url = (os.getenv("FRONTEND_BASE_URL") or default_frontend_url).rstrip("/")
+    frontend_url = frontend_url_for_origin(
+        (os.getenv("FRONTEND_BASE_URL") or default_frontend_url).rstrip("/"),
+        request.headers.get("origin"),
+    )
     if not frontend_url.endswith("/app"):
         frontend_url += "/app"
     if brevo_api_key or brevo_from:
