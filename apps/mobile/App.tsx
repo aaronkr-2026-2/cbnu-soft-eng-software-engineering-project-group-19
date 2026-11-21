@@ -46,25 +46,51 @@ function FounderProfile() {
   const [photoAvailable, setPhotoAvailable] = useState(true);
   return (
     <View style={styles.founderCard}>
-      <View
-        style={styles.founderPhoto}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      >
-        <Text style={styles.founderInitials}>MY</Text>
-        {photoAvailable && (
-          <Image
-            source={FOUNDER_PHOTO}
-            style={styles.founderImage}
-            onError={() => setPhotoAvailable(false)}
-          />
-        )}
+      <View style={styles.founderHeader}>
+        <View
+          style={styles.founderPhoto}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <Text style={styles.founderInitials}>MY</Text>
+          {photoAvailable && (
+            <Image
+              source={FOUNDER_PHOTO}
+              style={styles.founderImage}
+              onError={() => setPhotoAvailable(false)}
+            />
+          )}
+        </View>
+        <View
+          style={styles.founderIdentity}
+          accessible
+          accessibilityRole="header"
+          accessibilityLabel={`MUKHAMMADAZIZ YULDOSHBOEV, ${t("founderRole")}`}
+        >
+          <View style={styles.founderRoleChip}>
+            <Text style={styles.founderRole}>{t("founderRole")}</Text>
+          </View>
+          <View>
+            <Text
+              style={styles.founderName}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.62}
+            >
+              MUKHAMMADAZIZ
+            </Text>
+            <Text
+              style={styles.founderName}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.62}
+            >
+              YULDOSHBOEV
+            </Text>
+          </View>
+        </View>
       </View>
-      <Text style={styles.category}>{t("founderRole")}</Text>
-      <Text accessibilityRole="header" style={styles.founderName}>
-        MUKHAMMADAZIZ YULDOSHBOEV
-      </Text>
-      <Text style={styles.body}>{t("founderBio")}</Text>
+      <Text style={styles.founderBio}>{t("founderBio")}</Text>
     </View>
   );
 }
@@ -727,7 +753,14 @@ function StudyFlow({
                 setTab("catalog");
               }}
             >
-              <Text style={styles.filterText}>{t("catalog")}</Text>
+              <Text
+                style={styles.tabLabel}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
+                {t("catalog")}
+              </Text>
             </Pressable>
             <Pressable
               accessibilityRole="tab"
@@ -738,10 +771,18 @@ function StudyFlow({
                 if (!session) setLogin(true);
               }}
             >
-              <Text style={styles.filterText}>{t("myCourses")}</Text>
+              <Text
+                style={styles.tabLabel}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
+                {t("myCourses")}
+              </Text>
             </Pressable>
             <Pressable
               accessibilityRole="tab"
+              accessibilityLabel={t("myCertificates")}
               accessibilityState={{ selected: tab === "certificates" }}
               style={[styles.tab, tab === "certificates" && styles.activeTab]}
               onPress={() => {
@@ -749,7 +790,14 @@ function StudyFlow({
                 if (!session) setLogin(true);
               }}
             >
-              <Text style={styles.filterText}>{t("myCertificates")}</Text>
+              <Text
+                style={styles.tabLabel}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
+                {t("certificatesTab")}
+              </Text>
             </Pressable>
             <Pressable
               accessibilityRole="tab"
@@ -761,7 +809,14 @@ function StudyFlow({
                 setTab("about");
               }}
             >
-              <Text style={styles.filterText}>{t("aboutTab")}</Text>
+              <Text
+                style={styles.tabLabel}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
+                {t("aboutTab")}
+              </Text>
             </Pressable>
           </View>
         </>

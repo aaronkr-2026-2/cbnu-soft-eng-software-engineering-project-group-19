@@ -5,6 +5,7 @@ const languageIndex: Record<CourseLanguage, number> = { uz: 0, en: 1, ru: 2, ko:
 
 const messages = {
   aboutTab: ["Haqida", "About", "О нас", "소개"],
+  certificatesTab: ["Sertifikatlar", "Certificates", "Сертификаты", "수료증"],
   aboutTitle: ["Dastur haqida", "About StudyFlow", "О StudyFlow", "StudyFlow 소개"],
   aboutIntro: [
     "StudyFlow — veb-sayt va mobil ilova orqali o‘z maromingizda o‘rganish platformasi. Ikkalasida ham bitta hisob bilan kurslaringizni ochib, o‘qishni davom ettirishingiz mumkin.",
@@ -50,10 +51,10 @@ const messages = {
   ],
 
   founderBio: [
-    "MUKHAMMADAZIZ YULDOSHBOEV StudyFlow asoschisi. Uning loyiha tajribasi web va mobil ilova, kurs va darslar, testlar hamda sertifikat olish oqimini bir platformaga birlashtirishni qamrab oladi.",
-    "MUKHAMMADAZIZ YULDOSHBOEV is the founder of StudyFlow. His project experience includes bringing web and mobile apps, courses and lessons, assessments, and certificate issuance together in one platform.",
-    "MUKHAMMADAZIZ YULDOSHBOEV является основателем StudyFlow. Его опыт работы над проектом охватывает объединение сайта и мобильного приложения, курсов и уроков, тестов и выдачи сертификатов в одной платформе.",
-    "MUKHAMMADAZIZ YULDOSHBOEV는 StudyFlow의 설립자입니다. 웹과 모바일 앱, 강의와 수업, 평가, 수료증 발급을 하나의 플랫폼으로 통합한 프로젝트 경험이 있습니다.",
+    "Uning loyiha tajribasi web va mobil ilova, kurs va darslar, testlar hamda sertifikat olish oqimini bir platformaga birlashtirishni qamrab oladi.",
+    "His project experience includes bringing web and mobile apps, courses and lessons, assessments, and certificate issuance together in one platform.",
+    "Его опыт работы над проектом охватывает объединение сайта и мобильного приложения, курсов и уроков, тестов и выдачи сертификатов в одной платформе.",
+    "웹과 모바일 앱, 강의와 수업, 평가, 수료증 발급을 하나의 플랫폼으로 통합한 프로젝트 경험이 있습니다.",
   ],
   founderRole: [
     "StudyFlow asoschisi",
