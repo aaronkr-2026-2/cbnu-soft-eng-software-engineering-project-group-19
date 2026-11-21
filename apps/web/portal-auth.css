@@ -77,6 +77,41 @@
 #resetConfirmForm[hidden] {
   display: none !important;
 }
+.reset-password-field {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.auth-form .reset-password-field label {
+  margin-bottom: 0;
+}
+.reset-password-input {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+.reset-password-input input {
+  flex: 1;
+  min-width: 0;
+  font-size: 16px;
+}
+.reset-password-toggle {
+  min-height: 44px;
+  max-width: 45%;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #edf2e5;
+  color: #435a2c;
+  font: inherit;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.reset-password-toggle:focus-visible {
+  outline: 2px solid #526b32;
+  outline-offset: 2px;
+}
 @media (max-width: 520px) {
   .portal-page {
     padding: 14px;

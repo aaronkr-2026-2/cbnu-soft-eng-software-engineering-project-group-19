@@ -8,6 +8,8 @@ const resetCopy = {
     sent: "Agar bu email StudyFlow hisobiga tegishli bo‘lsa, tiklash havolasi yuborildi.",
     password: "Yangi parol",
     confirm: "Yangi parolni takrorlang",
+    show: "Ko‘rsatish",
+    hide: "Yashirish",
     save: "Parolni saqlash",
     success: "Parol yangilandi. Endi yangi parol bilan kiring.",
     mismatch: "Parollar bir xil emas.",
@@ -25,6 +27,8 @@ const resetCopy = {
     sent: "If this email belongs to a StudyFlow account, a reset link has been sent.",
     password: "New password",
     confirm: "Confirm new password",
+    show: "Show",
+    hide: "Hide",
     save: "Save password",
     success: "Password updated. Sign in with your new password.",
     mismatch: "The passwords do not match.",
@@ -42,6 +46,8 @@ const resetCopy = {
     sent: "Если этот адрес связан с аккаунтом StudyFlow, ссылка для сброса отправлена.",
     password: "Новый пароль",
     confirm: "Повторите новый пароль",
+    show: "Показать",
+    hide: "Скрыть",
     save: "Сохранить пароль",
     success: "Пароль обновлён. Войдите с новым паролем.",
     mismatch: "Пароли не совпадают.",
@@ -59,6 +65,8 @@ const resetCopy = {
     sent: "StudyFlow 계정에 등록된 이메일이면 재설정 링크를 보냈습니다.",
     password: "새 비밀번호",
     confirm: "새 비밀번호 확인",
+    show: "표시",
+    hide: "숨기기",
     save: "비밀번호 저장",
     success: "비밀번호가 변경됐어요. 새 비밀번호로 로그인하세요.",
     mismatch: "비밀번호가 일치하지 않아요.",
@@ -75,7 +83,30 @@ const message = document.querySelector("#resetMessage");
 const query = new URLSearchParams(location.search);
 const token = query.get("token");
 const accountType = query.get("account_type") === "author" ? "author" : "learner";
+const passwordToggles = Array.from(
+  confirmForm.querySelectorAll(".reset-password-toggle"),
+  (button) => {
+    const input = document.getElementById(button.getAttribute("aria-controls"));
+    return { button, input, label: input.labels[0] };
+  },
+);
 let language = localStorage.getItem("studyflow-language") || "uz";
+let passwordUpdated = false;
+
+function renderPasswordToggle({ button, input, label }) {
+  const c = resetCopy[language] || resetCopy.uz;
+  const action = input.type === "password" ? c.show : c.hide;
+  button.textContent = action;
+  button.setAttribute("aria-label", `${action} (${label.textContent})`);
+}
+
+for (const field of passwordToggles) {
+  field.button.addEventListener("click", () => {
+    field.input.type = field.input.type === "password" ? "text" : "password";
+    renderPasswordToggle(field);
+  });
+}
+
 function render() {
   const c = resetCopy[language] || resetCopy.uz;
   document.documentElement.lang = language;
@@ -95,7 +126,9 @@ function render() {
   document.getElementById("backLink").href =
     accountType === "author" ? "/app/author-login.html" : "/app/learner-login.html";
   requestForm.hidden = Boolean(token);
-  confirmForm.hidden = !token;
+  confirmForm.hidden = !token || passwordUpdated;
+  passwordToggles.forEach(renderPasswordToggle);
+  if (passwordUpdated) message.textContent = c.success;
 }
 languageSelect.addEventListener("change", () => {
   language = languageSelect.value;
@@ -141,8 +174,10 @@ confirmForm.addEventListener("submit", async (event) => {
   }
   try {
     await post("/auth/password-reset/confirm", { token, new_password: password });
-    message.textContent = resetCopy[language].success;
-    confirmForm.hidden = true;
+    passwordUpdated = true;
+    confirmForm.reset();
+    for (const { input } of passwordToggles) input.type = "password";
+    render();
     history.replaceState({}, "", location.pathname);
   } catch (error) {
     message.textContent = error.message || resetCopy[language].error;
