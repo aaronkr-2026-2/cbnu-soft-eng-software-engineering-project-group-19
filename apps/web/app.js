@@ -56,9 +56,7 @@ const copy = {
     featureTwoBody: "Til va o‘rganish darajangizga mos kurslarni kashf qiling.",
     featureThreeTitle: "Natijani ko‘ring",
     featureThreeBody: "Darslarni yakunlang, bilimni sinang va rivojlanishni kuzating.",
-    exploreLabel: "Keyingi qadamingiz",
-    exploreTitle: "O‘rganishga tayyormisiz?",
-    browseCourses: "Kurslarni ko‘rish",
+    exploreTitle: "Kurslar katalogi",
     coursesHint: "Kurslarni ko‘rish uchun avval tizimga kiring.",
     aboutTitle: "Dastur haqida",
     closingTitle: "Bugun boshlang. Ertaga o‘zingizga rahmat aytasiz.",
@@ -160,9 +158,7 @@ const copy = {
     featureTwoBody: "Discover courses matched to your language and level.",
     featureThreeTitle: "See your progress",
     featureThreeBody: "Finish lessons, check what you know, and track your growth.",
-    exploreLabel: "Your next step",
-    exploreTitle: "Ready to start learning?",
-    browseCourses: "Browse courses",
+    exploreTitle: "Course catalog",
     coursesHint: "Log in to explore available courses.",
     aboutTitle: "About SCHOLWARD Academy",
     closingTitle: "Start today. Thank yourself tomorrow.",
@@ -261,9 +257,7 @@ const copy = {
     featureTwoBody: "Находите курсы с учётом языка и уровня.",
     featureThreeTitle: "Видимый прогресс",
     featureThreeBody: "Завершайте уроки, проверяйте знания и следите за ростом.",
-    exploreLabel: "Ваш следующий шаг",
-    exploreTitle: "Готовы начать учиться?",
-    browseCourses: "Смотреть курсы",
+    exploreTitle: "Каталог курсов",
     coursesHint: "Войдите, чтобы посмотреть доступные курсы.",
     aboutTitle: "О SCHOLWARD Academy",
     closingTitle: "Начните сегодня. Завтра вы скажете себе спасибо.",
@@ -362,9 +356,7 @@ const copy = {
     featureTwoBody: "언어와 학습 수준에 맞는 강의를 찾아보세요.",
     featureThreeTitle: "성장 확인",
     featureThreeBody: "강의를 완료하고, 지식을 확인하며, 성장을 기록하세요.",
-    exploreLabel: "다음 단계",
-    exploreTitle: "학습을 시작할 준비가 됐나요?",
-    browseCourses: "강의 둘러보기",
+    exploreTitle: "강의 카탈로그",
     coursesHint: "로그인하면 강의를 둘러볼 수 있어요.",
     aboutTitle: "SCHOLWARD Academy 소개",
     closingTitle: "오늘 시작하고, 내일의 나에게 고마워하세요.",
@@ -1091,8 +1083,6 @@ const dashboardCopy = {
 const featureCopy = {
   uz: {
     courseCategoryLabel: "Mavzu yo‘nalishi",
-    courseSearchPlaceholder:
-      "Nimani o‘rganmoqchisiz? Masalan: Python, ingliz tili, sun’iy intellekt",
     searchCourses: "Kurslarni qidirish",
     aiRecommendation: "AI mavzuingiz va darajangizga ko‘ra tavsiya qildi",
     localRecommendation: "Mavzu va quiz natijangizga ko‘ra moslashtirilgan tavsiya",
@@ -1126,7 +1116,6 @@ const featureCopy = {
   },
   en: {
     courseCategoryLabel: "Subject area",
-    courseSearchPlaceholder: "What do you want to learn? Try Python, English, or AI",
     searchCourses: "Search courses",
     aiRecommendation: "AI recommendations based on your topic and level",
     localRecommendation: "Recommendations matched to your topic and quiz level",
@@ -1160,7 +1149,6 @@ const featureCopy = {
   },
   ru: {
     courseCategoryLabel: "Тема курса",
-    courseSearchPlaceholder: "Что хотите изучать? Например: Python, английский, ИИ",
     searchCourses: "Искать курсы",
     aiRecommendation: "ИИ подобрал курсы по теме и уровню",
     localRecommendation: "Рекомендации по теме и результатам тестов",
@@ -1194,7 +1182,6 @@ const featureCopy = {
   },
   ko: {
     courseCategoryLabel: "학습 주제",
-    courseSearchPlaceholder: "무엇을 배우고 싶으세요? Python, 영어, AI 등을 검색해 보세요",
     searchCourses: "강의 검색",
     aiRecommendation: "주제와 수준에 맞는 AI 추천",
     localRecommendation: "주제와 퀴즈 결과에 맞춘 추천",
@@ -1835,7 +1822,10 @@ function setLanguage(code, refresh = true) {
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     el.textContent = t(el.dataset.i18n);
   });
-  $("#courseSearch").placeholder = t("courseSearchPlaceholder");
+  const searchLabel = t("courseSearchLabel");
+  $("#courseSearch").placeholder = searchLabel;
+  $("#courseSearch").setAttribute("aria-label", searchLabel);
+  $("#courseSearchButton").setAttribute("aria-label", searchLabel);
   $("#courseSearch").setAttribute("aria-label", t("searchCourses"));
   $("#courseSearchButton").setAttribute("aria-label", t("searchCourses"));
   document.querySelectorAll(".week-days [data-weekday]").forEach((day) => {
@@ -1891,14 +1881,6 @@ function updateAuthUI() {
   $("#heroSection").hidden = isAuthor;
   $("#how").hidden = isAuthor;
   $("#closingBanner").hidden = isAuthor;
-  $("#courses .section-heading h2").textContent = isAuthor
-    ? { uz: "Kurslar katalogi", en: "Course catalog", ru: "Каталог курсов", ko: "강의 카탈로그" }[
-        language
-      ]
-    : t("exploreTitle");
-  $("#courses .section-label [data-i18n='exploreLabel']").textContent = isAuthor
-    ? { uz: "KURSLAR", en: "COURSES", ru: "КУРСЫ", ko: "강의" }[language]
-    : t("exploreLabel");
   $("#learnerNav").hidden = !isLearner;
   $("#instructorNav").hidden = !isAuthor;
   $("#authorPortalNav").hidden = isAuthor;
@@ -4016,9 +3998,6 @@ mainNav.querySelectorAll("a").forEach((link) =>
     mainNav.classList.remove("is-open");
     mobileNavToggle.setAttribute("aria-expanded", "false");
   }),
-);
-$("#browseButton").addEventListener("click", () =>
-  $("#courses").scrollIntoView({ behavior: "smooth" }),
 );
 $("#registerPasskeyButton").addEventListener("click", async (event) => {
   const button = event.currentTarget;
