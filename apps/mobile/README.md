@@ -1,8 +1,8 @@
 # SCHOLWARD Academy Mobile
 
-Android va iOS uchun SCHOLWARD Academy o‘quvchi ilovasi. Mavjud SCHOLWARD Academy hisobingiz bilan kiring. Kurslar va dars progressi web bilan bitta serverda saqlanadi.
+The SCHOLWARD Academy learner app is available for Android and iOS. Sign in with your existing SCHOLWARD Academy account. The mobile and web apps use the same server for courses and lesson progress.
 
-## Telefonda ochish
+## Run on your phone
 
 ```sh
 cd apps/mobile
@@ -10,25 +10,25 @@ npm ci
 npm start
 ```
 
-Telefon va kompyuterni bir Wi-Fi tarmog‘iga ulang. Android’da Expo Go ichidan, iOS’da kamera orqali terminaldagi QR kodni skanerlang. iOS’da Expo Go hamda Expo CLI bir Expo hisobiga kirgan bo‘lishi kerak. Ilova Expo SDK 58’dan foydalanadi.
+Connect your phone and computer to the same Wi-Fi network. On Android, scan the terminal QR code from Expo Go. On iOS, scan it with the Camera app and use the same Expo account in Expo Go and the Expo CLI. The app uses Expo SDK 58.
 
-## Birinchi versiya
+## Features
 
-- O‘quvchi hisobi bilan kirish va qurilmada sessiyani xavfsiz saqlash.
-- O‘zbek, ingliz, rus va koreys tilidagi interfeys va kurslar katalogi. Tanlangan til qurilmada saqlanadi.
-- Tanlangan kursning darslari, dars materiallari va progressi.
-- Videoni dars ichida ijro etish. Ko‘rish progressi SCHOLWARD Academy’da saqlanadi. Dars qayta ochilganda pleyer saqlangan joydan davom etishga tayyor turadi. Videoni brauzerda ham ochish mumkin. Ilovaga qaytganda progress avtomatik yangilanadi.
-- Dars quizlarini mobil ilovada ishlash, natijasi va avvalgi urinishlarini ko‘rish.
-- Darslar tugagach yakuniy imtihon holatini ko‘rish. Imtihonni topshirish va sertifikatni rasmiylashtirish SCHOLWARD Academy brauzer oynasida passkey bilan tasdiqlanadi. So‘ralsa, brauzerda o‘sha o‘quvchi hisobi bilan kiring.
-- «Sertifikatlarim» bo‘limida berilgan sertifikatlarni ko‘rish va tekshirish havolasini ochish.
+- Sign in with a learner account and store the session securely on your device.
+- Browse the interface and course catalog in Uzbek, English, Russian, or Korean. The app remembers your language preference.
+- Open lessons and materials for your selected course and track your progress.
+- Watch videos in the app and resume from your saved position. You can also open the video in your browser. Progress refreshes automatically when you return to the app.
+- Take lesson quizzes and review your scores and previous attempts.
+- Check your final exam status after completing the lessons. To take the final exam or request a certificate, open SCHOLWARD Academy in your browser and verify with a passkey. If prompted, sign in with the same learner account.
+- View issued certificates under **My Certificates** and open their verification links.
 
-Pulli kursga yozilish [SCHOLWARD Academy veb-saytida](https://studyflow-web-1hab.vercel.app/app/) amalga oshiriladi.
+Enroll in paid courses on the [SCHOLWARD Academy website](https://scholward-academy.vercel.app/app/).
 
-## Tekshirish
+## Run checks
 
 ```sh
 npm run check
 npx expo export --platform ios --platform android
 ```
 
-Standart server manzili `https://studyflow-web-1hab.vercel.app`. Sinov serverini ishlatish uchun Expo ishga tushishidan oldin `EXPO_PUBLIC_STUDYFLOW_API_URL` qiymatini belgilang.
+The app connects to `https://studyflow-web-1hab.vercel.app` by default. To use a test server, set `EXPO_PUBLIC_STUDYFLOW_API_URL` before starting Expo.
