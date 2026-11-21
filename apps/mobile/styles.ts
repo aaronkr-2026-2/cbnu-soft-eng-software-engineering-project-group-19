@@ -52,6 +52,8 @@ export const styles = StyleSheet.create({
   },
   body: { color: color.ink, fontSize: 15, lineHeight: 23 },
   muted: { color: color.muted, fontSize: 14, lineHeight: 20 },
+  passwordField: { gap: 6 },
+  passwordSuccess: { backgroundColor: color.pale, borderRadius: 12, padding: 14 },
   input: {
     minHeight: 48,
     borderWidth: 1,

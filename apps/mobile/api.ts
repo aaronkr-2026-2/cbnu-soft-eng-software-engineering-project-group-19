@@ -38,7 +38,7 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     message: string,
-    readonly messageKey?: "learnerRequired" | "invalidCredentials",
+    readonly messageKey?: "learnerRequired" | "invalidCredentials" | "wrongCurrentPassword",
   ) {
     super(message);
   }
@@ -100,6 +100,25 @@ export async function signIn(email: string, password: string): Promise<Session> 
   } catch (error) {
     if (error instanceof ApiError && [401, 403, 422].includes(error.status))
       throw new ApiError(error.status, "Invalid learner credentials", "invalidCredentials");
+    throw error;
+  }
+}
+
+export async function changePassword(token: string, currentPassword: string, newPassword: string) {
+  try {
+    await request<{ message: string }>("/auth/change-password", {
+      method: "POST",
+      token,
+      body: { current_password: currentPassword, new_password: newPassword },
+    });
+  } catch (error) {
+    if (
+      error instanceof ApiError &&
+      error.status === 400 &&
+      error.message === "Current password is incorrect"
+    ) {
+      throw new ApiError(error.status, error.message, "wrongCurrentPassword");
+    }
     throw error;
   }
 }

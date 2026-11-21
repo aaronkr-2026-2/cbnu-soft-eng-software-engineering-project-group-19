@@ -34,6 +34,7 @@ import type { Course, CourseLanguage, Lesson, Selection, Session, VideoProgress 
 import { color, styles } from "./styles";
 import { Button, Content, ErrorNotice, useRefreshOnReturn, useResource } from "./ui";
 import { CertificatesScreen, CourseCompletion, QuizScreen } from "./Assessments";
+import { ChangePassword } from "./ChangePassword";
 import { LessonVideo } from "./LessonVideo";
 import { LocaleContext, useTranslate } from "./localization";
 
@@ -229,7 +230,15 @@ function Catalog({
   );
 }
 
-function Login({ onLogin, cancel }: { onLogin: (value: Session) => void; cancel: () => void }) {
+function Login({
+  onLogin,
+  cancel,
+  passwordChanged,
+}: {
+  onLogin: (value: Session) => void;
+  cancel: () => void;
+  passwordChanged: boolean;
+}) {
   const t = useTranslate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -261,6 +270,13 @@ function Login({ onLogin, cancel }: { onLogin: (value: Session) => void; cancel:
           {t("learnerAccount")}
         </Text>
         <Text style={styles.body}>{t("loginHelp")}</Text>
+        {passwordChanged && (
+          <View style={styles.passwordSuccess}>
+            <Text accessibilityRole="alert" style={styles.body}>
+              {t("passwordChanged")}
+            </Text>
+          </View>
+        )}
         <TextInput
           style={styles.input}
           accessibilityLabel={t("email")}
@@ -301,12 +317,14 @@ function MyCourses({
   openCourse,
   onSignOut,
   onExpired,
+  onChangePassword,
 }: {
   session: Session;
   language: CourseLanguage;
   openCourse: (selection: Selection) => void;
   onSignOut: () => void;
   onExpired: () => void;
+  onChangePassword: () => void;
 }) {
   const t = useTranslate();
   const load = useCallback(
@@ -323,6 +341,7 @@ function MyCourses({
         {t("myCourses")}
       </Text>
       <Text style={styles.muted}>{session.name}</Text>
+      <Button title={t("changePassword")} onPress={onChangePassword} secondary />
       {error !== undefined && <ErrorNotice error={error} retry={refresh} />}
       {!loading && value?.length === 0 && <Text style={styles.body}>{t("noEnrollments")}</Text>}
       {value?.map((course) => (
@@ -634,6 +653,8 @@ function StudyFlow({
   const [tab, setTab] = useState<"catalog" | "mine" | "certificates" | "about">("catalog");
   const lastLearnerTab = useRef<"catalog" | "mine" | "certificates">("catalog");
   const [login, setLogin] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordChanged, setPasswordChanged] = useState(false);
   const [selection, setSelection] = useState<Selection | null>(null);
 
   const restore = useCallback(async () => {
@@ -665,10 +686,19 @@ function StudyFlow({
   }, [login, tab]);
 
   const expireSession = useCallback(() => {
+    setChangingPassword(false);
     setSession(null);
     setLogin(true);
     void SecureStore.deleteItemAsync(SESSION_KEY).catch(setRestoreError);
   }, []);
+
+  async function finishPasswordChange() {
+    await SecureStore.deleteItemAsync(SESSION_KEY).catch(setRestoreError);
+    setPasswordChanged(true);
+    setChangingPassword(false);
+    setSession(null);
+    setLogin(true);
+  }
 
   function openCourse(course: Selection) {
     setSelection(course);
@@ -687,6 +717,7 @@ function StudyFlow({
   }
 
   function cancelLogin() {
+    setPasswordChanged(false);
     setLogin(false);
     setSelection(null);
     setTab("catalog");
@@ -722,11 +753,20 @@ function StudyFlow({
         />
       ) : login ? (
         <Login
+          passwordChanged={passwordChanged}
           onLogin={(account) => {
+            setPasswordChanged(false);
             setSession(account);
             setLogin(false);
           }}
           cancel={cancelLogin}
+        />
+      ) : changingPassword && session ? (
+        <ChangePassword
+          token={session.token}
+          onChanged={finishPasswordChange}
+          onExpired={expireSession}
+          onBack={() => setChangingPassword(false)}
         />
       ) : selection && session ? (
         <CourseScreen
@@ -754,6 +794,7 @@ function StudyFlow({
               openCourse={openCourse}
               onSignOut={logOut}
               onExpired={expireSession}
+              onChangePassword={() => setChangingPassword(true)}
             />
           ) : (
             <Catalog
