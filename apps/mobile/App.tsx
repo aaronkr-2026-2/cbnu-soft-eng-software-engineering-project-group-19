@@ -1138,6 +1138,7 @@ function StudyFlow({
                   accessibilityState={{ selected }}
                   style={({ pressed }) => [
                     styles.tab,
+                    item.id === "certificates" && styles.certificatesTab,
                     selected && styles.activeTab,
                     pressed && styles.dimmed,
                   ]}
@@ -1149,7 +1150,12 @@ function StudyFlow({
                   }}
                 >
                   <View style={[styles.tabIndicator, selected && styles.activeTabIndicator]} />
-                  <Text style={[styles.tabLabel, selected && styles.activeTabLabel]}>
+                  <Text
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.75}
+                    style={[styles.tabLabel, selected && styles.activeTabLabel]}
+                  >
                     {t(item.label)}
                   </Text>
                 </Pressable>

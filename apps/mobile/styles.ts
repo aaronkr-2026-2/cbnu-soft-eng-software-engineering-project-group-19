@@ -412,6 +412,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  certificatesTab: { flex: 1.16 },
   tabIndicator: { width: 16, height: 3, borderRadius: 2, backgroundColor: "transparent" },
   activeTabIndicator: { backgroundColor: color.leaf },
   tabLabel: {
@@ -419,7 +420,8 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     textAlign: "center",
-    paddingHorizontal: 3,
+    alignSelf: "stretch",
+    paddingHorizontal: 2,
   },
   activeTab: { backgroundColor: color.pale },
   activeTabLabel: { color: color.leaf },
