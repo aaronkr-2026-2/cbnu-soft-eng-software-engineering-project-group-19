@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { AppState, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
-import { styles } from "./styles";
+import {
+  AppState,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import type { TextInputProps } from "react-native";
+import { color, styles } from "./styles";
 import { ApiError } from "./api";
 import { useTranslate } from "./localization";
 import type { MessageKey } from "./localization";
@@ -88,6 +97,62 @@ export function ErrorNotice({ error, retry }: { error: unknown; retry?: () => vo
         {t(errorKey(error))}
       </Text>
       {retry && <Button title={t("retry")} onPress={retry} secondary />}
+    </View>
+  );
+}
+
+export function PasswordInput({
+  label,
+  autoComplete,
+  editable,
+  value,
+  onChangeText,
+  onSubmitEditing,
+}: Pick<
+  TextInputProps,
+  "autoComplete" | "editable" | "value" | "onChangeText" | "onSubmitEditing"
+> & {
+  label: string;
+}) {
+  const t = useTranslate();
+  const [visible, setVisible] = useState(false);
+  const action = t(visible ? "hidePasswordValue" : "showPasswordValue");
+
+  useEffect(() => {
+    if (!visible) return;
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "background") setVisible(false);
+    });
+    return () => subscription.remove();
+  }, [visible]);
+
+  return (
+    <View style={styles.passwordInputRow}>
+      <TextInput
+        style={[styles.input, styles.passwordInput]}
+        accessibilityLabel={label}
+        placeholder={label}
+        placeholderTextColor={color.muted}
+        autoComplete={autoComplete}
+        autoCapitalize="none"
+        autoCorrect={false}
+        spellCheck={false}
+        secureTextEntry={!visible}
+        editable={editable}
+        value={value}
+        onChangeText={onChangeText}
+        onSubmitEditing={onSubmitEditing}
+      />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t(visible ? "hidePasswordField" : "showPasswordField", {
+          field: label,
+        })}
+        onPress={() => setVisible((current) => !current)}
+        style={({ pressed }) => [styles.passwordToggle, pressed && styles.dimmed]}
+      >
+        <Text style={styles.passwordToggleText}>{action}</Text>
+      </Pressable>
     </View>
   );
 }

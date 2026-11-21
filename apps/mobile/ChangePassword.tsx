@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { BackHandler, KeyboardAvoidingView, Platform, Text, TextInput, View } from "react-native";
+import { BackHandler, KeyboardAvoidingView, Platform, Text, View } from "react-native";
 import { ApiError, changePassword } from "./api";
 import { useTranslate } from "./localization";
 import type { MessageKey } from "./localization";
-import { color, styles } from "./styles";
-import { Button, Content, ErrorNotice } from "./ui";
+import { styles } from "./styles";
+import { Button, Content, ErrorNotice, PasswordInput } from "./ui";
 
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 128;
@@ -87,15 +87,9 @@ export function ChangePassword({
           ).map(([label, autoComplete, value, setValue]) => (
             <View key={label} style={styles.passwordField}>
               <Text style={styles.listTitle}>{t(label)}</Text>
-              <TextInput
-                style={styles.input}
-                accessibilityLabel={t(label)}
-                placeholder={t(label)}
-                placeholderTextColor={color.muted}
+              <PasswordInput
+                label={t(label)}
                 autoComplete={autoComplete}
-                autoCapitalize="none"
-                autoCorrect={false}
-                secureTextEntry
                 editable={!saving}
                 value={value}
                 onChangeText={(text) => {

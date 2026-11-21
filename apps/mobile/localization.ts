@@ -81,6 +81,20 @@ const messages = {
   ],
   email: ["Email", "Email", "Электронная почта", "이메일"],
   password: ["Parol", "Password", "Пароль", "비밀번호"],
+  showPasswordValue: ["Ko‘rsatish", "Show", "Показать", "표시"],
+  hidePasswordValue: ["Yashirish", "Hide", "Скрыть", "숨기기"],
+  showPasswordField: [
+    "Ko‘rsatish ({field})",
+    "Show ({field})",
+    "Показать ({field})",
+    "표시 ({field})",
+  ],
+  hidePasswordField: [
+    "Yashirish ({field})",
+    "Hide ({field})",
+    "Скрыть ({field})",
+    "숨기기 ({field})",
+  ],
   forgotPassword: [
     "Parolni unutdingizmi?",
     "Forgot your password?",

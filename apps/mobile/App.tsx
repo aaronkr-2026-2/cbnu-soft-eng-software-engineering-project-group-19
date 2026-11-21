@@ -33,7 +33,7 @@ import {
 } from "./api";
 import type { Course, CourseLanguage, Lesson, Selection, Session, VideoProgress } from "./api";
 import { color, styles } from "./styles";
-import { Button, Content, ErrorNotice, useRefreshOnReturn, useResource } from "./ui";
+import { Button, Content, ErrorNotice, PasswordInput, useRefreshOnReturn, useResource } from "./ui";
 import { CertificatesScreen, CourseCompletion, QuizScreen } from "./Assessments";
 import { ChangePassword } from "./ChangePassword";
 import { LessonVideo } from "./LessonVideo";
@@ -330,13 +330,10 @@ function Login({
           />
         )}
         {!resetMode && (
-          <TextInput
-            style={styles.input}
-            accessibilityLabel={t("password")}
-            placeholder={t("password")}
-            placeholderTextColor={color.muted}
+          <PasswordInput
+            label={t("password")}
             autoComplete="current-password"
-            secureTextEntry
+            editable={!pending}
             value={password}
             onChangeText={setPassword}
             onSubmitEditing={submit}

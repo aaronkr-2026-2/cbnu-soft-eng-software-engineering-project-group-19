@@ -54,6 +54,18 @@ export const styles = StyleSheet.create({
   muted: { color: color.muted, fontSize: 14, lineHeight: 20 },
   passwordField: { gap: 6 },
   passwordSuccess: { backgroundColor: color.pale, borderRadius: 12, padding: 14 },
+  passwordInputRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  passwordInput: { flex: 1, minWidth: 0 },
+  passwordToggle: {
+    minHeight: 48,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    justifyContent: "center",
+    borderRadius: 12,
+    backgroundColor: color.pale,
+    maxWidth: "42%",
+  },
+  passwordToggleText: { color: color.leaf, fontWeight: "700", textAlign: "center" },
   input: {
     minHeight: 48,
     borderWidth: 1,
