@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, AppState, Linking, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Linking, Pressable, Text, View } from "react-native";
 import {
   ApiError,
   certificateWebLink,
@@ -13,7 +13,7 @@ import {
 import type { Certificate, CourseLanguage, QuizAttempt } from "./api";
 import { color, styles } from "./styles";
 import { translate, useLocale, useTranslate } from "./localization";
-import { Button, Content, ErrorNotice, useResource } from "./ui";
+import { Button, Content, ErrorNotice, useRefreshOnReturn, useResource } from "./ui";
 
 type CourseProps = {
   token: string;
@@ -26,15 +26,6 @@ function useSessionFailure(error: unknown, onExpired: () => void) {
   useEffect(() => {
     if (error instanceof ApiError && error.status === 401) onExpired();
   }, [error, onExpired]);
-}
-
-function useRefreshOnReturn(refresh: () => void) {
-  useEffect(() => {
-    const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") refresh();
-    });
-    return () => subscription.remove();
-  }, [refresh]);
 }
 
 function attemptText(attempt: QuizAttempt, language: CourseLanguage) {

@@ -32,7 +32,7 @@ import {
 } from "./api";
 import type { Course, CourseLanguage, Lesson, Selection, Session, VideoProgress } from "./api";
 import { color, styles } from "./styles";
-import { Button, Content, ErrorNotice, useResource } from "./ui";
+import { Button, Content, ErrorNotice, useRefreshOnReturn, useResource } from "./ui";
 import { CertificatesScreen, CourseCompletion, QuizScreen } from "./Assessments";
 import { LessonVideo } from "./LessonVideo";
 import { LocaleContext, useTranslate } from "./localization";
@@ -371,6 +371,9 @@ function CourseScreen({
   const [working, setWorking] = useState(false);
   const [video, setVideo] = useState<VideoProgress>();
   const [updatedProgress, setUpdatedProgress] = useState(value?.progress);
+  const pendingWebLesson = useRef<string | null>(null);
+  const progressBusy = useRef(false);
+  const lessonId = lesson?.id;
   const progress = updatedProgress ?? value?.progress;
   const requireVideo =
     lesson?.resource_type === "video" && Boolean(lesson.resource_url || lesson.external_video_url);
@@ -393,34 +396,48 @@ function CourseScreen({
     return () => subscription.remove();
   }, [back, lesson, quizOpen, quizSubmitting, working]);
 
-  async function openWeb(url: string) {
+  async function openWeb(url: string, webLessonId?: string) {
+    if (webLessonId) pendingWebLesson.current = webLessonId;
     setActionError(undefined);
     try {
       await Linking.openURL(url);
     } catch (failure) {
+      if (webLessonId && pendingWebLesson.current === webLessonId) pendingWebLesson.current = null;
       setActionError(failure);
     }
   }
 
-  async function updateProgress() {
+  const updateProgress = useCallback(async () => {
+    if (progressBusy.current) return;
+    progressBusy.current = true;
     setWorking(true);
     setActionError(undefined);
     try {
       const [latestProgress, videoProgress] = await Promise.all([
         loadProgress(token, id),
-        requireVideo && lesson ? getVideoProgress(token, id, lesson.id) : undefined,
+        requireVideo && lessonId ? getVideoProgress(token, id, lessonId) : undefined,
       ]);
       setUpdatedProgress(latestProgress);
       setVideo(videoProgress);
     } catch (failure) {
       setActionError(failure);
     } finally {
+      progressBusy.current = false;
       setWorking(false);
     }
-  }
+  }, [id, lessonId, requireVideo, token]);
+
+  const refreshAfterWebVideo = useCallback(() => {
+    if (!lessonId || pendingWebLesson.current !== lessonId) return;
+    pendingWebLesson.current = null;
+    void updateProgress();
+  }, [lessonId, updateProgress]);
+
+  useRefreshOnReturn(refreshAfterWebVideo);
 
   async function markDone() {
-    if (!lesson || working) return;
+    if (!lesson || progressBusy.current) return;
+    progressBusy.current = true;
     setWorking(true);
     setActionError(undefined);
     try {
@@ -429,6 +446,7 @@ function CourseScreen({
     } catch (failure) {
       setActionError(failure);
     } finally {
+      progressBusy.current = false;
       setWorking(false);
     }
   }
@@ -487,7 +505,8 @@ function CourseScreen({
             )}
             <Button
               title={t("openBrowser")}
-              onPress={() => openWeb(courseWebLink(id, { lesson: lesson.id }))}
+              onPress={() => openWeb(courseWebLink(id, { lesson: lesson.id }), lesson.id)}
+              disabled={working}
               secondary
             />
             <Button

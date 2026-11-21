@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { AppState, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { styles } from "./styles";
 import { ApiError } from "./api";
 import { useTranslate } from "./localization";
@@ -17,6 +17,15 @@ function errorKey(error: unknown): MessageKey {
   if (error.status === 404) return "notFound";
   if (error.status === 429) return "tooManyRequests";
   return "genericError";
+}
+
+export function useRefreshOnReturn(refresh: () => void) {
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") refresh();
+    });
+    return () => subscription.remove();
+  }, [refresh]);
 }
 
 export function useResource<T>(load: (signal: AbortSignal) => Promise<T>) {
