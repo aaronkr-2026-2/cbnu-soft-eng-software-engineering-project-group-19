@@ -935,9 +935,10 @@ function StudyFlow({
       <View style={styles.header}>
         <View style={styles.brand}>
           <Text style={styles.logo}>S</Text>
-          <Text style={styles.wordmark}>
-            studyflow<Text style={styles.brandAccent}>.ai</Text>
-          </Text>
+          <View style={styles.wordmarkGroup}>
+            <Text style={styles.wordmark}>SCHOLWARD</Text>
+            <Text style={styles.brandAccent}>Academy</Text>
+          </View>
         </View>
         {!session && !login && !restoring && (
           <Button title={t("signIn")} onPress={() => setLogin(true)} secondary />

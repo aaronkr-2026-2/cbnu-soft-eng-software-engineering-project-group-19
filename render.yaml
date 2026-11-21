@@ -17,7 +17,7 @@ services:
       - key: WEBAUTHN_RP_ID
         value: studyflow-web-1hab.vercel.app
       - key: WEBAUTHN_RP_NAME
-        value: StudyFlow AI
+        value: SCHOLWARD Academy
       - key: WEBAUTHN_ORIGIN
         value: https://studyflow-web-1hab.vercel.app
       - key: PUBLIC_APP_URL

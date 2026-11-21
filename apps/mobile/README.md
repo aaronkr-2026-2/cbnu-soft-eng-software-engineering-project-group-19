@@ -1,6 +1,6 @@
-# StudyFlow Mobile
+# SCHOLWARD Academy Mobile
 
-Android va iOS uchun StudyFlow o‘quvchi ilovasi. Mavjud StudyFlow hisobingiz bilan kiring. Kurslar va dars progressi web bilan bitta serverda saqlanadi.
+Android va iOS uchun SCHOLWARD Academy o‘quvchi ilovasi. Mavjud SCHOLWARD Academy hisobingiz bilan kiring. Kurslar va dars progressi web bilan bitta serverda saqlanadi.
 
 ## Telefonda ochish
 
@@ -17,12 +17,12 @@ Telefon va kompyuterni bir Wi-Fi tarmog‘iga ulang. Android’da Expo Go ichida
 - O‘quvchi hisobi bilan kirish va qurilmada sessiyani xavfsiz saqlash.
 - O‘zbek, ingliz, rus va koreys tilidagi interfeys va kurslar katalogi. Tanlangan til qurilmada saqlanadi.
 - Tanlangan kursning darslari, dars materiallari va progressi.
-- Videoni dars ichida ijro etish. Ko‘rish progressi StudyFlow’da saqlanadi. Dars qayta ochilganda pleyer saqlangan joydan davom etishga tayyor turadi. Videoni brauzerda ham ochish mumkin. Ilovaga qaytganda progress avtomatik yangilanadi.
+- Videoni dars ichida ijro etish. Ko‘rish progressi SCHOLWARD Academy’da saqlanadi. Dars qayta ochilganda pleyer saqlangan joydan davom etishga tayyor turadi. Videoni brauzerda ham ochish mumkin. Ilovaga qaytganda progress avtomatik yangilanadi.
 - Dars quizlarini mobil ilovada ishlash, natijasi va avvalgi urinishlarini ko‘rish.
-- Darslar tugagach yakuniy imtihon holatini ko‘rish. Imtihonni topshirish va sertifikatni rasmiylashtirish StudyFlow brauzer oynasida passkey bilan tasdiqlanadi. So‘ralsa, brauzerda o‘sha o‘quvchi hisobi bilan kiring.
+- Darslar tugagach yakuniy imtihon holatini ko‘rish. Imtihonni topshirish va sertifikatni rasmiylashtirish SCHOLWARD Academy brauzer oynasida passkey bilan tasdiqlanadi. So‘ralsa, brauzerda o‘sha o‘quvchi hisobi bilan kiring.
 - «Sertifikatlarim» bo‘limida berilgan sertifikatlarni ko‘rish va tekshirish havolasini ochish.
 
-Pulli kursga yozilish [StudyFlow veb-saytida](https://studyflow-web-1hab.vercel.app/app/) amalga oshiriladi.
+Pulli kursga yozilish [SCHOLWARD Academy veb-saytida](https://studyflow-web-1hab.vercel.app/app/) amalga oshiriladi.
 
 ## Tekshirish
 

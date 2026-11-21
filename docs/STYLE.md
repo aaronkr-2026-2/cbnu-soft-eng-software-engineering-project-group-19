@@ -1,4 +1,4 @@
-# StudyFlow style guide
+# SCHOLWARD Academy style guide
 
 ## Code
 

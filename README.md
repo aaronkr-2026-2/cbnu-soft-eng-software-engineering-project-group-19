@@ -1,19 +1,19 @@
-# StudyFlow AI
+# SCHOLWARD Academy
 
 <p align="center">
   <a href="https://github.com/aaronkr-2026-2/cbnu-soft-eng-software-engineering-project-group-19">
-    <img src="docs/assets/studyflow-logo.svg" alt="StudyFlow AI logo" width="480" />
+    <img src="docs/assets/studyflow-logo.svg" alt="SCHOLWARD Academy logo" width="480" />
   </a>
 </p>
 
 <p align="center">
   <a href="https://deepwiki.com/aaronkr-2026-2/cbnu-soft-eng-software-engineering-project-group-19"><img alt="Ask DeepWiki" src="https://img.shields.io/badge/DeepWiki-Ask-blue"></a>
-  <a href="https://github.com/aaronkr-2026-2/cbnu-soft-eng-software-engineering-project-group-19"><img alt="GitHub repository" src="https://img.shields.io/badge/GitHub-StudyFlow_AI-181717?logo=github&logoColor=white"></a>
+  <a href="https://github.com/aaronkr-2026-2/cbnu-soft-eng-software-engineering-project-group-19"><img alt="GitHub repository" src="https://img.shields.io/badge/GitHub-SCHOLWARD_Academy-181717?logo=github&logoColor=white"></a>
 </p>
 
-StudyFlow AI is a multilingual learning platform for independent learners, course authors, and organizations that verify course certificates. It brings course discovery, structured lessons, progress tracking, assessments, and certificate verification into one learning flow.
+SCHOLWARD Academy is a multilingual learning platform for independent learners, course authors, and organizations that verify course certificates. It brings course discovery, structured lessons, progress tracking, assessments, and certificate verification into one learning flow.
 
-[Open the live StudyFlow demo](https://studyflow-web-1hab.vercel.app/). To run it locally, follow the [quick start](#requirements-and-quick-start).
+[Open the live SCHOLWARD Academy demo](https://studyflow-web-1hab.vercel.app/). To run it locally, follow the [quick start](#requirements-and-quick-start).
 
 The backend uses FastAPI, SQLAlchemy, Alembic, and PostgreSQL. The frontend is a responsive, dependency-free HTML/CSS/JavaScript app served by FastAPI at `/app`. Learners can use the interface in Uzbek, English, Russian, or Korean.
 
@@ -97,7 +97,7 @@ Start the backend as a separate command, still from `backend/`:
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Use `localhost` for local passkeys. If the app is opened through `127.0.0.1`, it redirects to `localhost` because passkey credentials are tied to the site hostname. Open the [StudyFlow AI web app](http://localhost:8000/app), [API docs](http://localhost:8000/docs), or [health check](http://localhost:8000/health).
+Use `localhost` for local passkeys. If the app is opened through `127.0.0.1`, it redirects to `localhost` because passkey credentials are tied to the site hostname. Open the [SCHOLWARD Academy web app](http://localhost:8000/app), [API docs](http://localhost:8000/docs), or [health check](http://localhost:8000/health).
 
 ## Environment configuration
 
@@ -107,7 +107,7 @@ Use `localhost` for local passkeys. If the app is opened through `127.0.0.1`, it
 | ----------------------------------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | `SECRET_KEY`                                                            | Signs JWT access tokens                                                | Required; use a private random value of at least 32 bytes                                 |
 | `WEBAUTHN_RP_ID`                                                        | WebAuthn relying-party domain                                          | `localhost` locally                                                                       |
-| `WEBAUTHN_RP_NAME`                                                      | Name shown in the device passkey prompt                                | `StudyFlow AI`                                                                            |
+| `WEBAUTHN_RP_NAME`                                                      | Name shown in the device passkey prompt                                | `SCHOLWARD Academy`                                                                       |
 | `WEBAUTHN_ORIGIN`                                                       | Exact origin accepted for passkey verification                         | `http://localhost:8000` locally                                                           |
 | `AI_API_KEY`                                                            | Enables AI course recommendations and author-triggered quiz generation | Optional; add a private OpenAI API key in `backend/.env`                                  |
 | `AI_MODEL`                                                              | Model used for AI recommendations and quiz generation                  | `gpt-4o-mini`                                                                             |
@@ -399,7 +399,7 @@ docker compose --env-file .env.compose.example config --quiet
 
 ## Architecture
 
-StudyFlow AI is a modular monolith. One FastAPI process serves the static frontend and API routes. Feature routers share SQLAlchemy models and a PostgreSQL database; Alembic tracks schema changes.
+SCHOLWARD Academy is a modular monolith. One FastAPI process serves the static frontend and API routes. Feature routers share SQLAlchemy models and a PostgreSQL database; Alembic tracks schema changes.
 
 ```text
 Browser: HTML, CSS, JavaScript
@@ -422,7 +422,7 @@ See the [architecture diagram and critique](docs/architecture-and-critique.md) f
 
 The `/auth` REST routes support registration and login with JWT bearer tokens. Authenticated users can view and update their account details, update their profile image, and change their password.
 
-The `/auth/passkeys` routes register a device passkey and perform user verification before a final exam or the first issuance of a certificate. WebAuthn verifies the challenge and user-verification flag; it does not tell StudyFlow AI whether the device used its PIN, fingerprint, or face method.
+The `/auth/passkeys` routes register a device passkey and perform user verification before a final exam or the first issuance of a certificate. WebAuthn verifies the challenge and user-verification flag; it does not tell SCHOLWARD Academy whether the device used its PIN, fingerprint, or face method.
 
 See Swagger for request and response schemas, or the [passkey implementation](backend/app/routers/passkeys.py).
 
@@ -493,6 +493,6 @@ Before a public deployment, use a managed PostgreSQL database and persistent pri
 | Week 10: security review              | [Security review and follow-up items](docs/security-audit.md)                                                                                                   |
 | Project development and AI assistance | [AI collaboration log](AI_LOG.md)                                                                                                                               |
 
-StudyFlow AI is the student’s project and the student wrote its code. The log records that Codex occasionally helped fix errors and run tests. The student should review it for accuracy before submission.
+SCHOLWARD Academy is the student’s project and the student wrote its code. The log records that Codex occasionally helped fix errors and run tests. The student should review it for accuracy before submission.
 
 # StadyFlow

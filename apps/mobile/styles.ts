@@ -40,8 +40,9 @@ export const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "900",
   },
-  wordmark: { color: color.ink, fontWeight: "900", fontSize: 23, letterSpacing: -0.8 },
-  brandAccent: { color: color.leaf },
+  wordmarkGroup: { flexShrink: 1 },
+  wordmark: { color: color.ink, fontWeight: "900", fontSize: 18, letterSpacing: -0.5 },
+  brandAccent: { color: color.leaf, fontSize: 13, fontWeight: "700" },
   content: { padding: 20, paddingBottom: 28, gap: 14 },
   title: {
     color: color.ink,

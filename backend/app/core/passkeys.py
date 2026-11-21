@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.models import PasskeyProof
 
 WEBAUTHN_RP_ID = os.getenv("WEBAUTHN_RP_ID") or os.getenv("RENDER_EXTERNAL_HOSTNAME", "localhost")
-WEBAUTHN_RP_NAME = os.getenv("WEBAUTHN_RP_NAME", "StudyFlow AI")
+WEBAUTHN_RP_NAME = os.getenv("WEBAUTHN_RP_NAME", "SCHOLWARD Academy")
 WEBAUTHN_ORIGIN = os.getenv("WEBAUTHN_ORIGIN") or os.getenv(
     "RENDER_EXTERNAL_URL", "http://localhost:8000"
 )

@@ -304,11 +304,11 @@ def request_password_reset(
     reset_query = urlencode({"token": token, "account_type": user.account_type})
     reset_url = f"{frontend_url}/reset-password.html?{reset_query}"
     message = EmailMessage()
-    message["Subject"] = "Reset your StudyFlow AI password"
+    message["Subject"] = "Reset your SCHOLWARD Academy password"
     message["From"] = brevo_from or resend_from or smtp_from
     message["To"] = user.email
     message.set_content(
-        "We received a request to reset your StudyFlow AI password. "
+        "We received a request to reset your SCHOLWARD Academy password. "
         f"Open this link within 30 minutes: {reset_url}\n\n"
         "If you did not request this, ignore this email."
     )
@@ -319,7 +319,7 @@ def request_password_reset(
                 "/v3/smtp/email",
                 {"api-key": brevo_api_key},
                 {
-                    "sender": {"name": "StudyFlow AI", "email": brevo_from},
+                    "sender": {"name": "SCHOLWARD Academy", "email": brevo_from},
                     "to": [{"email": user.email}],
                     "subject": message["Subject"],
                     "textContent": message.get_content(),

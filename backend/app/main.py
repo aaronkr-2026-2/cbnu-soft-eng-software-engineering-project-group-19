@@ -22,7 +22,7 @@ from app.routers.personalization import (
 )
 
 app = FastAPI(
-    title="StudyFlow AI",
+    title="SCHOLWARD Academy",
     description="AI-powered Personalized Self-Learning Platform",
     version="1.0.0",
 )
@@ -50,7 +50,7 @@ app.mount("/app", StaticFiles(directory=web_directory, html=True), name="web")
 @app.get("/")
 def home():
     return {
-        "message": "Welcome to StudyFlow AI!",
+        "message": "Welcome to SCHOLWARD Academy!",
         "status": "running",
         "version": "1.0.0",
     }

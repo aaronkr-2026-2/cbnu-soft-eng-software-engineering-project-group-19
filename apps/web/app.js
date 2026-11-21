@@ -46,7 +46,7 @@ const copy = {
     selfPaced: "O‘z maromingizda",
     personalized: "Shaxsiy tavsiyalar",
     fourLanguages: "4 tilda",
-    whyStudyflow: "Nega StudyFlow?",
+    whyStudyflow: "Nega SCHOLWARD Academy?",
     introTitle: "Katta maqsadlar kichik qadamlar bilan boshlanadi.",
     introBody:
       "Qiziqishingizga mos kurslarni toping, darslarni bajaring va natijalaringizni kuzating.",
@@ -150,7 +150,7 @@ const copy = {
     selfPaced: "Your own pace",
     personalized: "Personalized picks",
     fourLanguages: "4 languages",
-    whyStudyflow: "Why StudyFlow?",
+    whyStudyflow: "Why SCHOLWARD Academy?",
     introTitle: "Big goals start with small steps.",
     introBody:
       "Find courses that match your interests, complete lessons, and see how far you’ve come.",
@@ -164,7 +164,7 @@ const copy = {
     exploreTitle: "Ready to start learning?",
     browseCourses: "Browse courses",
     coursesHint: "Log in to explore available courses.",
-    aboutTitle: "About StudyFlow",
+    aboutTitle: "About SCHOLWARD Academy",
     closingTitle: "Start today. Thank yourself tomorrow.",
     closingBody: "Small steps can lead to big changes.",
     startToday: "Start for free",
@@ -252,7 +252,7 @@ const copy = {
     selfPaced: "В своём темпе",
     personalized: "Личные рекомендации",
     fourLanguages: "4 языка",
-    whyStudyflow: "Почему StudyFlow?",
+    whyStudyflow: "Почему SCHOLWARD Academy?",
     introTitle: "Большие цели начинаются с маленьких шагов.",
     introBody: "Находите интересные курсы, проходите уроки и следите за прогрессом.",
     featureOneTitle: "Учитесь в своём темпе",
@@ -265,7 +265,7 @@ const copy = {
     exploreTitle: "Готовы начать учиться?",
     browseCourses: "Смотреть курсы",
     coursesHint: "Войдите, чтобы посмотреть доступные курсы.",
-    aboutTitle: "О StudyFlow",
+    aboutTitle: "О SCHOLWARD Academy",
     closingTitle: "Начните сегодня. Завтра вы скажете себе спасибо.",
     closingBody: "Маленькие шаги ведут к большим переменам.",
     startToday: "Начать бесплатно",
@@ -353,7 +353,7 @@ const copy = {
     selfPaced: "나만의 속도로",
     personalized: "맞춤 추천",
     fourLanguages: "4개 언어",
-    whyStudyflow: "왜 StudyFlow인가요?",
+    whyStudyflow: "왜 SCHOLWARD Academy인가요?",
     introTitle: "큰 목표는 작은 한 걸음에서 시작돼요.",
     introBody: "관심 있는 강의를 찾고, 수업을 완료하고, 진도를 확인하세요.",
     featureOneTitle: "나만의 속도로 학습",
@@ -366,7 +366,7 @@ const copy = {
     exploreTitle: "학습을 시작할 준비가 됐나요?",
     browseCourses: "강의 둘러보기",
     coursesHint: "로그인하면 강의를 둘러볼 수 있어요.",
-    aboutTitle: "StudyFlow 소개",
+    aboutTitle: "SCHOLWARD Academy 소개",
     closingTitle: "오늘 시작하고, 내일의 나에게 고마워하세요.",
     closingBody: "작은 걸음이 큰 변화를 만들어요.",
     startToday: "무료로 시작하기",
@@ -516,7 +516,7 @@ const dashboardCopy = {
     passkeyTitle: "Qurilma xavfsizligi",
     passkeyLoading: "Passkey holati tekshirilmoqda…",
     passkeyPrivacy:
-      "PIN, barmoq izi yoki yuz tekshiruvi qurilmangizda qoladi; StudyFlow biometrik ma’lumotni olmaydi.",
+      "PIN, barmoq izi yoki yuz tekshiruvi qurilmangizda qoladi; SCHOLWARD Academy biometrik ma’lumotni olmaydi.",
     passkeyRegister: "Passkey sozlash",
     passkeyEnabled: "Passkey faol.",
     passkeyMissing: "Imtihon va sertifikat uchun passkey sozlang.",
@@ -686,7 +686,7 @@ const dashboardCopy = {
     passkeyTitle: "Device security",
     passkeyLoading: "Checking passkey status…",
     passkeyPrivacy:
-      "Your device keeps the PIN, fingerprint, or face check. StudyFlow never receives biometric data.",
+      "Your device keeps the PIN, fingerprint, or face check. SCHOLWARD Academy never receives biometric data.",
     passkeyRegister: "Set up passkey",
     passkeyEnabled: "Passkey is active.",
     passkeyMissing: "Set up a passkey for exams and certificates.",
@@ -855,7 +855,7 @@ const dashboardCopy = {
     passkeyTitle: "Защита устройства",
     passkeyLoading: "Проверяем passkey…",
     passkeyPrivacy:
-      "PIN-код, отпечаток пальца или распознавание лица остаются на устройстве. StudyFlow не получает биометрические данные.",
+      "PIN-код, отпечаток пальца или распознавание лица остаются на устройстве. SCHOLWARD Academy не получает биометрические данные.",
     passkeyRegister: "Настроить passkey",
     passkeyEnabled: "Passkey активен.",
     passkeyMissing: "Настройте passkey для экзамена и сертификата.",
@@ -1022,7 +1022,7 @@ const dashboardCopy = {
     passkeyTitle: "기기 보안",
     passkeyLoading: "패스키 상태 확인 중…",
     passkeyPrivacy:
-      "PIN, 지문 또는 얼굴 확인은 기기 안에서 처리돼요. StudyFlow는 생체 정보를 받지 않아요.",
+      "PIN, 지문 또는 얼굴 확인은 기기 안에서 처리돼요. SCHOLWARD Academy는 생체 정보를 받지 않아요.",
     passkeyRegister: "패스키 설정",
     passkeyEnabled: "패스키가 활성화됐어요.",
     passkeyMissing: "시험과 수료증을 위해 패스키를 설정해 주세요.",
@@ -2382,7 +2382,7 @@ function showCertificate(certificate) {
   }).format(new Date(certificate.issued_at));
   const verifyUrl = `/app/verify.html?code=${encodeURIComponent(certificate.certificate_code)}`;
   $("#certificateBody").innerHTML =
-    `<div class="certificate-corner certificate-corner-tl" aria-hidden="true"></div><div class="certificate-corner certificate-corner-tr" aria-hidden="true"></div><div class="certificate-corner certificate-corner-bl" aria-hidden="true"></div><div class="certificate-corner certificate-corner-br" aria-hidden="true"></div><div class="certificate-logo"><svg class="certificate-logo-mark" viewBox="0 0 48 48" role="img" aria-label="StudyFlow AI logo"><defs><linearGradient id="sfLogoGradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#758b45"/><stop offset="1" stop-color="#344b36"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="15" fill="url(#sfLogoGradient)"/><path d="M32.5 15.5c-2.2-2-5-3-8.6-3-5.5 0-9 2.8-9 7 0 4.1 3.3 5.7 9 6.7 5.6 1 8.2 2.1 8.2 5.7 0 4-3.8 6.7-9.4 6.7-3.9 0-7.2-1.2-10-3.7" fill="none" stroke="#fffdf6" stroke-linecap="round" stroke-width="3.5"/><circle cx="34.5" cy="11.5" r="2.3" fill="#e9d99b"/></svg><span class="certificate-wordmark">studyflow<span>ai</span></span></div><div class="certificate-divider"><span></span><b>✳</b><span></span></div><div class="certificate-eyebrow">${escapeHtml(t("certificateButton"))}</div><h2>${escapeHtml(t("awardedTo"))}</h2><h3>${escapeHtml(certificate.recipient_name)}</h3><p class="certificate-course">${escapeHtml(certificate.course_title)}</p><p class="certificate-statement">${escapeHtml(t("certificateTitle"))}</p><div class="certificate-seal" aria-hidden="true"><span>✳</span></div><div class="certificate-footer"><span>${escapeHtml(t("issuedOn"))}<b>${escapeHtml(issuedDate)}</b></span><span>${escapeHtml(t("certificateCode"))}<b>${escapeHtml(certificate.certificate_code)}</b></span></div><a class="certificate-verify-link" href="${verifyUrl}" target="_blank" rel="noopener">${escapeHtml(t("navVerifyCertificate"))} ↗</a>`;
+    `<div class="certificate-corner certificate-corner-tl" aria-hidden="true"></div><div class="certificate-corner certificate-corner-tr" aria-hidden="true"></div><div class="certificate-corner certificate-corner-bl" aria-hidden="true"></div><div class="certificate-corner certificate-corner-br" aria-hidden="true"></div><div class="certificate-logo"><svg class="certificate-logo-mark" viewBox="0 0 48 48" role="img" aria-label="SCHOLWARD Academy logo"><defs><linearGradient id="sfLogoGradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#758b45"/><stop offset="1" stop-color="#344b36"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="15" fill="url(#sfLogoGradient)"/><path d="M32.5 15.5c-2.2-2-5-3-8.6-3-5.5 0-9 2.8-9 7 0 4.1 3.3 5.7 9 6.7 5.6 1 8.2 2.1 8.2 5.7 0 4-3.8 6.7-9.4 6.7-3.9 0-7.2-1.2-10-3.7" fill="none" stroke="#fffdf6" stroke-linecap="round" stroke-width="3.5"/><circle cx="34.5" cy="11.5" r="2.3" fill="#e9d99b"/></svg><span class="certificate-wordmark">SCHOLWARD <span>Academy</span></span></div><div class="certificate-divider"><span></span><b>✳</b><span></span></div><div class="certificate-eyebrow">${escapeHtml(t("certificateButton"))}</div><h2>${escapeHtml(t("awardedTo"))}</h2><h3>${escapeHtml(certificate.recipient_name)}</h3><p class="certificate-course">${escapeHtml(certificate.course_title)}</p><p class="certificate-statement">${escapeHtml(t("certificateTitle"))}</p><div class="certificate-seal" aria-hidden="true"><span>✳</span></div><div class="certificate-footer"><span>${escapeHtml(t("issuedOn"))}<b>${escapeHtml(issuedDate)}</b></span><span>${escapeHtml(t("certificateCode"))}<b>${escapeHtml(certificate.certificate_code)}</b></span></div><a class="certificate-verify-link" href="${verifyUrl}" target="_blank" rel="noopener">${escapeHtml(t("navVerifyCertificate"))} ↗</a>`;
   const gradeLine = document.createElement("p");
   const grade = certificate.achievement_level || "bronze";
   gradeLine.className = "certificate-grade";

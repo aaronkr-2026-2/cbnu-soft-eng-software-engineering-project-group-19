@@ -146,7 +146,7 @@ def create_course_checkout(
         "/v1/user-service-tokens",
         token=access_token,
         body={
-            "name": f"StudyFlow course {str(course.id)[:8]}",
+            "name": f"SCHOLWARD Academy course {str(course.id)[:8]}",
             "description": course.title[:200],
             "externalId": external_id,
             "externalServiceId": service_id_value,

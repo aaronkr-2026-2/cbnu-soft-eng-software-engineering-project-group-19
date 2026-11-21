@@ -4,7 +4,7 @@ const verifyCopy = {
     verifyEyebrow: "RASMIY TEKSHIRUV",
     verifyTitle: "Sertifikat haqiqiyligini tekshiring",
     verifyBody:
-      "Sertifikatdagi noyob kodni kiriting. Natija StudyFlow AI rasmiy reyestridan olinadi.",
+      "Sertifikatdagi noyob kodni kiriting. Natija SCHOLWARD Academy rasmiy reyestridan olinadi.",
     certificateCodeLabel: "Sertifikat kodi",
     verifySubmit: "Tekshirish",
     validTitle: "Sertifikat haqiqiy",
@@ -24,7 +24,7 @@ const verifyCopy = {
     verifyEyebrow: "OFFICIAL VERIFICATION",
     verifyTitle: "Verify a certificate",
     verifyBody:
-      "Enter the unique code printed on the certificate. Results come from the official StudyFlow AI registry.",
+      "Enter the unique code printed on the certificate. Results come from the official SCHOLWARD Academy registry.",
     certificateCodeLabel: "Certificate code",
     verifySubmit: "Verify",
     validTitle: "Certificate is valid",
@@ -44,7 +44,7 @@ const verifyCopy = {
     verifyEyebrow: "ОФИЦИАЛЬНАЯ ПРОВЕРКА",
     verifyTitle: "Проверить подлинность сертификата",
     verifyBody:
-      "Введите уникальный код с сертификата. Результат проверяется по официальному реестру StudyFlow AI.",
+      "Введите уникальный код с сертификата. Результат проверяется по официальному реестру SCHOLWARD Academy.",
     certificateCodeLabel: "Код сертификата",
     verifySubmit: "Проверить",
     validTitle: "Сертификат действителен",
@@ -64,7 +64,7 @@ const verifyCopy = {
     verifyEyebrow: "공식 인증",
     verifyTitle: "수료증 진위 확인",
     verifyBody:
-      "수료증에 표시된 고유 코드를 입력하세요. 결과는 StudyFlow AI 공식 등록 정보에서 확인됩니다.",
+      "수료증에 표시된 고유 코드를 입력하세요. 결과는 SCHOLWARD Academy 공식 등록 정보에서 확인됩니다.",
     certificateCodeLabel: "수료증 코드",
     verifySubmit: "확인",
     validTitle: "유효한 수료증입니다",
