@@ -10,7 +10,13 @@ import {
   getQuizAttempts,
   submitQuiz,
 } from "./api";
-import type { Certificate, CourseLanguage, QuizAttempt, QuizSubmission } from "./api";
+import type {
+  Certificate,
+  CourseLanguage,
+  QuizAttempt,
+  QuizAttemptLock,
+  QuizSubmission,
+} from "./api";
 import { color, styles } from "./styles";
 import { translate, useLocale, useTranslate } from "./localization";
 import { Button, Content, ErrorNotice, useRefreshOnReturn, useResource } from "./ui";
@@ -35,6 +41,19 @@ function attemptText(attempt: QuizAttempt, language: CourseLanguage) {
     correct: attempt.correct_count,
     total: attempt.total_questions,
   });
+}
+
+function quizLockText(lock: QuizAttemptLock, language: CourseLanguage) {
+  if (lock.reason === "passed") return translate(language, "quizAlreadyPassed");
+  const date =
+    lock.retry_at &&
+    new Date(lock.retry_at).toLocaleString(language, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  return date
+    ? translate(language, "quizRetryAt", { date })
+    : translate(language, "quizRetryLater");
 }
 
 export function QuizScreen({
@@ -64,7 +83,11 @@ export function QuizScreen({
   const inFlight = useRef(false);
   const missing = quiz.error instanceof ApiError && quiz.error.status === 404;
   const quizData = quiz.value;
+  const lock = result?.attempt_lock ?? quizData?.attempt_lock;
+  const rejected = submitError instanceof ApiError && [409, 429].includes(submitError.status);
+  const showQuestions = !lock && !result && !rejected;
   const canSubmit =
+    showQuestions &&
     !!quizData?.questions.length &&
     quizData.questions.every(({ id }) => selected[id] !== undefined);
   const attemptHistory = history.value?.filter((attempt) => attempt.id !== result?.id);
@@ -85,6 +108,10 @@ export function QuizScreen({
       history.refresh();
     } catch (error) {
       setSubmitError(error);
+      if (error instanceof ApiError && [409, 429].includes(error.status)) {
+        quiz.refresh();
+        history.refresh();
+      }
     } finally {
       inFlight.current = false;
       setSending(false);
@@ -108,33 +135,39 @@ export function QuizScreen({
             {quizData.title}
           </Text>
           <Text style={styles.muted}>{t("passingScore", { score: quizData.passing_score })}</Text>
-          {quizData.questions.map((question, number) => (
-            <View key={question.id} style={styles.notice}>
-              <Text style={styles.listTitle}>
-                {number + 1}. {question.prompt}
-              </Text>
-              {question.choices.map((choice, index) => {
-                const checked = selected[question.id] === index;
-                return (
-                  <Pressable
-                    key={index}
-                    accessibilityRole="radio"
-                    accessibilityState={{ checked, disabled: sending || !!result }}
-                    disabled={sending || !!result}
-                    onPress={() =>
-                      setSelected((previous) => ({ ...previous, [question.id]: index }))
-                    }
-                    style={[styles.listItem, checked && styles.selectedFilter]}
-                  >
-                    <Text style={styles.category}>{String.fromCharCode(65 + index)}.</Text>
-                    <Text style={[styles.body, styles.fill]}>{choice}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          ))}
-          {submitError !== undefined && <ErrorNotice error={submitError} />}
-          {result ? (
+          {showQuestions &&
+            quizData.questions.map((question, number) => (
+              <View key={question.id} style={styles.notice}>
+                <Text style={styles.listTitle}>
+                  {number + 1}. {question.prompt}
+                </Text>
+                {question.choices.map((choice, index) => {
+                  const checked = selected[question.id] === index;
+                  return (
+                    <Pressable
+                      key={index}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked, disabled: sending }}
+                      disabled={sending}
+                      onPress={() =>
+                        setSelected((previous) => ({ ...previous, [question.id]: index }))
+                      }
+                      style={[styles.listItem, checked && styles.selectedFilter]}
+                    >
+                      <Text style={styles.category}>{String.fromCharCode(65 + index)}.</Text>
+                      <Text style={[styles.body, styles.fill]}>{choice}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ))}
+          {submitError !== undefined && !lock && <ErrorNotice error={submitError} />}
+          {lock && (
+            <Text accessibilityRole="alert" style={styles.muted}>
+              {quizLockText(lock, language)}
+            </Text>
+          )}
+          {result && (
             <View style={styles.notice}>
               <Text
                 accessibilityLiveRegion="polite"
@@ -176,16 +209,9 @@ export function QuizScreen({
                   <Button title={t("backToLesson")} onPress={back} secondary />
                 </>
               )}
-              <Button
-                title={t("retakeQuiz")}
-                onPress={() => {
-                  setResult(null);
-                  setSelected({});
-                }}
-                secondary
-              />
             </View>
-          ) : (
+          )}
+          {showQuestions && (
             <Button
               title={sending ? t("submitting") : t("submitAnswers")}
               disabled={!canSubmit || sending}

@@ -372,7 +372,24 @@ const messages = {
     "Проходной балл {score}%",
     "통과 기준 {score}%",
   ],
-  retakeQuiz: ["Qayta ishlash", "Retake quiz", "Пройти тест снова", "퀴즈 다시 풀기"],
+  quizAlreadyPassed: [
+    "Bu quizdan o‘tgansiz.",
+    "You have already passed this quiz.",
+    "Вы уже прошли этот тест.",
+    "이미 이 퀴즈에 통과했습니다.",
+  ],
+  quizRetryAt: [
+    "Keyingi urinish {date} da ochiladi.",
+    "Your next attempt opens at {date}.",
+    "Следующая попытка доступна с {date}.",
+    "다음 응시는 {date}부터 가능합니다.",
+  ],
+  quizRetryLater: [
+    "24 soatdan keyin qayta urinib ko‘ring.",
+    "Try again in 24 hours.",
+    "Повторите попытку через 24 часа.",
+    "24시간 후에 다시 시도해 주세요.",
+  ],
   submitting: ["Yuborilmoqda…", "Submitting…", "Отправка…", "제출 중…"],
   submitAnswers: ["Javoblarni yuborish", "Submit answers", "Отправить ответы", "답안 제출"],
   previousAttempts: [

@@ -1,4 +1,6 @@
 import uuid
+from datetime import UTC, datetime, timedelta
+from math import ceil
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
@@ -11,6 +13,7 @@ from app.core.localization import get_final_exam_content_translation, get_quiz_c
 from app.core.schemes.quiz import (
     QuizAttemptCreate,
     QuizAttemptFeedbackResponse,
+    QuizAttemptLock,
     QuizAttemptResponse,
     QuizMistakeResponse,
     FinalExamAttemptCreate,
@@ -51,6 +54,7 @@ MAX_QUIZ_PDF_PAGES = 50
 MIN_QUIZ_SOURCE_CHARS = 80
 MAX_QUIZ_SOURCE_CHARS = 24_000
 GENERATED_QUIZ_PASSING_SCORE = 60
+QUIZ_RETRY_DELAY = timedelta(hours=24)
 
 
 def get_lesson_context(
@@ -74,8 +78,35 @@ def is_enrolled(course_id: uuid.UUID, user_id: uuid.UUID, db: Session) -> bool:
     )
 
 
-def get_quiz(lesson_id: uuid.UUID, db: Session) -> Quiz | None:
-    return db.query(Quiz).filter(Quiz.lesson_id == lesson_id).first()
+def get_quiz(lesson_id: uuid.UUID, db: Session, *, for_update: bool = False) -> Quiz | None:
+    query = db.query(Quiz).filter(Quiz.lesson_id == lesson_id)
+    return (query.with_for_update() if for_update else query).first()
+
+
+def quiz_attempt_lock(attempt: QuizAttempt) -> QuizAttemptLock:
+    if attempt.passed:
+        return QuizAttemptLock(reason="passed")
+    submitted_at = attempt.submitted_at
+    if submitted_at.tzinfo is None:
+        submitted_at = submitted_at.replace(tzinfo=UTC)
+    return QuizAttemptLock(reason="cooldown", retry_at=submitted_at + QUIZ_RETRY_DELAY)
+
+
+def get_quiz_attempt_lock(
+    quiz_id: uuid.UUID, user_id: uuid.UUID, now: datetime, db: Session
+) -> QuizAttemptLock | None:
+    attempt = (
+        db.query(QuizAttempt)
+        .filter(QuizAttempt.quiz_id == quiz_id, QuizAttempt.user_id == user_id)
+        .order_by(QuizAttempt.passed.desc(), QuizAttempt.submitted_at.desc())
+        .first()
+    )
+    if attempt is None:
+        return None
+    lock = quiz_attempt_lock(attempt)
+    if lock.retry_at is not None and lock.retry_at <= now:
+        return None
+    return lock
 
 
 def to_quiz_response(quiz: Quiz, db: Session) -> QuizResponse:
@@ -314,6 +345,17 @@ def read_quiz(
     quiz = get_quiz(lesson.id, db)
     if quiz is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz not found")
+    if course.owner_id != current_user.id and (
+        lock := get_quiz_attempt_lock(quiz.id, current_user.id, datetime.now(UTC), db)
+    ):
+        return QuizResponse(
+            id=quiz.id,
+            lesson_id=lesson.id,
+            title=quiz.title,
+            passing_score=quiz.passing_score,
+            questions=[],
+            attempt_lock=lock,
+        )
     response = to_quiz_response(quiz, db)
     questions = (
         db.query(QuizQuestion)
@@ -466,9 +508,22 @@ def submit_quiz_attempt(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Enroll in the course to submit an attempt",
         )
-    quiz = get_quiz(lesson.id, db)
+    # Serialize submissions to this quiz so two tabs cannot both pass the attempt check.
+    quiz = get_quiz(lesson.id, db, for_update=True)
     if quiz is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz not found")
+    now = datetime.now(UTC)
+    lock = get_quiz_attempt_lock(quiz.id, current_user.id, now, db)
+    if lock is not None:
+        if lock.retry_at is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="You have already passed this quiz"
+            )
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Try again 24 hours after your last failed quiz attempt",
+            headers={"Retry-After": str(ceil((lock.retry_at - now).total_seconds()))},
+        )
 
     questions = db.query(QuizQuestion).filter(QuizQuestion.quiz_id == quiz.id).all()
     question_by_id = {question.id: question for question in questions}
@@ -520,6 +575,7 @@ def submit_quiz_attempt(
         total_points=total_points,
         score_percent=score_percent,
         passed=score_percent >= quiz.passing_score,
+        submitted_at=now,
     )
     db.add(attempt)
     db.commit()
@@ -527,6 +583,7 @@ def submit_quiz_attempt(
     return QuizAttemptFeedbackResponse(
         **to_attempt_response(attempt, len(questions)).model_dump(),
         mistakes=mistakes,
+        attempt_lock=quiz_attempt_lock(attempt),
     )
 
 

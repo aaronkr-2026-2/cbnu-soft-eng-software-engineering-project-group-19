@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field, StringConstraints, model_validator
@@ -41,12 +41,18 @@ class QuizQuestionResponse(BaseModel):
     position: int
 
 
+class QuizAttemptLock(BaseModel):
+    reason: Literal["passed", "cooldown"]
+    retry_at: datetime | None = None
+
+
 class QuizResponse(BaseModel):
     id: UUID
     lesson_id: UUID
     title: str
     passing_score: int
     questions: list[QuizQuestionResponse]
+    attempt_lock: QuizAttemptLock | None = None
 
 
 class QuizManageQuestionResponse(QuizQuestionResponse):
@@ -92,6 +98,7 @@ class QuizMistakeResponse(BaseModel):
 
 class QuizAttemptFeedbackResponse(QuizAttemptResponse):
     mistakes: list[QuizMistakeResponse]
+    attempt_lock: QuizAttemptLock
 
 
 class FinalExamQuestionResponse(BaseModel):

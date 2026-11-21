@@ -1688,6 +1688,9 @@ const quizFeedbackCopy = {
     correctAnswer: "To‘g‘ri javob",
     reviewQuizLesson: "Darsga qaytish",
     answerExplanation: "Javob izohi (ixtiyoriy)",
+    quizAlreadyPassed: "Bu quizdan o‘tgansiz.",
+    quizRetryAt: "Keyingi urinish {date} da ochiladi.",
+    quizRetryLater: "24 soatdan keyin qayta urinib ko‘ring.",
   },
   en: {
     quizMistakes: "Review mistakes",
@@ -1695,6 +1698,9 @@ const quizFeedbackCopy = {
     correctAnswer: "Correct answer",
     reviewQuizLesson: "Back to the lesson",
     answerExplanation: "Answer explanation (optional)",
+    quizAlreadyPassed: "You have already passed this quiz.",
+    quizRetryAt: "Your next attempt opens at {date}.",
+    quizRetryLater: "Try again in 24 hours.",
   },
   ru: {
     quizMistakes: "Разбор ошибок",
@@ -1702,6 +1708,9 @@ const quizFeedbackCopy = {
     correctAnswer: "Правильный ответ",
     reviewQuizLesson: "Вернуться к уроку",
     answerExplanation: "Пояснение к ответу (необязательно)",
+    quizAlreadyPassed: "Вы уже прошли этот тест.",
+    quizRetryAt: "Следующая попытка доступна с {date}.",
+    quizRetryLater: "Повторите попытку через 24 часа.",
   },
   ko: {
     quizMistakes: "오답 복습",
@@ -1709,6 +1718,9 @@ const quizFeedbackCopy = {
     correctAnswer: "정답",
     reviewQuizLesson: "수업으로 돌아가기",
     answerExplanation: "답안 해설 (선택 사항)",
+    quizAlreadyPassed: "이미 이 퀴즈에 통과했습니다.",
+    quizRetryAt: "다음 응시는 {date}부터 가능합니다.",
+    quizRetryLater: "24시간 후에 다시 시도해 주세요.",
   },
 };
 const lessonNoteCopy = {
@@ -3660,6 +3672,16 @@ function renderCourseCompletion(container, courseId, exam, certificate, review) 
     }),
   );
 }
+function quizLockText(lock) {
+  if (lock.reason === "passed") return t("quizAlreadyPassed");
+  if (!lock.retry_at) return t("quizRetryLater");
+  const date = new Date(lock.retry_at).toLocaleString(language, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+  return t("quizRetryAt").replace("{date}", date);
+}
+
 async function openQuiz(courseId, lessonId) {
   const panel = document.getElementById(`quiz-${lessonId}`);
   panel.hidden = false;
@@ -3668,6 +3690,24 @@ async function openQuiz(courseId, lessonId) {
     const quiz = await api(
       `/courses/${courseId}/lessons/${lessonId}/quiz?language=${encodeURIComponent(language)}`,
     );
+    panel.innerHTML = `<div class="quiz-heading"><div><h4>${escapeHtml(quiz.title || t("quizTitle"))}</h4><p>${t("passingScore")}: ${quiz.passing_score}%</p></div></div><div class="attempt-history"></div>`;
+    const history = panel.querySelector(".attempt-history");
+    const attemptsUrl = `/courses/${courseId}/lessons/${lessonId}/quiz/attempts`;
+    let historyVersion = 0;
+    const refreshHistory = async () => {
+      const version = ++historyVersion;
+      const attempts = await api(`${attemptsUrl}/me`).catch(() => null);
+      if (attempts && version === historyVersion) renderQuizHistory(history, attempts);
+    };
+    if (quiz.attempt_lock) {
+      const status = document.createElement("p");
+      status.className = "quiz-result";
+      status.setAttribute("role", "status");
+      status.textContent = quizLockText(quiz.attempt_lock);
+      history.before(status);
+      void refreshHistory();
+      return;
+    }
     const presentedQuestions = shuffled(quiz.questions).map(shuffledQuestion);
     const questions = presentedQuestions
       .map(
@@ -3675,48 +3715,46 @@ async function openQuiz(courseId, lessonId) {
           `<fieldset class="quiz-question"><legend>${index + 1}. ${escapeHtml(question.prompt)}</legend><div class="quiz-choices">${question.choices.map((choice, choiceIndex) => `<label><input type="radio" name="${question.id}" value="${choiceIndex}" required><span><b>${choiceLetter(choiceIndex)}.</b> ${escapeHtml(choice)}</span></label>`).join("")}</div></fieldset>`,
       )
       .join("");
-    panel.innerHTML = `<div class="quiz-heading"><div><h4>${escapeHtml(quiz.title || t("quizTitle"))}</h4><p>${t("passingScore")}: ${quiz.passing_score}%</p></div></div><p class="quiz-hint">${t("selectAnswers")} ${escapeHtml(t("shuffleNote"))}</p><form class="quiz-form" data-quiz-id="${quiz.id}">${questions}<button class="button button-dark" type="submit">${t("submitQuiz")}</button><p class="quiz-result" role="status"></p></form><section class="quiz-feedback" hidden></section><div class="attempt-history" id="attempts-${lessonId}"></div>`;
+    history.insertAdjacentHTML(
+      "beforebegin",
+      `<p class="quiz-hint">${t("selectAnswers")} ${escapeHtml(t("shuffleNote"))}</p><form class="quiz-form" data-quiz-id="${quiz.id}">${questions}<button class="button button-dark" type="submit">${t("submitQuiz")}</button><p class="quiz-result" role="status"></p></form><section class="quiz-feedback" hidden></section>`,
+    );
     const form = panel.querySelector("[data-quiz-id]");
+    const submit = form.querySelector("button[type=submit]");
+    const feedback = panel.querySelector(".quiz-feedback");
+    const hint = panel.querySelector(".quiz-hint");
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const quizForm = event.currentTarget;
-      if (!quizForm.reportValidity()) return;
-      const answerMap = new FormData(quizForm);
+      if (submit.disabled || !form.reportValidity()) return;
+      const answerMap = new FormData(form);
       const answers = presentedQuestions.map((question) => ({
         question_id: question.id,
         selected_index: question.choiceOrder[Number(answerMap.get(question.id))],
       }));
-      const submit = quizForm.querySelector("button[type=submit]");
-      if (submit.disabled) return;
       submit.disabled = true;
-      const feedback = panel.querySelector(".quiz-feedback");
-      feedback.hidden = true;
+      const result = form.querySelector(".quiz-result");
       try {
-        const attempt = await api(`/courses/${courseId}/lessons/${lessonId}/quiz/attempts`, {
+        const attempt = await api(attemptsUrl, {
           method: "POST",
           body: JSON.stringify({ answers }),
         });
-        const result = quizForm.querySelector(".quiz-result");
         result.className = `quiz-result ${attempt.passed ? "passed" : "not-passed"}`;
         result.textContent = `${t("result")}: ${attempt.score_percent}% · ${attempt.correct_count}/${attempt.total_questions} ${t("correctAnswers")} — ${t(attempt.passed ? "passed" : "notPassed")}`;
+        if (attempt.attempt_lock) result.append(` · ${quizLockText(attempt.attempt_lock)}`);
+        hint.remove();
+        form.replaceChildren(result);
         renderQuizMistakes(feedback, attempt.mistakes ?? [], presentedQuestions, lessonId);
-        const attempts = await api(
-          `/courses/${courseId}/lessons/${lessonId}/quiz/attempts/me`,
-        ).catch(() => null);
-        if (attempts && panel.contains(quizForm)) renderQuizHistory(lessonId, attempts);
+        void refreshHistory();
       } catch (error) {
-        quizForm.querySelector(".quiz-result").textContent = error.message || t("quizError");
-      } finally {
+        if (form.isConnected && [409, 429].includes(error.status)) {
+          void openQuiz(courseId, lessonId);
+          return;
+        }
+        result.textContent = error.message || t("quizError");
         submit.disabled = false;
       }
     });
-    api(`/courses/${courseId}/lessons/${lessonId}/quiz/attempts/me`)
-      .then((attempts) => {
-        if (form.isConnected && !form.querySelector(".quiz-result").textContent) {
-          renderQuizHistory(lessonId, attempts);
-        }
-      })
-      .catch(() => {});
+    void refreshHistory();
   } catch (error) {
     panel.innerHTML = `<p class="panel-empty">${error.status === 404 ? t("noQuiz") : t("quizError")}</p>`;
   }
@@ -3752,9 +3790,7 @@ function renderQuizMistakes(container, mistakes, questions, lessonId) {
   });
 }
 
-function renderQuizHistory(lessonId, attempts) {
-  const container = document.getElementById(`attempts-${lessonId}`);
-  if (!container) return;
+function renderQuizHistory(container, attempts) {
   container.innerHTML = `<h5>${t("previousAttempts")}</h5>${
     attempts.length
       ? attempts

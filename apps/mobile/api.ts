@@ -238,11 +238,13 @@ export function resourceUrl(value: string) {
 }
 
 export type Answer = { question_id: string; selected_index: number };
+export type QuizAttemptLock = { reason: "passed" | "cooldown"; retry_at: string | null };
 export type Quiz = {
   id: string;
   title: string;
   passing_score: number;
   questions: { id: string; prompt: string; choices: string[] }[];
+  attempt_lock?: QuizAttemptLock | null;
 };
 export type QuizAttempt = {
   id: string;
@@ -258,7 +260,10 @@ export type QuizMistake = {
   correct_index: number;
   explanation: string | null;
 };
-export type QuizSubmission = QuizAttempt & { mistakes?: QuizMistake[] };
+export type QuizSubmission = QuizAttempt & {
+  mistakes?: QuizMistake[];
+  attempt_lock?: QuizAttemptLock;
+};
 export type Certificate = {
   certificate_code: string;
   course_title: string;

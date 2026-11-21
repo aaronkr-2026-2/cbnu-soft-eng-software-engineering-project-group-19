@@ -20,6 +20,7 @@ from app.routers import courses as courses_router
 from app.routers import lessons as lessons_router
 from app.routers import passkeys as passkeys_router
 from app.routers import progress as progress_router
+from app.routers import quizzes as quizzes_router
 from tests.helpers import login, register
 
 
@@ -553,7 +554,15 @@ def test_author_can_open_saved_lesson_quiz_for_editing(client):
     assert editable_quiz.json()["questions"][0]["correct_index"] == 1
 
 
-def test_quiz_grades_mistakes_and_keeps_explanations_out_of_unsubmitted_quiz(client):
+def test_quiz_locks_after_attempt_and_still_reviews_mistakes(client, monkeypatch):
+    now = datetime(2026, 1, 1, 12, tzinfo=timezone.utc)
+
+    class QuizClock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return now.astimezone(tz)
+
+    monkeypatch.setattr(quizzes_router, "datetime", QuizClock)
     register(client, "review-author@example.com", "author")
     register(client, "review-learner@example.com")
     author = login(client, "review-author@example.com", "author")
@@ -576,7 +585,7 @@ def test_quiz_grades_mistakes_and_keeps_explanations_out_of_unsubmitted_quiz(cli
         },
         {"prompt": "Two plus three?", "choices": ["5", "6"], "correct_index": 0, "points": 2},
     ]
-    payload = {"title": "Addition quiz", "questions": questions}
+    payload = {"title": "Addition quiz", "passing_score": 70, "questions": questions}
     assert client.post(quiz, headers=author, json=payload).status_code == 201
     assert client.post(f"{course}/publish", headers=author).status_code == 200
     assert client.get(quiz, headers=learner).status_code == 403
@@ -606,6 +615,9 @@ def test_quiz_grades_mistakes_and_keeps_explanations_out_of_unsubmitted_quiz(cli
     attempt = send(0, 0)
     assert attempt.status_code == 201, attempt.text
     assert attempt.json()["score_percent"] == 66.67
+    assert attempt.json()["passed"] is False
+    retry_at = datetime.fromisoformat(attempt.json()["attempt_lock"]["retry_at"])
+    assert retry_at == now + timedelta(hours=24)
     assert attempt.json()["mistakes"] == [
         {
             "question_id": first,
@@ -614,10 +626,12 @@ def test_quiz_grades_mistakes_and_keeps_explanations_out_of_unsubmitted_quiz(cli
             "explanation": "Count two more after two to reach four.",
         }
     ]
-    wrong_without_explanation = send(1, 1)
-    assert wrong_without_explanation.status_code == 201
-    assert wrong_without_explanation.json()["mistakes"][0]["explanation"] is None
-    assert send(1, 0).json()["mistakes"] == []
+    locked = client.get(quiz, headers=learner).json()
+    assert locked["attempt_lock"] == attempt.json()["attempt_lock"]
+    assert locked["questions"] == []
+    rejected = send(1, 0)
+    assert rejected.status_code == 429
+    assert rejected.headers["Retry-After"] == "86400"
 
     questions[0]["explanation"] = "Two pairs make four."
     updated = client.put(quiz, headers=author, json=payload)
@@ -627,9 +641,28 @@ def test_quiz_grades_mistakes_and_keeps_explanations_out_of_unsubmitted_quiz(cli
     assert management.json()["questions"][0]["explanation"] == "Two pairs make four."
     questions[0]["correct_index"] = 0
     assert client.put(quiz, headers=author, json=payload).status_code == 409
-    history = client.get(f"{quiz}/attempts/me", headers=learner).json()
-    assert len(history) == 3 and all("mistakes" not in item for item in history)
+    now = retry_at - timedelta(seconds=1)
+    assert send(1, 0).status_code == 429
+    now = retry_at
+    assert client.get(quiz, headers=learner).json()["attempt_lock"] is None
+    wrong_without_explanation = send(1, 1)
+    assert wrong_without_explanation.status_code == 201
+    assert wrong_without_explanation.json()["mistakes"][0]["explanation"] is None
+    assert send(1, 0).status_code == 429
+    now += timedelta(hours=24)
     assert send(0, 0).json()["mistakes"][0]["explanation"] == "Two pairs make four."
+    now += timedelta(hours=24)
+    passed = send(1, 0)
+    assert passed.status_code == 201, passed.text
+    assert passed.json()["attempt_lock"] == {"reason": "passed", "retry_at": None}
+    assert passed.json()["mistakes"] == []
+    now += timedelta(days=30)
+    locked = client.get(quiz, headers=learner).json()
+    assert locked["attempt_lock"] == passed.json()["attempt_lock"]
+    assert locked["questions"] == []
+    assert send(1, 0).status_code == 409
+    history = client.get(f"{quiz}/attempts/me", headers=learner).json()
+    assert len(history) == 4 and all("mistakes" not in item for item in history)
 
 
 def test_final_exam_requires_completed_lessons_and_certificate_is_single(client):
