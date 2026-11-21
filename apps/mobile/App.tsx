@@ -2,6 +2,7 @@ import { Image as CourseImage } from "expo-image";
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import {
   ActivityIndicator,
   BackHandler,
@@ -42,6 +43,20 @@ import { LocaleContext, useTranslate } from "./localization";
 const SESSION_KEY = "studyflow-learner-token";
 const LANGUAGE_KEY = "studyflow-mobile-language";
 const FOUNDER_PHOTO = { uri: WEB_APP + "founder.webp?v=portrait-2" };
+const RESUME_KEY_PREFIX = "studyflow-resume-";
+const ID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
+type ResumeLesson = { id: string; title: string; lessonId: string; lessonTitle: string };
+
+function ResumeCard({ lesson, open }: { lesson: ResumeLesson; open: () => void }) {
+  const t = useTranslate();
+  return (
+    <View style={styles.resumeCard}>
+      <Text style={styles.category}>{lesson.title}</Text>
+      <Text style={styles.listTitle}>{lesson.lessonTitle}</Text>
+      <Button title={t("resumeLearning")} onPress={open} />
+    </View>
+  );
+}
 
 function FounderProfile() {
   const t = useTranslate();
@@ -156,10 +171,12 @@ function Catalog({
   language,
   changeLanguage,
   openCourse,
+  resumeCard,
 }: {
   language: CourseLanguage;
   changeLanguage: (value: CourseLanguage) => void;
   openCourse: (selection: Selection) => void;
+  resumeCard: ReactNode;
 }) {
   const t = useTranslate();
   const load = useCallback((signal: AbortSignal) => getCatalog(language, signal), [language]);
@@ -176,6 +193,7 @@ function Catalog({
       <Text accessibilityRole="header" style={styles.title}>
         {t("catalogTitle")}
       </Text>
+      {resumeCard}
       <TextInput
         style={styles.input}
         accessibilityLabel={t("searchCourses")}
@@ -385,6 +403,7 @@ function MyCourses({
   onSignOut,
   onExpired,
   onChangePassword,
+  resumeCard,
 }: {
   session: Session;
   language: CourseLanguage;
@@ -392,6 +411,7 @@ function MyCourses({
   onSignOut: () => void;
   onExpired: () => void;
   onChangePassword: () => void;
+  resumeCard: ReactNode;
 }) {
   const t = useTranslate();
   const load = useCallback(
@@ -408,6 +428,7 @@ function MyCourses({
         {t("myCourses")}
       </Text>
       <Text style={styles.muted}>{session.name}</Text>
+      {resumeCard}
       <Button title={t("changePassword")} onPress={onChangePassword} secondary />
       {error !== undefined && <ErrorNotice error={error} retry={refresh} />}
       {!loading && value?.length === 0 && <Text style={styles.body}>{t("noEnrollments")}</Text>}
@@ -435,12 +456,16 @@ function CourseScreen({
   language,
   onExpired,
   back,
+  rememberLesson,
+  clearResume,
 }: {
   session: Session;
   selection: Selection;
   language: CourseLanguage;
   onExpired: () => void;
   back: () => void;
+  rememberLesson: (lesson: Lesson, course: Selection) => void;
+  clearResume: (courseId: string, lessonId: string) => void;
 }) {
   const t = useTranslate();
   const { token } = session;
@@ -450,7 +475,9 @@ function CourseScreen({
     [token, selection, language],
   );
   const { value, loading, error, refresh } = useResource(load);
-  const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [openedLessonId, setOpenedLessonId] = useState(selection.lessonId);
+  const lesson = value?.lessons.find(({ id }) => id === openedLessonId);
+  const initialResume = useRef(selection.lessonId);
   const [quizOpen, setQuizOpen] = useState(false);
   const [quizSubmitting, setQuizSubmitting] = useState(false);
   const [actionError, setActionError] = useState<unknown>();
@@ -471,10 +498,21 @@ function CourseScreen({
   }, [actionError, error, onExpired]);
 
   useEffect(() => {
+    const savedId = initialResume.current;
+    if (!savedId) return;
+    const unavailable = error instanceof ApiError && [403, 404].includes(error.status);
+    if (unavailable || (value && !value.lessons.some(({ id }) => id === savedId))) {
+      initialResume.current = undefined;
+      clearResume(id, savedId);
+      setOpenedLessonId((current) => (current === savedId ? undefined : current));
+    }
+  }, [clearResume, error, id, value]);
+
+  useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
       if (!working && !quizSubmitting) {
         if (quizOpen) setQuizOpen(false);
-        else if (lesson) setLesson(null);
+        else if (lesson) setOpenedLessonId(undefined);
         else back();
       }
       return true;
@@ -560,7 +598,7 @@ function CourseScreen({
           title={t("backToLessons")}
           secondary
           disabled={working}
-          onPress={() => setLesson(null)}
+          onPress={() => setOpenedLessonId(undefined)}
         />
         <Text accessibilityRole="header" style={styles.title}>
           {lesson.title}
@@ -676,7 +714,8 @@ function CourseScreen({
             onPress={() => {
               setVideo(undefined);
               setActionError(undefined);
-              setLesson(item);
+              setOpenedLessonId(item.id);
+              rememberLesson(item, selection);
             }}
           >
             <Text style={styles.step}>{completed ? "✓" : item.position}</Text>
@@ -723,6 +762,80 @@ function StudyFlow({
   const [changingPassword, setChangingPassword] = useState(false);
   const [passwordChanged, setPasswordChanged] = useState(false);
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [resume, setResume] = useState<{ accountId: string; lesson: ResumeLesson | null }>();
+  const savingResume = useRef(Promise.resolve());
+  const accountId = session?.id;
+
+  useEffect(() => {
+    if (!accountId) return;
+    let current = true;
+    void savingResume.current
+      .then(() => SecureStore.getItemAsync(RESUME_KEY_PREFIX + accountId))
+      .then((raw) => {
+        if (!current || !raw) return;
+        const saved = JSON.parse(raw);
+        if (
+          typeof saved?.id !== "string" ||
+          !ID_PATTERN.test(saved.id) ||
+          typeof saved.lessonId !== "string" ||
+          !ID_PATTERN.test(saved.lessonId) ||
+          typeof saved.title !== "string" ||
+          typeof saved.lessonTitle !== "string"
+        )
+          return;
+        const { id, title, lessonId, lessonTitle } = saved;
+        setResume((previous) =>
+          previous?.accountId === accountId
+            ? previous
+            : { accountId, lesson: { id, title, lessonId, lessonTitle } },
+        );
+      })
+      .catch(() => {
+        // Continue to show lessons when device storage is unavailable.
+      });
+    return () => {
+      current = false;
+    };
+  }, [accountId]);
+
+  const saveResume = useCallback(
+    (lesson: ResumeLesson | null) => {
+      if (!accountId) return;
+      setResume({ accountId, lesson });
+      const key = RESUME_KEY_PREFIX + accountId;
+      savingResume.current = savingResume.current
+        .then(() =>
+          lesson
+            ? SecureStore.setItemAsync(key, JSON.stringify(lesson))
+            : SecureStore.deleteItemAsync(key),
+        )
+        .catch(() => {
+          // The shortcut remains available in the current session.
+        });
+    },
+    [accountId],
+  );
+
+  const savedLesson = resume?.accountId === accountId ? resume?.lesson : null;
+  const clearResume = useCallback(
+    (courseId: string, lessonId: string) => {
+      if (savedLesson?.id === courseId && savedLesson.lessonId === lessonId) saveResume(null);
+    },
+    [saveResume, savedLesson],
+  );
+
+  function rememberLesson(lesson: Lesson, course: Selection) {
+    saveResume({
+      id: course.id,
+      title: course.title,
+      lessonId: lesson.id,
+      lessonTitle: lesson.title,
+    });
+  }
+
+  const resumeCard = savedLesson && (
+    <ResumeCard lesson={savedLesson} open={() => setSelection(savedLesson)} />
+  );
 
   const restore = useCallback(async () => {
     setRestoring(true);
@@ -843,6 +956,8 @@ function StudyFlow({
           language={language}
           onExpired={expireSession}
           back={() => setSelection(null)}
+          rememberLesson={rememberLesson}
+          clearResume={clearResume}
         />
       ) : (
         <>
@@ -862,6 +977,7 @@ function StudyFlow({
               onSignOut={logOut}
               onExpired={expireSession}
               onChangePassword={() => setChangingPassword(true)}
+              resumeCard={resumeCard}
             />
           ) : (
             <Catalog
@@ -869,6 +985,7 @@ function StudyFlow({
               language={language}
               changeLanguage={changeLanguage}
               openCourse={openCourse}
+              resumeCard={resumeCard}
             />
           )}
           <View style={styles.tabBar}>

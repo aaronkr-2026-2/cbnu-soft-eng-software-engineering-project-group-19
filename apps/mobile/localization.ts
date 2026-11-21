@@ -72,6 +72,7 @@ const messages = {
   ],
   free: ["Bepul", "Free", "Бесплатно", "무료"],
   openCourse: ["Kursni ochish", "Open course", "Открыть курс", "강의 열기"],
+  resumeLearning: ["Davom ettirish", "Continue learning", "Продолжить обучение", "학습 계속하기"],
   learnerAccount: ["O‘quvchi hisobi", "Learner account", "Аккаунт учащегося", "학습자 계정"],
   loginHelp: [
     "StudyFlow’da ishlatgan emailingiz va parolingiz bilan kiring.",

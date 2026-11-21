@@ -1671,8 +1671,18 @@ let courseSearchTimer = null;
 let authMode = "register";
 let accessToken = localStorage.getItem("studyflow-token");
 let user = null;
+let resumeLesson = null;
+let resumeAccountId = null;
+const COURSE_ID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
+const resumeLearningCopy = {
+  uz: "Davom ettirish",
+  en: "Continue learning",
+  ru: "Продолжить обучение",
+  ko: "학습 계속하기",
+};
 
 function t(key) {
+  if (key === "resumeLearning") return resumeLearningCopy[language];
   return (
     quizUiCopy[language]?.[key] ||
     featureCopy[language]?.[key] ||
@@ -1780,7 +1790,54 @@ function updateAuthUI() {
   else main.insertBefore($("#courses"), $("#how"));
   $("#heroSignup").textContent = t(isLearner ? "myLearning" : "startLearning");
   $("#closingSignup").textContent = t(isLearner ? "myLearning" : "startToday");
+  const accountId = isLearner ? user.id : null;
+  if (accountId !== resumeAccountId) {
+    resumeAccountId = accountId;
+    resumeLesson = null;
+    if (accountId) {
+      try {
+        const saved = JSON.parse(localStorage.getItem(`studyflow-resume-${accountId}`));
+        if (
+          typeof saved?.courseId === "string" &&
+          COURSE_ID_PATTERN.test(saved.courseId) &&
+          typeof saved.lessonId === "string" &&
+          COURSE_ID_PATTERN.test(saved.lessonId) &&
+          typeof saved.courseTitle === "string" &&
+          typeof saved.lessonTitle === "string"
+        )
+          resumeLesson = saved;
+      } catch {
+        // Course navigation still works when browser storage is unavailable.
+      }
+    }
+  }
+  renderResumeLesson();
 }
+
+function renderResumeLesson() {
+  $("#resumeLearning").hidden = !resumeLesson;
+  $("#resumeLessonName").textContent = resumeLesson?.lessonTitle ?? "";
+  $("#resumeCourseName").textContent = resumeLesson?.courseTitle ?? "";
+}
+
+function saveResumeLesson(lesson) {
+  if (!resumeAccountId) return;
+  resumeLesson = lesson;
+  try {
+    const key = `studyflow-resume-${resumeAccountId}`;
+    if (lesson) localStorage.setItem(key, JSON.stringify(lesson));
+    else localStorage.removeItem(key);
+  } catch {
+    // Keep the shortcut available for the current page.
+  }
+  renderResumeLesson();
+}
+
+$("#resumeLesson").addEventListener("click", () => {
+  if (resumeLesson) {
+    void openLearnerCourse(resumeLesson.courseId, { lessonId: resumeLesson.lessonId });
+  }
+});
 
 async function api(path, options = {}) {
   const response = await fetch(path, {
@@ -1896,9 +1953,13 @@ async function openLearnerCourse(
     }
     if (!enrollment) {
       const enrollments = await listEnrollments(options);
+      if (request.signal.aborted) return;
       enrollment = enrollments.find((item) => item.course_id === courseId);
     }
-    if (!enrollment) throw new Error(t("coursePreviewError"));
+    if (!enrollment) {
+      if (resumeLesson?.courseId === courseId) saveResumeLesson(null);
+      throw new Error(t("coursePreviewError"));
+    }
 
     const [lessons, progress] = await Promise.all([
       api(`/courses/${courseId}/lessons?language=${encodeURIComponent(language)}`, options),
@@ -1907,7 +1968,13 @@ async function openLearnerCourse(
     if (request.signal.aborted) return;
     const examUnlocked =
       progress.total_lessons > 0 && progress.completed_lessons === progress.total_lessons;
-    renderLearnerCourse(enrollment, lessons, progress, request.signal);
+    if (
+      resumeLesson?.courseId === courseId &&
+      !lessons.some(({ id }) => id === resumeLesson.lessonId)
+    ) {
+      saveResumeLesson(null);
+    }
+    renderLearnerCourse(enrollment, lessons, progress, request.signal, openLesson);
     const firstToggle =
       host.querySelector(".lesson-item:has([data-complete]) [data-toggle]") ||
       host.querySelector("[data-toggle]");
@@ -1947,6 +2014,9 @@ async function openLearnerCourse(
       redirectToCourseLogin(courseId, { price, lessonId, openLesson });
       return;
     }
+    if ([403, 404].includes(error.status) && resumeLesson?.courseId === courseId) {
+      saveResumeLesson(null);
+    }
     if (previewDialog?.open) previewDialog.close();
     $("#enrolledCourses").hidden = true;
     view.hidden = false;
@@ -1962,15 +2032,14 @@ async function openLearnerCourse(
 async function resumePendingCourse() {
   const url = new URL(window.location.href);
   const courseId = url.searchParams.get("course");
-  const uuid = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
-  if (courseId && uuid.test(courseId)) {
+  if (courseId && COURSE_ID_PATTERN.test(courseId)) {
     const lesson = url.searchParams.get("lesson");
     const openLesson = url.searchParams.get("view") !== "completion";
     for (const key of ["course", "lesson", "view"]) url.searchParams.delete(key);
     window.history.replaceState(null, "", url);
     sessionStorage.removeItem("studyflow-pending-course");
     await openLearnerCourse(courseId.toLowerCase(), {
-      lessonId: lesson && uuid.test(lesson) ? lesson.toLowerCase() : undefined,
+      lessonId: lesson && COURSE_ID_PATTERN.test(lesson) ? lesson.toLowerCase() : undefined,
       openLesson,
     });
     return;
@@ -3203,6 +3272,9 @@ async function loadDashboard() {
     const enrollments = await listEnrollments();
     if (!isCurrent()) return;
     learnerEnrollments = enrollments;
+    if (resumeLesson && !enrollments.some(({ course_id }) => course_id === resumeLesson.courseId)) {
+      saveResumeLesson(null);
+    }
     renderEnrollmentList(enrollments);
 
     const entries = await Promise.all(
@@ -3251,7 +3323,7 @@ function renderLearnerAssignment(lesson, assignment) {
   return `<section class="learner-assignment"><h4>${escapeHtml(assignment.title)}</h4><p>${escapeHtml(assignment.instructions)}</p>${status}<form class="assignment-submit-form" data-assignment-submit data-course-id="${lesson.course_id}" data-lesson-id="${lesson.id}"><label><span>${escapeHtml(t("assignmentAnswerLabel"))}</span><textarea name="answer" rows="4" maxlength="20000" required>${escapeHtml(submission?.answer || "")}</textarea></label><button class="button button-outline" type="submit">${escapeHtml(t(submission ? "assignmentResubmitButton" : "assignmentSubmitButton"))}</button><p class="assignment-form-message" role="status"></p></form></section>`;
 }
 
-function renderLearnerCourse(enrollment, lessons, progress, signal) {
+function renderLearnerCourse(enrollment, lessons, progress, signal, rememberInitialLesson) {
   const container = $("#activeCourse");
   const courseId = enrollment.course_id;
   const completed =
@@ -3278,7 +3350,7 @@ function renderLearnerCourse(enrollment, lessons, progress, signal) {
     setupVideoCompletion(host.closest(".lesson-item"), courseId, lesson);
   });
 
-  bindLearnerCourseActions(container, courseId, signal);
+  bindLearnerCourseActions(container, enrollment, lessonById, signal, rememberInitialLesson);
 }
 
 function renderLearningOverview(entries) {
@@ -3331,7 +3403,14 @@ function renderLearningOverview(entries) {
     : `<p class="panel-empty">${escapeHtml(t("emptyCertificates"))}</p>`;
 }
 
-function bindLearnerCourseActions(container, courseId, signal) {
+function bindLearnerCourseActions(
+  container,
+  enrollment,
+  lessonById,
+  signal,
+  rememberInitialLesson,
+) {
+  const { course_id: courseId, course_title: courseTitle } = enrollment;
   container.querySelectorAll("[data-complete]").forEach((button) =>
     button.addEventListener("click", async () => {
       button.disabled = true;
@@ -3356,13 +3435,21 @@ function bindLearnerCourseActions(container, courseId, signal) {
       ),
     );
   container.querySelectorAll("[data-toggle]").forEach((button) =>
-    button.addEventListener("click", () => {
+    button.addEventListener("click", (event) => {
       const panel = document.getElementById(button.dataset.toggle);
-      panel.classList.toggle("open");
-      button.textContent = panel.classList.contains("open") ? "⌃" : "⌄";
-      if (panel.classList.contains("open") && !panel.dataset.assignmentLoaded) {
+      const opened = panel.classList.toggle("open");
+      const lessonId = panel.id.slice("lesson-".length);
+      button.textContent = opened ? "⌃" : "⌄";
+      if (opened && (event.isTrusted || rememberInitialLesson)) {
+        saveResumeLesson({
+          courseId,
+          courseTitle,
+          lessonId,
+          lessonTitle: lessonById.get(lessonId).title,
+        });
+      }
+      if (opened && !panel.dataset.assignmentLoaded) {
         panel.dataset.assignmentLoaded = "true";
-        const lessonId = panel.id.slice("lesson-".length);
         api(
           `/courses/${courseId}/lessons/${lessonId}/assignment?language=${encodeURIComponent(language)}`,
           { signal: AbortSignal.any([signal, AbortSignal.timeout(CATALOG_REQUEST_TIMEOUT_MS)]) },
@@ -3379,10 +3466,7 @@ function bindLearnerCourseActions(container, courseId, signal) {
             delete panel.dataset.assignmentLoaded;
           });
       }
-      button.setAttribute(
-        "aria-label",
-        panel.classList.contains("open") ? t("hideLesson") : t("openLesson"),
-      );
+      button.setAttribute("aria-label", opened ? t("hideLesson") : t("openLesson"));
     }),
   );
 }

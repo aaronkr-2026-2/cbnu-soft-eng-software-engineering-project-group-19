@@ -2421,6 +2421,19 @@ body[dir="rtl"] {
   gap: 5px;
   min-width: 0;
 }
+.resume-learning {
+  margin-top: 20px;
+}
+.resume-learning[hidden] {
+  display: none;
+}
+.resume-learning b {
+  overflow-wrap: anywhere;
+  font-size: 15px;
+}
+.resume-learning span {
+  font-size: 13px;
+}
 .learner-list-card b {
   font: 700 12px var(--display);
 }
@@ -2440,6 +2453,10 @@ body[dir="rtl"] {
   flex: 0 0 auto;
   padding: 8px 10px;
   font-size: 9px;
+}
+.resume-learning .button {
+  min-height: 44px;
+  font-size: 13px;
 }
 .certificate-list-card {
   align-items: flex-start;

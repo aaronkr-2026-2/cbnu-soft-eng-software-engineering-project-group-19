@@ -16,7 +16,7 @@ export type Course = {
 };
 
 export type Enrollment = { course_id: string; course_title: string };
-export type Selection = { id: string; title: string; price?: number };
+export type Selection = { id: string; title: string; price?: number; lessonId?: string };
 export type Lesson = {
   id: string;
   title: string;
@@ -32,7 +32,7 @@ export type Progress = {
   total_lessons: number;
   progress_percent: number;
 };
-export type Session = { token: string; name: string };
+export type Session = { token: string; id: string; name: string };
 
 export class ApiError extends Error {
   constructor(
@@ -88,10 +88,13 @@ async function request<T>(
 }
 
 export async function loadSession(token: string): Promise<Session> {
-  const profile = await request<{ full_name: string; account_type: string }>("/auth/me", { token });
+  const profile = await request<{ id: string; full_name: string; account_type: string }>(
+    "/auth/me",
+    { token },
+  );
   if (profile.account_type !== "learner")
     throw new ApiError(403, "Learner account required", "learnerRequired");
-  return { token, name: profile.full_name };
+  return { token, id: profile.id, name: profile.full_name };
 }
 
 export async function signIn(email: string, password: string): Promise<Session> {
