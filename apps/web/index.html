@@ -21,7 +21,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./style.css?v=scholward-10" />
+    <link rel="stylesheet" href="./style.css?v=scholward-11" />
     <link rel="stylesheet" href="./media-content.css" />
     <link rel="stylesheet" href="/app/certificate.css?v=4" />
   </head>
@@ -86,8 +86,9 @@
           <div class="hero-actions">
             <button class="button button-dark" id="heroSignup" data-i18n="startLearning"></button
             ><a class="text-link" href="#courses"
-              ><span data-i18n="browseCatalog"></span><span aria-hidden="true">↗</span></a
-            >
+              ><span data-i18n="browseCatalog"></span
+              ><span class="ui-icon icon-arrow" aria-hidden="true"></span
+            ></a>
           </div>
           <div class="learner-list-card resume-learning" id="resumeLearning" hidden>
             <div><b id="resumeLessonName"></b><span id="resumeCourseName"></span></div>
@@ -109,15 +110,25 @@
           />
         </div>
         <div class="hero-bottom">
-          <div><span>◉</span> <span data-i18n="selfPaced"></span></div>
-          <div><span>✳</span> <span data-i18n="personalized"></span></div>
-          <div><span>↗</span> <span data-i18n="fourLanguages"></span></div>
+          <div>
+            <span class="ui-icon icon-target" aria-hidden="true"></span>
+            <span data-i18n="selfPaced"></span>
+          </div>
+          <div>
+            <span class="ui-icon icon-spark" aria-hidden="true"></span>
+            <span data-i18n="personalized"></span>
+          </div>
+          <div>
+            <span class="ui-icon icon-arrow" aria-hidden="true"></span>
+            <span data-i18n="fourLanguages"></span>
+          </div>
         </div>
       </section>
 
       <section class="intro-section" id="how">
         <div class="section-label">
-          <span class="tiny-star">✳</span><span data-i18n="whyStudyflow"></span>
+          <span class="tiny-star ui-icon icon-spark" aria-hidden="true"></span
+          ><span data-i18n="whyStudyflow"></span>
         </div>
         <div class="intro-grid">
           <h2 data-i18n="introTitle"></h2>
@@ -125,17 +136,23 @@
         </div>
         <div class="feature-grid">
           <article class="feature-card">
-            <span class="feature-icon feature-lime">✳</span>
+            <span class="feature-icon feature-lime" aria-hidden="true"
+              ><span class="ui-icon icon-spark"></span
+            ></span>
             <h3 data-i18n="featureOneTitle"></h3>
             <p data-i18n="featureOneBody"></p>
           </article>
           <article class="feature-card">
-            <span class="feature-icon feature-lilac">⌁</span>
+            <span class="feature-icon feature-lilac" aria-hidden="true"
+              ><span class="ui-icon icon-recommendation"></span
+            ></span>
             <h3 data-i18n="featureTwoTitle"></h3>
             <p data-i18n="featureTwoBody"></p>
           </article>
           <article class="feature-card">
-            <span class="feature-icon feature-peach">↗</span>
+            <span class="feature-icon feature-peach" aria-hidden="true"
+              ><span class="ui-icon icon-arrow"></span
+            ></span>
             <h3 data-i18n="featureThreeTitle"></h3>
             <p data-i18n="featureThreeBody"></p>
           </article>
@@ -164,7 +181,8 @@
         <div class="section-heading dashboard-heading">
           <div>
             <div class="section-label">
-              <span class="tiny-star">✳</span><span data-i18n="instructorEyebrow"></span>
+              <span class="tiny-star ui-icon icon-spark" aria-hidden="true"></span
+              ><span data-i18n="instructorEyebrow"></span>
             </div>
             <h2 data-i18n="instructorTitle"></h2>
           </div>
@@ -212,7 +230,8 @@
         <div class="section-heading dashboard-heading">
           <div>
             <div class="section-label">
-              <span class="tiny-star">✳</span><span data-i18n="dashboardEyebrow"></span>
+              <span class="tiny-star ui-icon icon-spark" aria-hidden="true"></span
+              ><span data-i18n="dashboardEyebrow"></span>
             </div>
             <h2 data-i18n="dashboardTitle"></h2>
           </div>
@@ -298,7 +317,8 @@
         <div class="dashboard-lower">
           <section class="dashboard-panel">
             <div class="section-label">
-              <span class="tiny-star">✳</span><span data-i18n="recommendationsTitle"></span>
+              <span class="tiny-star ui-icon icon-spark" aria-hidden="true"></span
+              ><span data-i18n="recommendationsTitle"></span>
             </div>
             <div id="recommendationList" class="recommendation-list"></div>
           </section>
@@ -306,7 +326,7 @@
       </section>
       <section class="closing-banner" id="closingBanner">
         <div>
-          <span class="banner-spark">✳</span>
+          <span class="banner-spark ui-icon icon-spark" aria-hidden="true"></span>
           <h2 data-i18n="closingTitle"></h2>
           <p data-i18n="closingBody"></p>
         </div>
@@ -374,6 +394,6 @@
       <div id="finalExamBody" class="final-exam-body"></div>
     </dialog>
     <script src="/app/certificate.js?v=5" defer></script>
-    <script src="/app/app.js?v=scholward-13" defer></script>
+    <script src="/app/app.js?v=scholward-14" defer></script>
   </body>
 </html>

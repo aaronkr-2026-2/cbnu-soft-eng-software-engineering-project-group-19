@@ -1400,7 +1400,7 @@ function renderLessonResource(lesson) {
     .map((material) =>
       material.resource_type === "audio"
         ? `<section class="lesson-resource supplemental-material"><h4>${escapeHtml(material.position)}. ${escapeHtml(material.title)}</h4><audio controls preload="metadata" src="${escapeHtml(material.resource_url)}"></audio></section>`
-        : `<section class="lesson-resource supplemental-material"><h4>${escapeHtml(material.position)}. ${escapeHtml(material.title)}</h4><a class="button button-outline button-small" href="${escapeHtml(material.resource_url)}" target="_blank" rel="noopener">${escapeHtml(materialText("openPdf"))} ↗</a></section>`,
+        : `<section class="lesson-resource supplemental-material"><h4>${escapeHtml(material.position)}. ${escapeHtml(material.title)}</h4><a class="button button-outline button-small" href="${escapeHtml(material.resource_url)}" target="_blank" rel="noopener">${escapeHtml(materialText("openPdf"))} <span class="ui-icon icon-arrow" aria-hidden="true"></span></a></section>`,
     )
     .join("");
   if (lesson.external_video_url) {
@@ -1440,7 +1440,7 @@ function renderLessonResource(lesson) {
   if (lesson.resource_type === "audio")
     return `<div class="lesson-resource"><audio controls preload="metadata" src="${url}"></audio></div>${extraMaterials}`;
   if (lesson.resource_type === "pdf")
-    return `<div class="lesson-resource"><a class="button button-outline button-small" href="${url}" target="_blank" rel="noopener">${escapeHtml(materialText("openPdf"))} ↗</a></div>${extraMaterials}`;
+    return `<div class="lesson-resource"><a class="button button-outline button-small" href="${url}" target="_blank" rel="noopener">${escapeHtml(materialText("openPdf"))} <span class="ui-icon icon-arrow" aria-hidden="true"></span></a></div>${extraMaterials}`;
   return extraMaterials;
 }
 function setupVideoCompletion(container, courseId, lesson) {
@@ -2212,7 +2212,7 @@ function renderCatalogCard(course, index, showEnrollment) {
       </div>`;
   const enrollment = showEnrollment
     ? `<button class="button button-dark button-small" data-course="${id}" data-price="${escapeHtml(course.price_uzs)}">
-        ${escapeHtml(t(course.price_uzs > 0 ? "buyCourse" : "enroll"))} <span aria-hidden="true">↗</span>
+        ${escapeHtml(t(course.price_uzs > 0 ? "buyCourse" : "enroll"))} <span class="ui-icon icon-arrow" aria-hidden="true"></span>
       </button>`
     : "";
   return `<article class="course-card">
@@ -2301,7 +2301,7 @@ async function openCourseDetails(courseId) {
         : course.price_uzs > 0
           ? "buyCourse"
           : "enrollFromPreview";
-    host.innerHTML = `${course.banner_url ? `<img class="course-preview-banner" src="${escapeHtml(course.banner_url)}" alt="${escapeHtml(course.title)}">` : ""}<div class="section-label">${escapeHtml(t("courseDetails"))}</div><h2>${escapeHtml(course.title)}</h2><p class="course-preview-description">${escapeHtml(course.description || "")}</p>${courseTranslationNotice(course)}<div class="course-preview-meta"><span>${escapeHtml(t(`language${course.language[0].toUpperCase()}${course.language.slice(1)}`))}</span><span>${escapeHtml(humanLevel(course.level))}</span><span>${course.lessons.length} ${escapeHtml(t("courseLessonCount"))}</span></div><div class="course-price course-preview-price">${escapeHtml(coursePrice(course.price_uzs))}</div>${course.price_uzs > 0 ? `<p class="payment-provider-note">${escapeHtml(t("paymentProviderLabel"))}</p>` : ""}<h3>${escapeHtml(t("courseOutline"))}</h3>${lessons}<div class="course-review-summary"><h3>${escapeHtml(t("reviewTitle"))} ${course.average_rating !== null ? `★ ${course.average_rating.toFixed(1)} · ${course.review_count} ${escapeHtml(t("reviewsCount"))}` : escapeHtml(t("noReviews"))}</h3>${course.reviews.length ? `<div class="public-review-list">${course.reviews.map((review) => `<article class="public-review"><div><b>${escapeHtml(review.reviewer_name)}</b><span>${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</span></div>${review.comment ? `<p>${escapeHtml(review.comment)}</p>` : ""}</article>`).join("")}</div>` : ""}</div><button id="enrollFromPreview" class="button button-dark" data-course="${course.id}">${escapeHtml(t(startLabel))} ↗</button>`;
+    host.innerHTML = `${course.banner_url ? `<img class="course-preview-banner" src="${escapeHtml(course.banner_url)}" alt="${escapeHtml(course.title)}">` : ""}<div class="section-label">${escapeHtml(t("courseDetails"))}</div><h2>${escapeHtml(course.title)}</h2><p class="course-preview-description">${escapeHtml(course.description || "")}</p>${courseTranslationNotice(course)}<div class="course-preview-meta"><span>${escapeHtml(t(`language${course.language[0].toUpperCase()}${course.language.slice(1)}`))}</span><span>${escapeHtml(humanLevel(course.level))}</span><span>${course.lessons.length} ${escapeHtml(t("courseLessonCount"))}</span></div><div class="course-price course-preview-price">${escapeHtml(coursePrice(course.price_uzs))}</div>${course.price_uzs > 0 ? `<p class="payment-provider-note">${escapeHtml(t("paymentProviderLabel"))}</p>` : ""}<h3>${escapeHtml(t("courseOutline"))}</h3>${lessons}<div class="course-review-summary"><h3>${escapeHtml(t("reviewTitle"))} ${course.average_rating !== null ? `★ ${course.average_rating.toFixed(1)} · ${course.review_count} ${escapeHtml(t("reviewsCount"))}` : escapeHtml(t("noReviews"))}</h3>${course.reviews.length ? `<div class="public-review-list">${course.reviews.map((review) => `<article class="public-review"><div><b>${escapeHtml(review.reviewer_name)}</b><span>${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</span></div>${review.comment ? `<p>${escapeHtml(review.comment)}</p>` : ""}</article>`).join("")}</div>` : ""}</div><button id="enrollFromPreview" class="button button-dark" data-course="${course.id}">${escapeHtml(t(startLabel))} <span class="ui-icon icon-arrow" aria-hidden="true"></span></button>`;
     $("#enrollFromPreview").addEventListener("click", async (event) => {
       const button = event.currentTarget;
       button.disabled = true;

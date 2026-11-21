@@ -504,6 +504,97 @@ a {
 .intro-section {
   border-top: 1px solid var(--line);
 }
+.ui-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.13em;
+}
+
+.ui-icon::before {
+  content: "";
+  width: 100%;
+  height: 100%;
+  background: currentColor;
+  forced-color-adjust: none;
+}
+
+.icon-arrow::before {
+  clip-path: polygon(
+    36% 12%,
+    88% 12%,
+    88% 64%,
+    77% 64%,
+    77% 31%,
+    20% 88%,
+    12% 80%,
+    69% 23%,
+    36% 23%
+  );
+}
+
+.icon-spark::before {
+  background:
+    linear-gradient(currentColor 0 0) center / 12% 100% no-repeat,
+    linear-gradient(currentColor 0 0) center / 100% 12% no-repeat,
+    linear-gradient(45deg, transparent 46%, currentColor 46% 54%, transparent 54%) center / 80% 80%
+      no-repeat,
+    linear-gradient(-45deg, transparent 46%, currentColor 46% 54%, transparent 54%) center / 80% 80%
+      no-repeat;
+}
+
+.icon-recommendation::before {
+  clip-path: polygon(
+    5% 58%,
+    33% 58%,
+    45% 19%,
+    58% 19%,
+    69% 52%,
+    95% 52%,
+    95% 64%,
+    61% 64%,
+    51% 34%,
+    42% 70%,
+    5% 70%
+  );
+}
+
+.icon-target::before {
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    currentColor 37%,
+    transparent 38% 54%,
+    currentColor 55% 67%,
+    transparent 68%
+  );
+}
+
+.icon-play::before {
+  clip-path: polygon(25% 13%, 84% 50%, 25% 87%);
+}
+
+.icon-check::before {
+  clip-path: polygon(8% 51%, 17% 42%, 39% 64%, 83% 20%, 92% 29%, 39% 82%);
+}
+
+.icon-diamond::before {
+  clip-path: polygon(
+    50% 4%,
+    96% 50%,
+    50% 96%,
+    4% 50%,
+    50% 4%,
+    50% 20%,
+    20% 50%,
+    50% 80%,
+    80% 50%,
+    50% 20%
+  );
+}
+
 .tiny-star {
   color: #91ae4d;
   font-size: 15px;
