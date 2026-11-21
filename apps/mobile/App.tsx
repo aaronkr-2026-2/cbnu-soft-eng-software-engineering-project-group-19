@@ -933,6 +933,10 @@ function StudyFlow({
   return (
     <SafeAreaView style={styles.screen}>
       <StatusBar style="dark" />
+      <View pointerEvents="none" style={styles.backgroundDecoration}>
+        <View style={styles.backgroundBlue} />
+        <View style={styles.backgroundSand} />
+      </View>
       <View style={styles.header}>
         <View style={styles.brand}>
           <Text style={styles.logo}>S</Text>
