@@ -3333,6 +3333,43 @@ body[dir="rtl"] {
   border-radius: 10px;
   background: #fff;
 }
+.lesson-note-form {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+}
+.lesson-note-form label {
+  font-weight: 700;
+}
+.lesson-note-form small,
+.lesson-note-status {
+  color: var(--muted);
+  font-size: 13px;
+}
+.lesson-note-form textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 16px;
+  resize: vertical;
+}
+.lesson-note-form .button {
+  min-height: 44px;
+}
+.lesson-note-status {
+  margin: 0;
+}
+.lesson-note-status:empty {
+  display: none;
+}
 .learner-assignment {
   margin: 16px 0;
   padding: 16px;

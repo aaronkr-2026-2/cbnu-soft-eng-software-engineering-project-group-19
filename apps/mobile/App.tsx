@@ -38,6 +38,7 @@ import { Button, Content, ErrorNotice, PasswordInput, useRefreshOnReturn, useRes
 import { CertificatesScreen, CourseCompletion, QuizScreen } from "./Assessments";
 import { ChangePassword } from "./ChangePassword";
 import { LessonVideo } from "./LessonVideo";
+import { LessonNote } from "./LessonNote";
 import { LocaleContext, useTranslate } from "./localization";
 
 const SESSION_KEY = "studyflow-learner-token";
@@ -593,74 +594,81 @@ function CourseScreen({
     const media =
       lesson.resource_type !== "video" && lesson.resource_url && resourceUrl(lesson.resource_url);
     return (
-      <Content key={lesson.id}>
-        <Button
-          title={t("backToLessons")}
-          secondary
-          disabled={working}
-          onPress={() => setOpenedLessonId(undefined)}
-        />
-        <Text accessibilityRole="header" style={styles.title}>
-          {lesson.title}
-        </Text>
-        {media ? (
+      <KeyboardAvoidingView
+        key={lesson.id}
+        style={styles.fill}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <Content>
           <Button
-            title={t("openMaterial")}
+            title={t("backToLessons")}
             secondary
-            onPress={() => {
-              void Linking.openURL(media).catch(setActionError);
-            }}
+            disabled={working}
+            onPress={() => setOpenedLessonId(undefined)}
           />
-        ) : null}
-        {requireVideo && (
-          <View style={styles.notice}>
-            <LessonVideo
-              course={id}
-              lesson={lesson}
-              token={token}
-              language={language}
-              onProgress={setVideo}
-              onExpired={onExpired}
-            />
-            {video && (
-              <Text accessibilityLiveRegion="polite" style={styles.muted}>
-                {t("videoProgress", { progress: Math.floor(video.completion_percent) })}
-              </Text>
-            )}
-            <Button
-              title={t("openBrowser")}
-              onPress={() => openWeb(courseWebLink(id, { lesson: lesson.id }), lesson.id)}
-              disabled={working}
-              secondary
-            />
-            <Button
-              title={t("refreshVideo")}
-              onPress={updateProgress}
-              disabled={working}
-              secondary
-            />
-          </View>
-        )}
-        <Text style={styles.body}>{lesson.content}</Text>
-        <Button
-          title={t("takeQuiz")}
-          onPress={() => setQuizOpen(true)}
-          disabled={working}
-          secondary
-        />
-        {actionError !== undefined && <ErrorNotice error={actionError} />}
-        {done ? (
-          <Text accessibilityRole="text" style={styles.category}>
-            {t("lessonDone")}
+          <Text accessibilityRole="header" style={styles.title}>
+            {lesson.title}
           </Text>
-        ) : (
+          {media ? (
+            <Button
+              title={t("openMaterial")}
+              secondary
+              onPress={() => {
+                void Linking.openURL(media).catch(setActionError);
+              }}
+            />
+          ) : null}
+          {requireVideo && (
+            <View style={styles.notice}>
+              <LessonVideo
+                course={id}
+                lesson={lesson}
+                token={token}
+                language={language}
+                onProgress={setVideo}
+                onExpired={onExpired}
+              />
+              {video && (
+                <Text accessibilityLiveRegion="polite" style={styles.muted}>
+                  {t("videoProgress", { progress: Math.floor(video.completion_percent) })}
+                </Text>
+              )}
+              <Button
+                title={t("openBrowser")}
+                onPress={() => openWeb(courseWebLink(id, { lesson: lesson.id }), lesson.id)}
+                disabled={working}
+                secondary
+              />
+              <Button
+                title={t("refreshVideo")}
+                onPress={updateProgress}
+                disabled={working}
+                secondary
+              />
+            </View>
+          )}
+          <Text style={styles.body}>{lesson.content}</Text>
           <Button
-            title={working ? t("refreshing") : t("markComplete")}
-            onPress={markDone}
-            disabled={working || (requireVideo && !video?.can_complete)}
+            title={t("takeQuiz")}
+            onPress={() => setQuizOpen(true)}
+            disabled={working}
+            secondary
           />
-        )}
-      </Content>
+          {actionError !== undefined && <ErrorNotice error={actionError} />}
+          {done ? (
+            <Text accessibilityRole="text" style={styles.category}>
+              {t("lessonDone")}
+            </Text>
+          ) : (
+            <Button
+              title={working ? t("refreshing") : t("markComplete")}
+              onPress={markDone}
+              disabled={working || (requireVideo && !video?.can_complete)}
+            />
+          )}
+          <LessonNote accountId={session.id} lessonId={lesson.id} />
+        </Content>
+      </KeyboardAvoidingView>
     );
   }
 

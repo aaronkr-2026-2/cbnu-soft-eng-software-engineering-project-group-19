@@ -53,6 +53,7 @@ export const styles = StyleSheet.create({
   body: { color: color.ink, fontSize: 15, lineHeight: 23 },
   muted: { color: color.muted, fontSize: 14, lineHeight: 20 },
   resumeCard: { padding: 14, gap: 8, borderRadius: 16, backgroundColor: color.pale },
+  noteInput: { minHeight: 96, textAlignVertical: "top" },
   passwordField: { gap: 6 },
   passwordSuccess: { backgroundColor: color.pale, borderRadius: 12, padding: 14 },
   passwordInputRow: { flexDirection: "row", alignItems: "center", gap: 8 },

@@ -1680,6 +1680,45 @@ const resumeLearningCopy = {
   ru: "Продолжить обучение",
   ko: "학습 계속하기",
 };
+const NOTE_LIMIT = 500;
+const lessonNoteCopy = {
+  uz: {
+    title: "Dars eslatmasi",
+    hint: `Bu brauzerda saqlanadi · ${NOTE_LIMIT} tagacha belgi`,
+    placeholder: "Muhim fikrlarni yozing…",
+    save: "Eslatmani saqlash",
+    saved: "Eslatma saqlandi.",
+    loadError: "Eslatmani ochib bo‘lmadi.",
+    saveError: "Eslatmani saqlab bo‘lmadi. Qayta urinib ko‘ring.",
+  },
+  en: {
+    title: "Lesson note",
+    hint: `Saved in this browser · Up to ${NOTE_LIMIT} characters`,
+    placeholder: "Write down key points…",
+    save: "Save note",
+    saved: "Note saved.",
+    loadError: "Couldn’t load the note.",
+    saveError: "Couldn’t save the note. Try again.",
+  },
+  ru: {
+    title: "Заметка к уроку",
+    hint: `Хранится в этом браузере · До ${NOTE_LIMIT} символов`,
+    placeholder: "Запишите главное…",
+    save: "Сохранить заметку",
+    saved: "Заметка сохранена.",
+    loadError: "Не удалось открыть заметку.",
+    saveError: "Не удалось сохранить заметку. Попробуйте ещё раз.",
+  },
+  ko: {
+    title: "수업 메모",
+    hint: `이 브라우저에 저장 · 최대 ${NOTE_LIMIT}자`,
+    placeholder: "중요한 내용을 적어 보세요…",
+    save: "메모 저장",
+    saved: "메모가 저장되었습니다.",
+    loadError: "메모를 불러오지 못했습니다.",
+    saveError: "메모를 저장하지 못했습니다. 다시 시도해 주세요.",
+  },
+};
 
 function t(key) {
   if (key === "resumeLearning") return resumeLearningCopy[language];
@@ -3323,6 +3362,46 @@ function renderLearnerAssignment(lesson, assignment) {
   return `<section class="learner-assignment"><h4>${escapeHtml(assignment.title)}</h4><p>${escapeHtml(assignment.instructions)}</p>${status}<form class="assignment-submit-form" data-assignment-submit data-course-id="${lesson.course_id}" data-lesson-id="${lesson.id}"><label><span>${escapeHtml(t("assignmentAnswerLabel"))}</span><textarea name="answer" rows="4" maxlength="20000" required>${escapeHtml(submission?.answer || "")}</textarea></label><button class="button button-outline" type="submit">${escapeHtml(t(submission ? "assignmentResubmitButton" : "assignmentSubmitButton"))}</button><p class="assignment-form-message" role="status"></p></form></section>`;
 }
 
+function mountLessonNote(panel, accountId, lessonId) {
+  const c = lessonNoteCopy[language];
+  const key = `studyflow-note-${accountId}-${lessonId}`;
+  const fieldId = `note-${escapeHtml(lessonId)}`;
+  panel.insertAdjacentHTML(
+    "beforeend",
+    `<form class="lesson-note-form"><label for="${fieldId}">${escapeHtml(c.title)}</label><small id="${fieldId}-hint">${escapeHtml(c.hint)}</small><textarea id="${fieldId}" aria-describedby="${fieldId}-hint" name="note" rows="3" maxlength="${NOTE_LIMIT}" placeholder="${escapeHtml(c.placeholder)}"></textarea><button class="button button-outline button-small" type="submit" disabled>${escapeHtml(c.save)}</button><p class="lesson-note-status" role="status"></p></form>`,
+  );
+  const form = panel.querySelector(".lesson-note-form");
+  const { note } = form.elements;
+  const save = form.querySelector("button");
+  const status = form.querySelector(".lesson-note-status");
+  let saved = "";
+  try {
+    saved = localStorage.getItem(key) ?? "";
+    note.value = saved;
+  } catch {
+    status.textContent = c.loadError;
+  }
+  note.addEventListener("input", () => {
+    save.disabled = note.value === saved;
+    status.textContent = "";
+  });
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (user?.id !== accountId || save.disabled) return;
+    const value = note.value.trim();
+    try {
+      if (value) localStorage.setItem(key, value);
+      else localStorage.removeItem(key);
+      saved = value;
+      note.value = value;
+      save.disabled = true;
+      status.textContent = c.saved;
+    } catch {
+      status.textContent = c.saveError;
+    }
+  });
+}
+
 function renderLearnerCourse(enrollment, lessons, progress, signal, rememberInitialLesson) {
   const container = $("#activeCourse");
   const courseId = enrollment.course_id;
@@ -3447,6 +3526,9 @@ function bindLearnerCourseActions(
           lessonId,
           lessonTitle: lessonById.get(lessonId).title,
         });
+      }
+      if (opened && user?.id && !panel.querySelector(".lesson-note-form")) {
+        mountLessonNote(panel, user.id, lessonId);
       }
       if (opened && !panel.dataset.assignmentLoaded) {
         panel.dataset.assignmentLoaded = "true";
