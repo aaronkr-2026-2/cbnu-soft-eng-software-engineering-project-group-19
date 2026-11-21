@@ -20,11 +20,11 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./style.css?v=scholward-2" />
+    <link rel="stylesheet" href="./style.css?v=scholward-3" />
     <link rel="stylesheet" href="./media-content.css" />
   </head>
   <body>
-    <header class="topbar">
+    <header class="topbar landing-topbar">
       <a class="brand" href="/app" aria-label="SCHOLWARD Academy"
         ><span class="brand-mark">s</span
         ><span class="brand-name">SCHOLWARD <span class="brand-academy">Academy</span></span></a
@@ -74,7 +74,6 @@
     <main>
       <section class="hero" id="heroSection">
         <div class="hero-copy">
-          <div class="eyebrow"><span class="spark">✳</span><span data-i18n="eyebrow"></span></div>
           <h1 data-i18n="heroTitle"></h1>
           <p class="hero-description" data-i18n="heroBody"></p>
           <div class="hero-actions">
@@ -92,59 +91,17 @@
               data-i18n="resumeLearning"
             ></button>
           </div>
-          <div class="learner-note">
-            <div class="avatar-stack" aria-hidden="true">
-              <span></span><span></span><span></span><span></span>
-            </div>
-            <span data-i18n="learnerNote"></span>
-          </div>
         </div>
-        <div class="hero-art" aria-label="Personal learning dashboard illustration">
-          <div class="art-orbit orbit-one"></div>
-          <div class="art-orbit orbit-two"></div>
-          <div class="art-sun"><span>✳</span></div>
-          <div class="floating-note note-top">
-            <span class="note-icon lavender">◷</span
-            ><span><b data-i18n="dailyGoal"></b><small data-i18n="dailyGoalValue"></small></span
-            ><span class="note-check">✓</span>
-          </div>
-          <div class="learning-card">
-            <div class="card-kicker">
-              <span class="live-dot"></span><span data-i18n="yourJourney"></span
-              ><span class="more">···</span>
-            </div>
-            <div class="card-title" data-i18n="learningPath"></div>
-            <div class="path-row">
-              <div class="path-icon peach">Aa</div>
-              <div class="path-info">
-                <b data-i18n="courseOne"></b><small data-i18n="courseOneMeta"></small>
-              </div>
-              <span class="path-arrow">↗</span>
-            </div>
-            <div class="path-row">
-              <div class="path-icon mint">⌘</div>
-              <div class="path-info">
-                <b data-i18n="courseTwo"></b><small data-i18n="courseTwoMeta"></small>
-              </div>
-              <span class="path-arrow">↗</span>
-            </div>
-            <div class="progress-label"><span data-i18n="weeklyProgress"></span><b>72%</b></div>
-            <div class="progress-track"><span></span></div>
-            <div class="week-days">
-              <span data-weekday="0"></span><span data-weekday="1"></span
-              ><span data-weekday="2"></span><span class="today" data-weekday="3"></span
-              ><span data-weekday="4"></span><span data-weekday="5"></span
-              ><span data-weekday="6"></span>
-            </div>
-          </div>
-          <div class="floating-note note-bottom">
-            <span class="streak-icon">✦</span
-            ><span><b data-i18n="streakValue"></b><small data-i18n="streakLabel"></small></span>
-          </div>
-          <span class="art-star star-left">✳</span><span class="art-star star-right">✦</span>
+        <div class="hero-visual">
+          <img
+            src="/app/scholward-learning.webp"
+            width="1120"
+            height="840"
+            alt=""
+            fetchpriority="high"
+          />
         </div>
         <div class="hero-bottom">
-          <span data-i18n="builtFor"></span>
           <div><span>◉</span> <span data-i18n="selfPaced"></span></div>
           <div><span>✳</span> <span data-i18n="personalized"></span></div>
           <div><span>↗</span> <span data-i18n="fourLanguages"></span></div>

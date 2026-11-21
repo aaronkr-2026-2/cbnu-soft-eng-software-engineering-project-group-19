@@ -192,32 +192,36 @@ function Catalog({
 
   return (
     <Content refreshing={loading} refresh={refresh}>
-      <Text accessibilityRole="header" style={styles.title}>
-        {t("catalogTitle")}
-      </Text>
-      {resumeCard}
-      <TextInput
-        style={styles.input}
-        accessibilityLabel={t("searchCourses")}
-        placeholder={t("searchCourses")}
-        placeholderTextColor={color.muted}
-        value={query}
-        onChangeText={setQuery}
-        clearButtonMode="while-editing"
-      />
-      <View style={styles.filters}>
-        {(Object.keys(languages) as CourseLanguage[]).map((key) => (
-          <Pressable
-            key={key}
-            accessibilityRole="button"
-            accessibilityState={{ selected: language === key }}
-            onPress={() => changeLanguage(key)}
-            style={[styles.filter, key === language && styles.selectedFilter]}
-          >
-            <Text style={styles.filterText}>{languages[key]}</Text>
-          </Pressable>
-        ))}
+      <View style={styles.catalogHeader}>
+        <Text accessibilityRole="header" style={styles.catalogTitle}>
+          {t("catalogTitle")}
+        </Text>
+        <TextInput
+          style={[styles.input, styles.catalogSearch]}
+          accessibilityLabel={t("searchCourses")}
+          placeholder={t("searchCourses")}
+          placeholderTextColor={color.muted}
+          value={query}
+          onChangeText={setQuery}
+          clearButtonMode="while-editing"
+        />
+        <View style={styles.filters}>
+          {(Object.keys(languages) as CourseLanguage[]).map((key) => (
+            <Pressable
+              key={key}
+              accessibilityRole="button"
+              accessibilityState={{ selected: language === key }}
+              onPress={() => changeLanguage(key)}
+              style={[styles.filter, key === language && styles.selectedFilter]}
+            >
+              <Text style={[styles.filterText, key === language && styles.selectedFilterText]}>
+                {languages[key]}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       </View>
+      {resumeCard}
       {error !== undefined && <ErrorNotice error={error} retry={refresh} />}
       {!loading && value && matches.length === 0 && (
         <Text style={styles.muted}>{t("noMatchingCourses")}</Text>
@@ -226,18 +230,20 @@ function Catalog({
         <View key={course.id} style={styles.card}>
           <CatalogCover key={course.banner_url ?? ""} course={course} />
           <View style={styles.cardBody}>
-            <Text style={styles.category}>{course.category}</Text>
+            <View style={styles.catalogCardMeta}>
+              <Text style={styles.category}>{course.category}</Text>
+              <Text style={styles.catalogPrice}>
+                {course.price_uzs > 0
+                  ? new Intl.NumberFormat(language, { style: "currency", currency: "UZS" }).format(
+                      course.price_uzs,
+                    )
+                  : t("free")}
+              </Text>
+            </View>
             <Text accessibilityRole="header" style={styles.cardTitle}>
               {course.title}
             </Text>
-            {course.description && <Text style={styles.body}>{course.description}</Text>}
-            <Text style={styles.category}>
-              {course.price_uzs > 0
-                ? new Intl.NumberFormat(language, { style: "currency", currency: "UZS" }).format(
-                    course.price_uzs,
-                  )
-                : t("free")}
-            </Text>
+            {course.description && <Text style={styles.muted}>{course.description}</Text>}
             <Button
               title={t("openCourse")}
               onPress={() =>
