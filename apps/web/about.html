@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/app/style.css?v=scholward-9" />
+    <link rel="stylesheet" href="/app/style.css?v=scholward-10" />
   </head>
   <body class="about-page">
     <header class="about-nav">
@@ -44,12 +44,17 @@
       </div>
       <section class="studyflow-about" id="about" aria-labelledby="aboutTitle">
         <div class="about-intro">
-          <h1 id="aboutTitle" data-about-copy="aboutTitle">Dastur haqida</h1>
-          <p data-about-copy="aboutIntro">
-            SCHOLWARD Academy — veb-sayt va mobil ilova orqali o‘z maromingizda o‘rganish
-            platformasi. Ikkalasida ham bitta hisob bilan kurslaringizni ochib, o‘qishni davom
-            ettirishingiz mumkin.
-          </p>
+          <div class="about-intro-copy">
+            <h1 id="aboutTitle" data-about-copy="aboutTitle">Dastur haqida</h1>
+            <p data-about-copy="aboutIntro">
+              SCHOLWARD Academy — veb-sayt va mobil ilova orqali o‘z maromingizda o‘rganish
+              platformasi. Ikkalasida ham bitta hisob bilan kurslaringizni ochib, o‘qishni davom
+              ettirishingiz mumkin.
+            </p>
+          </div>
+          <div class="about-emblem" aria-hidden="true">
+            <img src="/app/scholward-crest.svg" width="120" height="120" alt="" />
+          </div>
         </div>
         <section class="about-feature about-name" aria-labelledby="aboutNameTitle">
           <h2 id="aboutNameTitle" data-about-copy="aboutNameTitle">Nom nimani anglatadi?</h2>
@@ -60,6 +65,7 @@
         </section>
         <div class="about-features">
           <div class="about-feature">
+            <span class="about-feature-icon" aria-hidden="true">▶</span>
             <h2 data-about-copy="aboutCoursesTitle">Kurslar va video darslar</h2>
             <p data-about-copy="aboutCoursesBody">
               O‘zbek, ingliz, rus yoki koreys tilidagi kursni tanlang. Video darslarni ilova ichida
@@ -67,6 +73,7 @@
             </p>
           </div>
           <div class="about-feature">
+            <span class="about-feature-icon" aria-hidden="true">✓</span>
             <h2 data-about-copy="aboutAssessmentTitle">Quiz va yakuniy imtihon</h2>
             <p data-about-copy="aboutAssessmentBody">
               Dars quizlari bilan bilimingizni tekshiring. Barcha darslar tugagach, yakuniy imtihon
@@ -74,6 +81,7 @@
             </p>
           </div>
           <div class="about-feature">
+            <span class="about-feature-icon" aria-hidden="true">◇</span>
             <h2 data-about-copy="aboutProgressTitle">Progress va sertifikat</h2>
             <p data-about-copy="aboutProgressBody">
               Bajarilgan darslar va natijalaringizni kuzating. Yakuniy imtihondan o‘tgach,

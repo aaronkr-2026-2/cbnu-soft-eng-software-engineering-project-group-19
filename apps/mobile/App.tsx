@@ -115,10 +115,9 @@ function FounderProfile() {
 }
 
 const aboutFeatures = [
-  ["aboutNameTitle", "aboutNameBody"],
-  ["aboutCoursesTitle", "aboutCoursesBody"],
-  ["aboutAssessmentTitle", "aboutAssessmentBody"],
-  ["aboutProgressTitle", "aboutProgressBody"],
+  ["aboutCoursesTitle", "aboutCoursesBody", "▶"],
+  ["aboutAssessmentTitle", "aboutAssessmentBody", "✓"],
+  ["aboutProgressTitle", "aboutProgressBody", "◇"],
 ] as const;
 
 function AboutScreen() {
@@ -126,13 +125,27 @@ function AboutScreen() {
   return (
     <Content>
       <View style={styles.aboutHero}>
+        <Image
+          source={require("./assets/scholward-mark.png")}
+          style={styles.aboutEmblem}
+          accessible={false}
+        />
         <Text accessibilityRole="header" style={styles.aboutTitle}>
           {t("aboutTitle")}
         </Text>
         <Text style={styles.aboutLead}>{t("aboutIntro")}</Text>
       </View>
-      {aboutFeatures.map(([title, body]) => (
+      <View style={styles.aboutName}>
+        <Text accessibilityRole="header" style={styles.listTitle}>
+          {t("aboutNameTitle")}
+        </Text>
+        <Text style={styles.muted}>{t("aboutNameBody")}</Text>
+      </View>
+      {aboutFeatures.map(([title, body, symbol]) => (
         <View key={title} style={styles.aboutFeature}>
+          <Text accessible={false} accessibilityElementsHidden style={styles.aboutFeatureIcon}>
+            {symbol}
+          </Text>
           <Text accessibilityRole="header" style={styles.listTitle}>
             {t(title)}
           </Text>

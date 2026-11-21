@@ -1,6 +1,9 @@
+SCHOLWARD_PUBLIC_URL = "https://scholward-academy.vercel.app"
+
+
 SCHOLWARD_SITE_ORIGINS = frozenset(
     {
-        "https://scholward-academy.vercel.app",
+        SCHOLWARD_PUBLIC_URL,
         "https://studyflow-web-1hab.vercel.app",
     }
 )

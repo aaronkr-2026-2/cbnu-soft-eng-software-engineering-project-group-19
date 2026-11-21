@@ -1,8 +1,10 @@
 import hashlib
 import json
 import re
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
-from uuid import uuid4
+from io import BytesIO
+from uuid import UUID, uuid4
 from xml.etree import ElementTree
 from urllib.parse import parse_qs, urlparse
 
@@ -11,6 +13,7 @@ import pytest
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from fastapi import HTTPException
+from pypdf import PdfReader
 from starlette.requests import Request
 from webauthn.helpers import bytes_to_base64url
 from webauthn.helpers.structs import AuthenticatorTransport
@@ -24,7 +27,7 @@ from app.routers import quizzes as quizzes_router
 from app.core import lesson_storage
 from app.core.site import frontend_url_for_origin
 from app.database import get_db
-from app.models import LessonResourceChunk, LessonResourceFile
+from app.models import CourseTranslation, LessonResourceChunk, LessonResourceFile
 from tests.helpers import login, register
 
 
@@ -800,7 +803,7 @@ def test_final_exam_requires_completed_lessons_and_certificate_is_single(client)
     author_headers = login(client, "course-author@example.com", "author")
     learner_headers = login(client, "course-learner@example.com")
 
-    course = create_course(client, author_headers, "Final Exam Course")
+    course = create_course(client, author_headers, "HTML va CSS asoslari")
     course_id = course["id"]
     lesson_response = client.post(
         f"/courses/{course_id}/lessons",
@@ -879,6 +882,51 @@ def test_final_exam_requires_completed_lessons_and_certificate_is_single(client)
     assert first_certificate.status_code == 200, first_certificate.text
     assert second_certificate.status_code == 200, second_certificate.text
     assert first_certificate.json()["id"] == second_certificate.json()["id"]
+
+    code = first_certificate.json()["certificate_code"]
+    verification_url = f"/certificates/verify/{code}"
+    original = client.get(verification_url).json()
+    assert original["course_title"] == "HTML va CSS asoslari"
+    assert client.get(verification_url, params={"lang": "en"}).json()["course_title"] == (
+        "HTML and CSS Fundamentals"
+    )
+    with contextmanager(client.app.dependency_overrides[get_db])() as db:
+        db.add(
+            CourseTranslation(
+                course_id=UUID(course_id),
+                language="ru",
+                title="Введение в HTML и CSS",
+                category="Веб",
+            )
+        )
+        db.commit()
+    translated = client.get(f"{certificate_url}/me", headers=learner_headers, params={"lang": "ru"})
+    assert translated.status_code == 200
+    assert translated.json()["course_title"] == "Введение в HTML и CSS"
+    assert translated.json()["certificate_code"] == code
+    assert translated.json()["recipient_name"] == original["recipient_name"]
+
+    download = client.get(f"/certificates/verify/{code}/pdf", params={"lang": "ko"})
+    assert download.status_code == 200
+    assert download.headers["content-type"] == "application/pdf"
+    assert download.headers["content-disposition"].startswith("attachment;")
+    pdf = PdfReader(BytesIO(download.content))
+    assert len(pdf.pages) == 1
+    page = pdf.pages[0]
+    assert page.mediabox.width > page.mediabox.height
+    assert "과정 수료증" in page.extract_text()
+    assert "HTML과 CSS 기초" in page.extract_text()
+    assert "HTML va CSS asoslari" not in page.extract_text()
+    assert code in page.extract_text()
+    links = [annotation.get_object()["/A"]["/URI"] for annotation in page["/Annots"]]
+    assert set(links) == {
+        f"https://scholward-academy.vercel.app/app/verify.html?code={code}&lang=ko"
+    }
+    inline = client.get(f"/certificates/verify/{code}/pdf", params={"inline": "true"})
+    assert inline.status_code == 200
+    assert inline.headers["content-type"] == "application/pdf"
+    assert inline.headers["content-disposition"].startswith("inline;")
+    assert client.get("/certificates/verify/unknown/pdf").status_code == 404
 
 
 def test_video_lesson_cannot_be_completed_by_seeking_past_end(client):

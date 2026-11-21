@@ -16,6 +16,13 @@ const verifyCopy = {
     grade_bronze: "Boshlang‘ich",
     grade_silver: "O‘rta",
     grade_gold: "Yuqori",
+    certificateDocumentTitle: "Kursni tamomlaganlik sertifikati",
+    awardedTo: "Ushbu sertifikat taqdim etiladi",
+    certificateTitle: "Kursni muvaffaqiyatli tamomladi",
+    closeCertificate: "Yopish",
+    downloadCertificatePdf: "PDF’ni yuklab olish",
+    openCertificatePdf: "PDF’ni ochish",
+    downloadCertificateAgain: "Sertifikatni qayta yuklab olish",
     invalid: "Bu kod bo‘yicha sertifikat topilmadi.",
     error: "Tekshiruv vaqtida xatolik yuz berdi. Qayta urinib ko‘ring.",
   },
@@ -36,6 +43,13 @@ const verifyCopy = {
     grade_bronze: "Foundation",
     grade_silver: "Intermediate",
     grade_gold: "Advanced",
+    certificateDocumentTitle: "Certificate of Completion",
+    awardedTo: "This certificate is presented to",
+    certificateTitle: "has successfully completed the course",
+    closeCertificate: "Close",
+    downloadCertificatePdf: "Download PDF",
+    openCertificatePdf: "Open PDF",
+    downloadCertificateAgain: "Download certificate again",
     invalid: "No certificate was found for this code.",
     error: "Verification failed. Please try again.",
   },
@@ -56,6 +70,13 @@ const verifyCopy = {
     grade_bronze: "Базовый",
     grade_silver: "Средний",
     grade_gold: "Продвинутый",
+    certificateDocumentTitle: "Сертификат об окончании курса",
+    awardedTo: "Настоящий сертификат выдан",
+    certificateTitle: "успешно завершил(а) курс",
+    closeCertificate: "Закрыть",
+    downloadCertificatePdf: "Скачать PDF",
+    openCertificatePdf: "Открыть PDF",
+    downloadCertificateAgain: "Скачать сертификат повторно",
     invalid: "Сертификат с таким кодом не найден.",
     error: "Не удалось выполнить проверку. Попробуйте ещё раз.",
   },
@@ -76,6 +97,13 @@ const verifyCopy = {
     grade_bronze: "기초",
     grade_silver: "중급",
     grade_gold: "고급",
+    certificateDocumentTitle: "과정 수료증",
+    awardedTo: "이 수료증을 드립니다",
+    certificateTitle: "강의를 성공적으로 수료했습니다",
+    closeCertificate: "닫기",
+    downloadCertificatePdf: "PDF 다운로드",
+    openCertificatePdf: "PDF 열기",
+    downloadCertificateAgain: "수료증 다시 다운로드",
     invalid: "해당 코드의 수료증을 찾을 수 없습니다.",
     error: "확인 중 오류가 발생했어요. 다시 시도해 주세요.",
   },
@@ -83,12 +111,15 @@ const verifyCopy = {
 const languageSelect = document.querySelector("#language");
 const codeInput = document.querySelector("#certificateCode");
 const resultBox = document.querySelector("#verificationResult");
-let language = localStorage.getItem("studyflow-language") || "uz";
+const query = new URLSearchParams(location.search);
+let language = query.get("lang") || localStorage.getItem("studyflow-language") || "uz";
+let requestedCode = "";
+let verificationRequest = 0;
 let verificationStatus = null;
 let verifiedCertificate = null;
 const labels = () => verifyCopy[language] || verifyCopy.uz;
 function applyLanguage(code) {
-  language = verifyCopy[code] ? code : "uz";
+  language = Object.hasOwn(verifyCopy, code) ? code : "uz";
   localStorage.setItem("studyflow-language", language);
   document.documentElement.lang = language;
   languageSelect.value = language;
@@ -96,10 +127,21 @@ function applyLanguage(code) {
     const key = element.dataset.i18n;
     if (labels()[key]) element.textContent = labels()[key];
   });
-  if (verificationStatus === "valid" && verifiedCertificate) showResult(verifiedCertificate);
+  if (requestedCode && verificationStatus !== "invalid") verify(requestedCode);
   else if (verificationStatus === "invalid") resultBox.textContent = labels().invalid;
-  else if (verificationStatus === "error") resultBox.textContent = labels().error;
 }
+function openVerifiedCertificate() {
+  if (!verifiedCertificate) return;
+  const copy = labels();
+  const documentCopy = {
+    ...copy,
+    issuedOn: copy.validDate,
+    certificateCode: copy.certificateCodeLabel,
+    navVerifyCertificate: copy.verifyTitle,
+  };
+  window.ScholwardCertificate.show(verifiedCertificate, language, (key) => documentCopy[key] ?? "");
+}
+
 function showResult(certificate) {
   verificationStatus = "valid";
   verifiedCertificate = certificate;
@@ -108,9 +150,16 @@ function showResult(certificate) {
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: "UTC",
   }).format(new Date(certificate.issued_at));
   resultBox.className = "verification-result is-valid";
-  resultBox.innerHTML = `<h2>✓ ${copy.validTitle}</h2><dl><dt>${copy.validRecipient}</dt><dd>${escapeHtml(certificate.recipient_name)}</dd><dt>${copy.validCourse}</dt><dd>${escapeHtml(certificate.course_title)}</dd><dt>${copy.achievementLevel}</dt><dd>${escapeHtml(copy[`grade_${certificate.achievement_level}`] || certificate.achievement_level)}</dd><dt>${copy.certificateScore}</dt><dd>${escapeHtml(certificate.score_percent)}%</dd><dt>${copy.certificateCodeLabel}</dt><dd>${escapeHtml(certificate.certificate_code)}</dd><dt>${copy.validDate}</dt><dd>${escapeHtml(date)}</dd></dl>`;
+  const pdfUrl = window.ScholwardCertificate.downloadUrl(certificate.certificate_code, language);
+  const viewUrl = window.ScholwardCertificate.downloadUrl(
+    certificate.certificate_code,
+    language,
+    true,
+  );
+  resultBox.innerHTML = `<h2>✓ ${copy.validTitle}</h2><dl><dt>${copy.validRecipient}</dt><dd>${escapeHtml(certificate.recipient_name)}</dd><dt>${copy.validCourse}</dt><dd>${escapeHtml(certificate.course_title)}</dd><dt>${copy.achievementLevel}</dt><dd>${escapeHtml(copy[`grade_${certificate.achievement_level}`] || certificate.achievement_level)}</dd><dt>${copy.certificateScore}</dt><dd>${escapeHtml(certificate.score_percent)}%</dd><dt>${copy.certificateCodeLabel}</dt><dd>${escapeHtml(certificate.certificate_code)}</dd><dt>${copy.validDate}</dt><dd>${escapeHtml(date)}</dd></dl><div class="verification-actions"><a class="button button-dark verification-download" download href="${escapeHtml(pdfUrl)}">${escapeHtml(copy.downloadCertificateAgain)}</a><a class="button button-outline" href="${escapeHtml(viewUrl)}">${escapeHtml(copy.openCertificatePdf)}</a></div>`;
 }
 function escapeHtml(value) {
   return String(value).replace(
@@ -118,8 +167,10 @@ function escapeHtml(value) {
     (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char],
   );
 }
-async function verify(code) {
+async function verify(code, openCertificate = false) {
   const normalized = code.trim().toUpperCase();
+  const request = ++verificationRequest;
+  requestedCode = normalized;
   codeInput.value = normalized;
   resultBox.className = "verification-result";
   resultBox.textContent = "";
@@ -127,7 +178,10 @@ async function verify(code) {
   verifiedCertificate = null;
   if (!normalized) return;
   try {
-    const response = await fetch(`/certificates/verify/${encodeURIComponent(normalized)}`);
+    const response = await fetch(
+      `/certificates/verify/${encodeURIComponent(normalized)}?lang=${language}`,
+    );
+    if (request !== verificationRequest) return;
     if (response.status === 404) {
       resultBox.className = "verification-result is-invalid";
       verificationStatus = "invalid";
@@ -135,8 +189,12 @@ async function verify(code) {
       return;
     }
     if (!response.ok) throw new Error("Verification request failed");
-    showResult(await response.json());
+    const certificate = await response.json();
+    if (request !== verificationRequest) return;
+    showResult(certificate);
+    if (openCertificate) openVerifiedCertificate();
   } catch {
+    if (request !== verificationRequest) return;
     resultBox.className = "verification-result is-invalid";
     verificationStatus = "error";
     resultBox.textContent = labels().error;
@@ -148,5 +206,5 @@ document.querySelector("#verifyForm").addEventListener("submit", (event) => {
   verify(codeInput.value);
 });
 applyLanguage(language);
-const initialCode = new URLSearchParams(location.search).get("code");
-if (initialCode) verify(initialCode);
+const initialCode = query.get("code");
+if (initialCode) verify(initialCode, query.get("view") === "certificate");

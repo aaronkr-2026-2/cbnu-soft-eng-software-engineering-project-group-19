@@ -227,14 +227,15 @@ A quiz has one or more questions. Each question has 2–8 answer choices, a zero
 
 ### Certificate, recommendations, and study-plan routes
 
-| Method | Route                                     | Purpose                                                        |
-| ------ | ----------------------------------------- | -------------------------------------------------------------- |
-| `POST` | `/courses/{course_id}/certificate`        | Issue a certificate after course and exam requirements are met |
-| `GET`  | `/courses/{course_id}/certificate/me`     | Read the learner's existing certificate                        |
-| `GET`  | `/certificates/verify/{certificate_code}` | Return the public verification result                          |
-| `GET`  | `/recommendations/me`                     | Read personalized course recommendations                       |
-| `POST` | `/learning-plans/generate`                | Generate a plan for an enrolled course                         |
-| `GET`  | `/learning-plans/me`                      | List the learner's plans                                       |
+| Method | Route                                         | Purpose                                                        |
+| ------ | --------------------------------------------- | -------------------------------------------------------------- |
+| `POST` | `/courses/{course_id}/certificate`            | Issue a certificate after course and exam requirements are met |
+| `GET`  | `/courses/{course_id}/certificate/me`         | Read the learner's existing certificate                        |
+| `GET`  | `/certificates/verify/{certificate_code}`     | Return the public verification result                          |
+| `GET`  | `/certificates/verify/{certificate_code}/pdf` | Download the localized PDF                                     |
+| `GET`  | `/recommendations/me`                         | Read personalized course recommendations                       |
+| `POST` | `/learning-plans/generate`                    | Generate a plan for an enrolled course                         |
+| `GET`  | `/learning-plans/me`                          | List the learner's plans                                       |
 
 ## Example API calls
 
@@ -318,7 +319,7 @@ The attempt response reports the score, earned points, and whether the quiz pass
 4. Request and verify a fresh passkey assertion with purpose `final_exam`.
 5. Submit answers to `/courses/{course_id}/final-exam/attempts` with the returned proof in the `X-Passkey-Proof` header.
 6. If the score meets the course's configured passing score, request a fresh passkey proof with purpose `certificate` and send it to `POST /courses/{course_id}/certificate`.
-7. Print or save the certificate; share the verification code or public link with an organization.
+7. Open **My Certificates** to view or download the PDF. Share its verification link with an organization.
 
 Passkey proof values are short-lived and single-use. Do not log them or store them in the repository.
 

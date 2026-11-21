@@ -480,12 +480,15 @@ const dashboardCopy = {
     examFailed: "O‘tish bali yetmadi. Qayta urinib ko‘ring.",
     examError: "Imtihonni yuklab bo‘lmadi.",
     certificateButton: "Sertifikatni olish",
+    certificateDocumentTitle: "Kursni tamomlaganlik sertifikati",
     viewCertificate: "Sertifikatni ko‘rish",
+    downloadCertificateAgain: "Sertifikatni qayta yuklab olish",
     certificateTitle: "Kursni muvaffaqiyatli tamomladi",
     awardedTo: "Ushbu sertifikat taqdim etiladi",
     issuedOn: "Berilgan sana",
     certificateCode: "Tasdiqlash kodi",
-    printCertificate: "Chop etish / PDF saqlash",
+    downloadCertificatePdf: "PDF’ni yuklab olish",
+    openCertificatePdf: "PDF’ni ochish",
     closeCertificate: "Yopish",
     certificateError: "Sertifikatni olishda xatolik yuz berdi.",
     logout: "Chiqish",
@@ -650,12 +653,15 @@ const dashboardCopy = {
     examFailed: "You did not reach the pass mark. Try again.",
     examError: "Could not load the final exam.",
     certificateButton: "Get certificate",
+    certificateDocumentTitle: "Certificate of Completion",
     viewCertificate: "View certificate",
+    downloadCertificateAgain: "Download certificate again",
     certificateTitle: "has successfully completed the course",
     awardedTo: "This certificate is proudly presented to",
     issuedOn: "Issue date",
     certificateCode: "Verification code",
-    printCertificate: "Print / Save as PDF",
+    downloadCertificatePdf: "Download PDF",
+    openCertificatePdf: "Open PDF",
     closeCertificate: "Close",
     certificateError: "Could not issue the certificate.",
     logout: "Log out",
@@ -819,12 +825,15 @@ const dashboardCopy = {
     examFailed: "Проходной балл не набран. Попробуйте ещё раз.",
     examError: "Не удалось загрузить экзамен.",
     certificateButton: "Получить сертификат",
+    certificateDocumentTitle: "Сертификат об окончании курса",
     viewCertificate: "Посмотреть сертификат",
+    downloadCertificateAgain: "Скачать сертификат повторно",
     certificateTitle: "успешно завершил(а) курс",
     awardedTo: "Настоящий сертификат выдан",
     issuedOn: "Дата выдачи",
     certificateCode: "Код подтверждения",
-    printCertificate: "Печать / Сохранить в PDF",
+    downloadCertificatePdf: "Скачать PDF",
+    openCertificatePdf: "Открыть PDF",
     closeCertificate: "Закрыть",
     certificateError: "Не удалось выдать сертификат.",
     logout: "Выйти",
@@ -986,12 +995,15 @@ const dashboardCopy = {
     examFailed: "통과 점수에 도달하지 못했어요. 다시 시도해 주세요.",
     examError: "최종 시험을 불러오지 못했어요.",
     certificateButton: "수료증 받기",
+    certificateDocumentTitle: "과정 수료증",
     viewCertificate: "수료증 보기",
+    downloadCertificateAgain: "수료증 다시 다운로드",
     certificateTitle: "강의를 성공적으로 수료했습니다",
     awardedTo: "이 수료증을 드립니다",
     issuedOn: "발급일",
     certificateCode: "인증 코드",
-    printCertificate: "인쇄 / PDF 저장",
+    downloadCertificatePdf: "PDF 다운로드",
+    openCertificatePdf: "PDF 열기",
     closeCertificate: "닫기",
     certificateError: "수료증을 발급하지 못했어요.",
     logout: "로그아웃",
@@ -2387,20 +2399,7 @@ async function openFinalExam(courseId) {
 }
 
 function showCertificate(certificate) {
-  const issuedDate = new Intl.DateTimeFormat(language, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(new Date(certificate.issued_at));
-  const verifyUrl = `/app/verify.html?code=${encodeURIComponent(certificate.certificate_code)}`;
-  $("#certificateBody").innerHTML =
-    `<div class="certificate-corner certificate-corner-tl" aria-hidden="true"></div><div class="certificate-corner certificate-corner-tr" aria-hidden="true"></div><div class="certificate-corner certificate-corner-bl" aria-hidden="true"></div><div class="certificate-corner certificate-corner-br" aria-hidden="true"></div><div class="certificate-logo"><img class="certificate-logo-mark" src="/app/scholward-crest.svg" width="46" height="46" alt=""><span class="certificate-wordmark">SCHOLWARD <span>Academy</span></span></div><div class="certificate-divider"><span></span><b>✳</b><span></span></div><div class="certificate-eyebrow">${escapeHtml(t("certificateButton"))}</div><h2>${escapeHtml(t("awardedTo"))}</h2><h3>${escapeHtml(certificate.recipient_name)}</h3><p class="certificate-course">${escapeHtml(certificate.course_title)}</p><p class="certificate-statement">${escapeHtml(t("certificateTitle"))}</p><div class="certificate-seal" aria-hidden="true"><span>✳</span></div><div class="certificate-footer"><span>${escapeHtml(t("issuedOn"))}<b>${escapeHtml(issuedDate)}</b></span><span>${escapeHtml(t("certificateCode"))}<b>${escapeHtml(certificate.certificate_code)}</b></span></div><a class="certificate-verify-link" href="${verifyUrl}" target="_blank" rel="noopener">${escapeHtml(t("navVerifyCertificate"))} ↗</a>`;
-  const gradeLine = document.createElement("p");
-  const grade = certificate.achievement_level || "bronze";
-  gradeLine.className = "certificate-grade";
-  gradeLine.textContent = `${t("achievementLevel")}: ${t(`grade_${grade}`)} · ${t("certificateScore")}: ${certificate.score_percent ?? "—"}%`;
-  $("#certificateBody").querySelector(".certificate-statement")?.after(gradeLine);
-  $("#certificateDialog").showModal();
+  window.ScholwardCertificate.show(certificate, language, t);
 }
 
 function renderQuizEditor(course, lesson, quiz) {
@@ -3457,7 +3456,7 @@ async function loadDashboard() {
       enrollments.map(async (enrollment) => {
         const [progress, certificate] = await Promise.all([
           api(`/courses/${enrollment.course_id}/progress/me`).catch(() => null),
-          api(`/courses/${enrollment.course_id}/certificate/me`).catch(() => null),
+          api(`/courses/${enrollment.course_id}/certificate/me?lang=${language}`).catch(() => null),
         ]);
         return { enrollment, progress, certificate };
       }),
@@ -3613,7 +3612,11 @@ function renderLearningOverview(entries) {
             month: "short",
             day: "numeric",
           }).format(new Date(certificate.issued_at));
-          return `<article class="learner-list-card certificate-list-card"><div><b>${escapeHtml(certificate.course_title)}</b><span>${escapeHtml(t("certificateCode"))}: ${escapeHtml(certificate.certificate_code)}</span><span>${escapeHtml(t("issuedOn"))}: ${escapeHtml(issuedDate)}</span></div><a class="button button-outline button-small" href="/app/verify.html?code=${encodeURIComponent(certificate.certificate_code)}">${escapeHtml(t("navVerifyCertificate"))}</a></article>`;
+          const pdfUrl = window.ScholwardCertificate.downloadUrl(
+            certificate.certificate_code,
+            language,
+          );
+          return `<article class="learner-list-card certificate-list-card"><div><b>${escapeHtml(certificate.course_title)}</b><span>${escapeHtml(t("certificateCode"))}: ${escapeHtml(certificate.certificate_code)}</span><span>${escapeHtml(t("issuedOn"))}: ${escapeHtml(issuedDate)}</span></div><div class="certificate-list-actions"><a class="button button-dark button-small" download href="${escapeHtml(pdfUrl)}">${escapeHtml(t("downloadCertificateAgain"))}</a><a class="button button-outline button-small" href="/app/verify.html?code=${encodeURIComponent(certificate.certificate_code)}">${escapeHtml(t("navVerifyCertificate"))}</a></div></article>`;
         })
         .join("")
     : `<p class="panel-empty">${escapeHtml(t("emptyCertificates"))}</p>`;
@@ -3728,13 +3731,18 @@ function renderCourseCompletion(container, courseId, exam, certificate, review) 
       try {
         let certificate;
         if (button.dataset.issued === "true")
-          certificate = await api(`/courses/${button.dataset.certificate}/certificate/me`);
+          certificate = await api(
+            `/courses/${button.dataset.certificate}/certificate/me?lang=${language}`,
+          );
         else {
           const proof = await authenticateWithPasskey("certificate");
-          certificate = await api(`/courses/${button.dataset.certificate}/certificate`, {
-            method: "POST",
-            headers: { "X-Passkey-Proof": proof },
-          });
+          certificate = await api(
+            `/courses/${button.dataset.certificate}/certificate?lang=${language}`,
+            {
+              method: "POST",
+              headers: { "X-Passkey-Proof": proof },
+            },
+          );
         }
         showCertificate(certificate);
         button.dataset.issued = "true";
@@ -3987,8 +3995,6 @@ $("#backToMyCourses").addEventListener("click", () => {
 });
 $("#finalExamClose").addEventListener("click", () => $("#finalExamDialog").close());
 $("#courseDetailsClose").addEventListener("click", () => $("#courseDetailsDialog").close());
-$("#certificateClose").addEventListener("click", () => $("#certificateDialog").close());
-$("#certificatePrint").addEventListener("click", () => window.print());
 $("#loginButton").addEventListener("click", () =>
   accessToken
     ? (user?.account_type === "author" ? $("#myCourses") : $("#myLearning")).scrollIntoView({
