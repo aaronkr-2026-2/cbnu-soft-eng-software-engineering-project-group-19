@@ -11,6 +11,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import require_author
+from app.core.lesson_storage import delete_resources, legacy_resource_path
 from app.core.localization import (
     get_course_translation,
     get_lesson_translation,
@@ -44,7 +45,6 @@ from app.models import (
 )
 
 router = APIRouter(prefix="/courses", tags=["Courses"])
-RESOURCE_DIR = Path(__file__).resolve().parents[2] / "storage" / "course-materials"
 BANNER_DIR = Path(__file__).resolve().parents[2] / "storage" / "lesson-banners"
 COURSE_BANNER_DIR = Path(__file__).resolve().parents[2] / "storage" / "course-banners"
 MAX_BANNER_BYTES = 8 * 1024 * 1024
@@ -607,7 +607,10 @@ def delete_course(
     db: Session = Depends(get_db),
 ) -> None:
     course = (
-        db.query(Course).filter(Course.id == course_id, Course.owner_id == current_user.id).first()
+        db.query(Course)
+        .filter(Course.id == course_id, Course.owner_id == current_user.id)
+        .with_for_update()
+        .first()
     )
     if course is None:
         raise HTTPException(
@@ -634,9 +637,10 @@ def delete_course(
         .filter(Lesson.course_id == course.id, Lesson.banner_key.is_not(None))
         .all()
     ]
+    delete_resources(db, resource_keys)
     db.delete(course)
     db.commit()
     for resource_key in resource_keys:
-        (RESOURCE_DIR / Path(resource_key).name).unlink(missing_ok=True)
+        legacy_resource_path(resource_key).unlink(missing_ok=True)
     for banner_key in banner_keys:
         (BANNER_DIR / Path(banner_key).name).unlink(missing_ok=True)

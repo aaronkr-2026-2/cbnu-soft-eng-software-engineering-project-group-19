@@ -1269,6 +1269,8 @@ const materialCopy = {
     audio: "Audio dars",
     openPdf: "PDF faylni ochish",
     removeResource: "Faylni olib tashlash",
+    confirmRemoveResource: "Dars materialini olib tashlaysizmi?",
+    invalidVideoUrl: "YouTube videosi yoki pleylistining to‘g‘ri havolasini kiriting.",
     uploadFailed: "Fayl yuklanmadi. Turi va hajmini tekshiring.",
     extraTitle: "Qo‘shimcha materiallar",
     extraName: "Material nomi",
@@ -1288,6 +1290,8 @@ const materialCopy = {
     audio: "Audio lesson",
     openPdf: "Open PDF",
     removeResource: "Remove file",
+    confirmRemoveResource: "Remove the lesson material?",
+    invalidVideoUrl: "Enter a valid YouTube video or playlist link.",
     uploadFailed: "Upload failed. Check the file type and size.",
     extraTitle: "Supplementary materials",
     extraName: "Material title",
@@ -1307,6 +1311,8 @@ const materialCopy = {
     audio: "Аудио урок",
     openPdf: "Открыть PDF",
     removeResource: "Удалить файл",
+    confirmRemoveResource: "Удалить материал урока?",
+    invalidVideoUrl: "Введите корректную ссылку на видео или плейлист YouTube.",
     uploadFailed: "Не удалось загрузить файл. Проверьте формат и размер.",
     extraTitle: "Дополнительные материалы",
     extraName: "Название материала",
@@ -1326,6 +1332,8 @@ const materialCopy = {
     audio: "오디오 수업",
     openPdf: "PDF 열기",
     removeResource: "파일 삭제",
+    confirmRemoveResource: "수업 자료를 삭제할까요?",
+    invalidVideoUrl: "올바른 YouTube 동영상 또는 재생목록 링크를 입력하세요.",
     uploadFailed: "업로드하지 못했어요. 파일 형식과 크기를 확인해 주세요.",
     extraTitle: "추가 학습 자료",
     extraName: "자료 제목",
@@ -1960,7 +1968,16 @@ async function api(path, options = {}) {
   });
   const body = response.status === 204 ? null : await response.json().catch(() => null);
   if (!response.ok) {
-    const error = new Error(body?.detail || t("genericError"));
+    const detail = body?.detail;
+    const invalidVideoLink =
+      Array.isArray(detail) && detail.some(({ loc }) => loc?.includes("external_video_url"));
+    const error = new Error(
+      invalidVideoLink
+        ? materialText("invalidVideoUrl")
+        : typeof detail === "string"
+          ? detail
+          : t("genericError"),
+    );
     error.status = response.status;
     throw error;
   }
@@ -2485,12 +2502,13 @@ function addResourceControls(container, cards) {
     hint.textContent = materialText("hint");
     fieldset.append(typeLabel, fileLabel, videoLinkLabel, hint);
     videoLinkLabel.hidden = select.value !== "video";
-    if (isEdit && lesson?.resource_key) {
+    if (isEdit && (lesson?.resource_url || lesson?.external_video_url)) {
       const removeButton = document.createElement("button");
       removeButton.type = "button";
       removeButton.className = "button button-outline button-small resource-remove";
       removeButton.textContent = materialText("removeResource");
       removeButton.addEventListener("click", async () => {
+        if (!confirm(materialText("confirmRemoveResource"))) return;
         removeButton.disabled = true;
         try {
           await api(
@@ -2932,25 +2950,39 @@ async function loadInstructorCourses() {
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         const message = form.querySelector(".studio-form-message");
-        const file = form.querySelector('[name="resource_file"]').files[0];
         const selectedType = form.querySelector('[name="resource_type"]').value;
+        const file =
+          selectedType !== "text" && form.querySelector('[name="resource_file"]').files[0];
+        const videoUrl =
+          selectedType === "video"
+            ? form.querySelector('[name="external_video_url"]').value.trim()
+            : "";
+        const existing = cards
+          .find(({ course }) => course.id === form.dataset.lessonEdit)
+          ?.lessonData.find(({ lesson }) => lesson.id === form.dataset.lessonId)?.lesson;
+        if (
+          selectedType !== "text" &&
+          !file &&
+          !videoUrl &&
+          !(existing?.resource_type === selectedType && existing.resource_url)
+        ) {
+          message.textContent = materialText("uploadFailed");
+          return;
+        }
+        if (
+          selectedType === "text" &&
+          (existing?.resource_url || existing?.external_video_url) &&
+          !confirm(materialText("confirmRemoveResource"))
+        )
+          return;
         const values = {
           title: form.elements.title.value,
           content: form.elements.content.value,
           position: Number(form.elements.position.value),
           module_id: form.elements.module_id.value || null,
-          resource_type: selectedType,
-          external_video_url:
-            selectedType === "video"
-              ? form.querySelector('[name="external_video_url"]').value || null
-              : null,
+          ...(!file && { resource_type: selectedType, external_video_url: videoUrl || null }),
         };
         try {
-          if (values.external_video_url && !file)
-            await api(
-              `/courses/${form.dataset.lessonEdit}/lessons/${form.dataset.lessonId}/resource`,
-              { method: "DELETE" },
-            );
           await api(`/courses/${form.dataset.lessonEdit}/lessons/${form.dataset.lessonId}`, {
             method: "PUT",
             body: JSON.stringify(values),

@@ -648,6 +648,24 @@ function CourseScreen({
             </View>
           )}
           <Text style={styles.body}>{lesson.content}</Text>
+          {!!lesson.materials?.length && (
+            <View style={styles.notice}>
+              <Text accessibilityRole="header" style={styles.listTitle}>
+                {t("supplementalMaterials")}
+              </Text>
+              {lesson.materials.map((material) => (
+                <Button
+                  key={material.id}
+                  title={material.title}
+                  onPress={() => {
+                    const url = resourceUrl(material.resource_url);
+                    if (url) void openWeb(url);
+                  }}
+                  secondary
+                />
+              ))}
+            </View>
+          )}
           <Button
             title={t("takeQuiz")}
             onPress={() => setQuizOpen(true)}

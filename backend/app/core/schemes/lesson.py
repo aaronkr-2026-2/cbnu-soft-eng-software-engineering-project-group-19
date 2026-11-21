@@ -1,9 +1,43 @@
+import re
 import uuid
 from typing import Literal
 from pydantic import field_validator, model_validator
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from pydantic import BaseModel, Field
+
+
+def validate_youtube_url(value: str | None) -> str | None:
+    if value is None:
+        return None
+    parsed = urlparse(value.strip())
+    host = (parsed.hostname or "").lower()
+    if parsed.scheme != "https" or host not in {
+        "youtu.be",
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "www.youtube-nocookie.com",
+    }:
+        raise ValueError("Use a secure YouTube or youtu.be link")
+
+    parts = [part for part in parsed.path.split("/") if part]
+    query = parse_qs(parsed.query)
+    video_id = query.get("v", [""])[0]
+    playlist_id = query.get("list", [""])[0]
+    if host == "youtu.be" and len(parts) == 1:
+        video_id = parts[0]
+    elif not video_id and len(parts) == 2 and parts[0] in {"embed", "shorts", "live"}:
+        video_id = parts[1] if parts[1] != "videoseries" else ""
+    if video_id and not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id):
+        raise ValueError("Use a YouTube video or playlist link")
+    if playlist_id and not re.fullmatch(r"[A-Za-z0-9_-]{10,100}", playlist_id):
+        raise ValueError("Use a YouTube video or playlist link")
+    if not video_id and not (playlist_id and parts in (["playlist"], ["embed", "videoseries"])):
+        raise ValueError("Use a YouTube video or playlist link")
+    if host == "youtu.be":
+        return parsed._replace(path=f"/{video_id}").geturl()
+    return parsed.geturl()
 
 
 class LessonCreate(BaseModel):
@@ -17,38 +51,7 @@ class LessonCreate(BaseModel):
     @field_validator("external_video_url")
     @classmethod
     def validate_video_url(cls, value):
-        if value is None:
-            return value
-        parsed = urlparse(value)
-        host = (parsed.hostname or "").lower()
-        if parsed.scheme != "https" or not (
-            host == "youtu.be" or host == "youtube.com" or host.endswith(".youtube.com")
-        ):
-            raise ValueError("Use a secure YouTube or youtu.be link")
-        path_parts = [part for part in parsed.path.split("/") if part]
-        has_video = bool(parsed.hostname == "youtu.be" and path_parts)
-        has_video = has_video or bool(
-            parsed.hostname != "youtu.be"
-            and (
-                parsed.query
-                and any(
-                    part.partition("=")[0] == "v" and part.partition("=")[2]
-                    for part in parsed.query.split("&")
-                )
-                or len(path_parts) >= 2
-                and path_parts[0] in {"embed", "shorts", "live"}
-            )
-        )
-        has_playlist = bool(
-            parsed.path.startswith("/playlist")
-            and any(
-                part.partition("=")[0] == "list" and part.partition("=")[2]
-                for part in parsed.query.split("&")
-            )
-        )
-        if not (has_video or has_playlist):
-            raise ValueError("Use a YouTube video or playlist link")
-        return value
+        return validate_youtube_url(value)
 
     @model_validator(mode="after")
     def video_url_requires_video_lesson(self):
@@ -68,38 +71,7 @@ class LessonUpdate(BaseModel):
     @field_validator("external_video_url")
     @classmethod
     def validate_video_url(cls, value):
-        if value is None:
-            return value
-        parsed = urlparse(value)
-        host = (parsed.hostname or "").lower()
-        if parsed.scheme != "https" or not (
-            host == "youtu.be" or host == "youtube.com" or host.endswith(".youtube.com")
-        ):
-            raise ValueError("Use a secure YouTube or youtu.be link")
-        path_parts = [part for part in parsed.path.split("/") if part]
-        has_video = bool(parsed.hostname == "youtu.be" and path_parts)
-        has_video = has_video or bool(
-            parsed.hostname != "youtu.be"
-            and (
-                parsed.query
-                and any(
-                    part.partition("=")[0] == "v" and part.partition("=")[2]
-                    for part in parsed.query.split("&")
-                )
-                or len(path_parts) >= 2
-                and path_parts[0] in {"embed", "shorts", "live"}
-            )
-        )
-        has_playlist = bool(
-            parsed.path.startswith("/playlist")
-            and any(
-                part.partition("=")[0] == "list" and part.partition("=")[2]
-                for part in parsed.query.split("&")
-            )
-        )
-        if not (has_video or has_playlist):
-            raise ValueError("Use a YouTube video or playlist link")
-        return value
+        return validate_youtube_url(value)
 
     @model_validator(mode="after")
     def video_url_requires_video_lesson(self):

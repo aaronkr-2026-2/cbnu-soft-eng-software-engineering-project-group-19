@@ -17,6 +17,7 @@ export type Course = {
 
 export type Enrollment = { course_id: string; course_title: string };
 export type Selection = { id: string; title: string; price?: number; lessonId?: string };
+export type LessonMaterial = { id: string; title: string; resource_url: string };
 export type Lesson = {
   id: string;
   title: string;
@@ -25,6 +26,7 @@ export type Lesson = {
   resource_type: "text" | "video" | "audio" | "pdf";
   resource_url: string | null;
   external_video_url: string | null;
+  materials?: LessonMaterial[];
 };
 export type Progress = {
   completed_lessons: number;

@@ -213,6 +213,23 @@ class LessonMaterial(Base):
     lesson: Mapped[Lesson] = relationship(back_populates="materials")
 
 
+class LessonResourceFile(Base):
+    __tablename__ = "lesson_resource_files"
+
+    key: Mapped[str] = mapped_column(String(80), primary_key=True)
+    size: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+class LessonResourceChunk(Base):
+    __tablename__ = "lesson_resource_chunks"
+
+    file_key: Mapped[str] = mapped_column(
+        String(80), ForeignKey("lesson_resource_files.key", ondelete="CASCADE"), primary_key=True
+    )
+    position: Mapped[int] = mapped_column(Integer, primary_key=True)
+    data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+
+
 class LessonTranslation(Base):
     __tablename__ = "lesson_translations"
     __table_args__ = (

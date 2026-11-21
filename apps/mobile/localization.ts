@@ -228,6 +228,12 @@ const messages = {
     "Открыть материал урока",
     "수업 자료 열기",
   ],
+  supplementalMaterials: [
+    "Qo‘shimcha dars materiallari",
+    "Supplemental lesson materials",
+    "Дополнительные материалы урока",
+    "추가 학습 자료",
+  ],
   videoProgress: [
     "Video progressi {progress}%",
     "Video progress {progress}%",

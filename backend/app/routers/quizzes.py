@@ -1,7 +1,6 @@
 import uuid
 from datetime import UTC, datetime, timedelta
 from math import ceil
-from pathlib import Path
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -9,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_user, require_author
 from app.core.ai import AIConfigurationError, AIProviderError, generate_quiz_json
 from app.core.passkeys import consume_passkey_proof
+from app.core.lesson_storage import open_resource
 from app.core.localization import get_final_exam_content_translation, get_quiz_content_translation
 from app.core.schemes.quiz import (
     QuizAttemptCreate,
@@ -48,7 +48,6 @@ from app.models import (
 )
 
 router = APIRouter(tags=["Quizzes and Assessments"])
-RESOURCE_DIR = Path(__file__).resolve().parents[2] / "storage" / "course-materials"
 
 MAX_QUIZ_PDF_PAGES = 50
 MIN_QUIZ_SOURCE_CHARS = 80
@@ -161,21 +160,19 @@ def to_quiz_manage_response(quiz: Quiz, db: Session) -> QuizManageResponse:
     )
 
 
-def extract_quiz_material(lesson: Lesson) -> str:
+def extract_quiz_material(lesson: Lesson, db: Session) -> str:
     lesson_text = (lesson.content or "").strip()
     if lesson.resource_type == "pdf" and lesson.resource_key:
-        pdf_path = (RESOURCE_DIR / Path(lesson.resource_key).name).resolve()
-        if pdf_path.parent != RESOURCE_DIR.resolve() or not pdf_path.is_file():
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Uploaded lesson PDF was not found"
-            )
         try:
             from pypdf import PdfReader
 
-            reader = PdfReader(str(pdf_path))
-            pdf_text = "\n".join(
-                (page.extract_text() or "") for page in reader.pages[:MAX_QUIZ_PDF_PAGES]
-            )
+            with open_resource(db, lesson.resource_key) as file:
+                reader = PdfReader(file)
+                pdf_text = "\n".join(
+                    (page.extract_text() or "") for page in reader.pages[:MAX_QUIZ_PDF_PAGES]
+                )
+        except HTTPException:
+            raise
         except ImportError:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -200,8 +197,8 @@ def extract_quiz_material(lesson: Lesson) -> str:
     return lesson_text[:MAX_QUIZ_SOURCE_CHARS]
 
 
-def generate_quiz_draft(course: Course, lesson: Lesson) -> QuizCreate:
-    lesson_text = extract_quiz_material(lesson)
+def generate_quiz_draft(course: Course, lesson: Lesson, db: Session) -> QuizCreate:
+    lesson_text = extract_quiz_material(lesson, db)
     try:
         return QuizCreate.model_validate(
             generate_quiz_json(course.title, lesson.title, lesson_text)
@@ -242,7 +239,7 @@ def generate_lesson_quiz(
             status_code=status.HTTP_409_CONFLICT,
             detail="This quiz has learner attempts and cannot be regenerated",
         )
-    quiz_draft = generate_quiz_draft(course, lesson)
+    quiz_draft = generate_quiz_draft(course, lesson, db)
     if saved_quiz is None:
         saved_quiz = Quiz(
             lesson_id=lesson.id, title=quiz_draft.title, passing_score=GENERATED_QUIZ_PASSING_SCORE

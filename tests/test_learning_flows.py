@@ -21,6 +21,9 @@ from app.routers import lessons as lessons_router
 from app.routers import passkeys as passkeys_router
 from app.routers import progress as progress_router
 from app.routers import quizzes as quizzes_router
+from app.core import lesson_storage
+from app.database import get_db
+from app.models import LessonResourceChunk, LessonResourceFile
 from tests.helpers import login, register
 
 
@@ -856,7 +859,7 @@ def test_video_lesson_cannot_be_completed_by_seeking_past_end(client):
             "title": "Video Lesson",
             "content": "Watch the course video",
             "resource_type": "video",
-            "external_video_url": "https://www.youtube.com/watch?v=abc123",
+            "external_video_url": "https://www.youtube.com/watch?v=M7lc1UVf-VE",
             "position": 1,
         },
     )
@@ -1012,6 +1015,72 @@ def test_ordered_lesson_materials_are_private_managed_and_visible_to_enrolled_le
         f"/courses/{course_id}/lessons?language=uz", headers=learner_headers
     ).json()[0]["materials"]
     assert [(item["title"], item["position"]) for item in after_delete] == [("First notes", 1)]
+
+
+def test_uploaded_media_survives_empty_disk_and_invalid_video_replacement(
+    client, monkeypatch, tmp_path
+):
+    register(client, "durable-author@example.com", "author")
+    register(client, "durable-learner@example.com")
+    author = login(client, "durable-author@example.com", "author")
+    learner = login(client, "durable-learner@example.com")
+    course = f"/courses/{create_course(client, author)['id']}"
+    created = client.post(
+        f"{course}/lessons",
+        headers=author,
+        json={"title": "Media lesson", "content": "Lesson content", "position": 1},
+    )
+    assert created.status_code == 201, created.text
+    lesson = f"{course}/lessons/{created.json()['id']}"
+    resource = f"{lesson}/resource"
+    limit = lesson_storage.RESOURCE_CHUNK_BYTES
+    video = b"\x00\x00\x00\x18ftypmp42".ljust(limit, b"A") + b"rest of file"
+    uploaded = client.put(resource, headers={**author, "Content-Type": "video/mp4"}, content=video)
+    assert uploaded.status_code == 200, uploaded.text
+    notes = client.post(
+        f"{lesson}/materials?title=Notes",
+        headers={**author, "Content-Type": "application/pdf"},
+        content=b"%PDF-1.4 notes",
+    )
+    assert notes.status_code == 201, notes.text
+
+    monkeypatch.setattr(lesson_storage, "RESOURCE_DIR", tmp_path / "empty-after-restart")
+    assert client.post(f"{course}/publish", headers=author).status_code == 200
+    assert client.post(f"{course}/enroll", headers=learner).status_code == 201
+    current = client.get(f"{course}/lessons", headers=learner).json()[0]
+    url = current["resource_url"]
+    assert client.get(url).content == video
+    assert client.get(current["materials"][0]["resource_url"]).content == b"%PDF-1.4 notes"
+    partial = client.get(url, headers={"Range": f"bytes={limit - 2}-{limit + 3}"})
+    assert partial.status_code == 206
+    assert partial.headers["Content-Range"] == f"bytes {limit - 2}-{limit + 3}/{len(video)}"
+    assert partial.content == video[limit - 2 : limit + 4]
+    assert client.get(url, headers={"Range": "bytes=-4"}).content == video[-4:]
+    assert client.get(url, headers={"Range": f"bytes={len(video)}-"}).status_code == 416
+
+    for invalid_url in ["https://example.com/video", "https://youtu.be/invalid"]:
+        invalid = client.put(lesson, headers=author, json={"external_video_url": invalid_url})
+        assert invalid.status_code == 422
+        assert client.get(url).content == video
+    failed_file = client.put(
+        resource, headers={**author, "Content-Type": "video/mp4"}, content=b"not an mp4"
+    )
+    assert failed_file.status_code == 415
+    assert client.get(url).content == video
+    changed = client.put(
+        lesson, headers=author, json={"external_video_url": "https://youtu.be/M7lc1UVf-VE"}
+    )
+    assert changed.status_code == 200, changed.text
+    assert changed.json()["resource_url"] is None
+    assert client.get(url).status_code == 404
+    assert client.get(current["materials"][0]["resource_url"]).status_code == 200
+
+    assert client.delete(course, headers=author).status_code == 204
+    sessions = client.app.dependency_overrides[get_db]()
+    with next(sessions) as db:
+        assert db.query(LessonResourceFile).count() == 0
+        assert db.query(LessonResourceChunk).count() == 0
+    sessions.close()
 
 
 def test_email_password_reset_accepts_new_password_and_rejects_reused_link(client, monkeypatch):
