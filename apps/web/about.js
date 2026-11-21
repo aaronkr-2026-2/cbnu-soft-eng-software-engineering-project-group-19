@@ -14,7 +14,7 @@ const aboutCopy = {
       "Bajarilgan darslar va natijalaringizni kuzating. Yakuniy imtihondan o‘tgach, sertifikatingizni olib, uni havola orqali tekshirishingiz mumkin.",
     founderRole: "StudyFlow asoschisi",
     founderBio:
-      "Texnik loyiha tajribasi — MUKHAMMADAZIZ YULDOSHBOEV StudyFlow asoschisi. Uning loyiha tajribasi web va mobil ilova, kurs va darslar, testlar hamda sertifikat olish oqimini bir platformaga birlashtirishni qamrab oladi.",
+      "MUKHAMMADAZIZ YULDOSHBOEV StudyFlow asoschisi. Uning loyiha tajribasi web va mobil ilova, kurs va darslar, testlar hamda sertifikat olish oqimini bir platformaga birlashtirishni qamrab oladi.",
     backHome: "Bosh sahifaga qaytish",
     chooseLanguage: "Tilni tanlang",
   },
@@ -33,7 +33,7 @@ const aboutCopy = {
       "Track your completed lessons and results. After passing the final exam, you can claim your certificate and verify it via its link.",
     founderRole: "Founder of StudyFlow",
     founderBio:
-      "Technical project experience — MUKHAMMADAZIZ YULDOSHBOEV is the founder of StudyFlow. His project experience includes bringing web and mobile apps, courses and lessons, assessments, and certificate issuance together in one platform.",
+      "MUKHAMMADAZIZ YULDOSHBOEV is the founder of StudyFlow. His project experience includes bringing web and mobile apps, courses and lessons, assessments, and certificate issuance together in one platform.",
     backHome: "Back to home",
     chooseLanguage: "Choose a language",
   },
@@ -52,7 +52,7 @@ const aboutCopy = {
       "Следите за завершёнными уроками и результатами. Сдав итоговый экзамен, вы сможете получить сертификат и проверить его по ссылке.",
     founderRole: "Основатель StudyFlow",
     founderBio:
-      "Опыт работы над техническим проектом — MUKHAMMADAZIZ YULDOSHBOEV является основателем StudyFlow. Его опыт работы над проектом охватывает объединение сайта и мобильного приложения, курсов и уроков, тестов и выдачи сертификатов в одной платформе.",
+      "MUKHAMMADAZIZ YULDOSHBOEV является основателем StudyFlow. Его опыт работы над проектом охватывает объединение сайта и мобильного приложения, курсов и уроков, тестов и выдачи сертификатов в одной платформе.",
     backHome: "На главную",
     chooseLanguage: "Выберите язык",
   },
@@ -71,7 +71,7 @@ const aboutCopy = {
       "완료한 수업과 결과를 확인하세요. 최종 시험에 통과하면 수료증을 발급받고 링크로 확인할 수 있습니다.",
     founderRole: "StudyFlow 설립자",
     founderBio:
-      "기술 프로젝트 경험 — MUKHAMMADAZIZ YULDOSHBOEV는 StudyFlow의 설립자입니다. 웹과 모바일 앱, 강의와 수업, 평가, 수료증 발급을 하나의 플랫폼으로 통합한 프로젝트 경험이 있습니다.",
+      "MUKHAMMADAZIZ YULDOSHBOEV는 StudyFlow의 설립자입니다. 웹과 모바일 앱, 강의와 수업, 평가, 수료증 발급을 하나의 플랫폼으로 통합한 프로젝트 경험이 있습니다.",
     backHome: "홈으로 돌아가기",
     chooseLanguage: "언어 선택",
   },

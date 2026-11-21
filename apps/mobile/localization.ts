@@ -50,10 +50,10 @@ const messages = {
   ],
 
   founderBio: [
-    "Texnik loyiha tajribasi — MUKHAMMADAZIZ YULDOSHBOEV StudyFlow asoschisi. Uning loyiha tajribasi web va mobil ilova, kurs va darslar, testlar hamda sertifikat olish oqimini bir platformaga birlashtirishni qamrab oladi.",
-    "Technical project experience — MUKHAMMADAZIZ YULDOSHBOEV is the founder of StudyFlow. His project experience includes bringing web and mobile apps, courses and lessons, assessments, and certificate issuance together in one platform.",
-    "Опыт работы над техническим проектом — MUKHAMMADAZIZ YULDOSHBOEV является основателем StudyFlow. Его опыт работы над проектом охватывает объединение сайта и мобильного приложения, курсов и уроков, тестов и выдачи сертификатов в одной платформе.",
-    "기술 프로젝트 경험 — MUKHAMMADAZIZ YULDOSHBOEV는 StudyFlow의 설립자입니다. 웹과 모바일 앱, 강의와 수업, 평가, 수료증 발급을 하나의 플랫폼으로 통합한 프로젝트 경험이 있습니다.",
+    "MUKHAMMADAZIZ YULDOSHBOEV StudyFlow asoschisi. Uning loyiha tajribasi web va mobil ilova, kurs va darslar, testlar hamda sertifikat olish oqimini bir platformaga birlashtirishni qamrab oladi.",
+    "MUKHAMMADAZIZ YULDOSHBOEV is the founder of StudyFlow. His project experience includes bringing web and mobile apps, courses and lessons, assessments, and certificate issuance together in one platform.",
+    "MUKHAMMADAZIZ YULDOSHBOEV является основателем StudyFlow. Его опыт работы над проектом охватывает объединение сайта и мобильного приложения, курсов и уроков, тестов и выдачи сертификатов в одной платформе.",
+    "MUKHAMMADAZIZ YULDOSHBOEV는 StudyFlow의 설립자입니다. 웹과 모바일 앱, 강의와 수업, 평가, 수료증 발급을 하나의 플랫폼으로 통합한 프로젝트 경험이 있습니다.",
   ],
   founderRole: [
     "StudyFlow asoschisi",
