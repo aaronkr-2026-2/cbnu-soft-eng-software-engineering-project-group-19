@@ -1864,7 +1864,9 @@ const lessonNoteCopy = {
 const browserCopy = {
   uz: {
     openInBrowser: "Safari yoki Chrome’da ochish",
-    browserHandoffHelp: "Ilova menyusidagi ⋯ tugmasidan brauzerda oching yoki havolani nusxalang.",
+    openChrome: "Chrome’da ochish",
+    browserHandoffHelp:
+      "Safari uchun ilovadagi ⋯ → Brauzerda ochish bandini tanlang yoki havolani nusxalang.",
     copyBrowserLink: "Havolani nusxalash",
     browserLinkCopied: "Havola nusxalandi.",
     browserCopyManual: "Havolani tanlab nusxalang va Safari yoki Chrome’ga qo‘ying.",
@@ -1876,7 +1878,8 @@ const browserCopy = {
   },
   en: {
     openInBrowser: "Open in Safari or Chrome",
-    browserHandoffHelp: "Use the app’s ⋯ menu to open in a browser, or copy the link.",
+    openChrome: "Open in Chrome",
+    browserHandoffHelp: "For Safari, use the app’s ⋯ menu to open in a browser or copy the link.",
     copyBrowserLink: "Copy link",
     browserLinkCopied: "Link copied.",
     browserCopyManual: "Select and copy the link, then paste it into Safari or Chrome.",
@@ -1887,7 +1890,9 @@ const browserCopy = {
   },
   ru: {
     openInBrowser: "Открыть в Safari или Chrome",
-    browserHandoffHelp: "Откройте сайт в браузере через меню ⋯ приложения или скопируйте ссылку.",
+    openChrome: "Открыть в Chrome",
+    browserHandoffHelp:
+      "Для Safari выберите открытие в браузере в меню ⋯ приложения или скопируйте ссылку.",
     copyBrowserLink: "Скопировать ссылку",
     browserLinkCopied: "Ссылка скопирована.",
     browserCopyManual: "Выделите и скопируйте ссылку, затем вставьте её в Safari или Chrome.",
@@ -1899,7 +1904,8 @@ const browserCopy = {
   },
   ko: {
     openInBrowser: "Safari 또는 Chrome에서 열기",
-    browserHandoffHelp: "앱의 ⋯ 메뉴에서 브라우저로 열거나 링크를 복사하세요.",
+    openChrome: "Chrome에서 열기",
+    browserHandoffHelp: "Safari에서 열려면 앱의 ⋯ 메뉴를 이용하거나 링크를 복사하세요.",
     copyBrowserLink: "링크 복사",
     browserLinkCopied: "링크를 복사했습니다.",
     browserCopyManual: "링크를 선택해 복사한 뒤 Safari 또는 Chrome에 붙여넣으세요.",
@@ -3854,10 +3860,11 @@ function bindLearnerCourseActions(
           panel.querySelector("[data-lesson-browser]").addEventListener("click", () => {
             browserHandoffLesson = lessonId;
             browserHandoff.hidden = false;
-            browserHandoff.open = true;
             updateBrowserHandoff();
             browserHandoff.scrollIntoView({ block: "center" });
-            browserHandoff.querySelector("summary").focus({ preventScroll: true });
+            ($("#openChrome").hidden ? $("#copyBrowserLink") : $("#openChrome")).focus({
+              preventScroll: true,
+            });
           });
           start();
         }
@@ -4403,30 +4410,34 @@ function browserLessonUrl(lessonId) {
 const browserHandoff = $("#browserHandoff");
 const browserAgent = navigator.userAgent;
 const android = /Android/i.test(browserAgent);
+const ios = /iPhone|iPad|iPod/i.test(browserAgent);
 const embeddedBrowser =
   /Instagram|FBAN|FBAV|Line\/|Snapchat|Telegram|TikTok|Bytedance|; wv\)/i.test(browserAgent) ||
-  (/iPhone|iPad|iPod/i.test(browserAgent) &&
-    /AppleWebKit/i.test(browserAgent) &&
-    !/Safari|CriOS|FxiOS|EdgiOS/i.test(browserAgent));
+  (ios && /AppleWebKit/i.test(browserAgent) && !/Safari|CriOS|FxiOS|EdgiOS/i.test(browserAgent));
 let browserHandoffLesson;
+
+function externalChromeHref(url, platform) {
+  if (url.protocol !== "https:") return "";
+  const destination = url.href.slice("https://".length);
+  if (platform === "ios") return `googlechromes://${destination}`;
+  if (platform === "android")
+    return `intent://${destination}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(url.href)};end`;
+  return "";
+}
 
 function updateBrowserHandoff() {
   const url = browserLessonUrl(browserHandoffLesson);
   $("#browserHandoffUrl").value = url.href;
-  if (android && url.protocol === "https:") {
-    const chrome = $("#openChrome");
-    const target = url.href.replace(/^https:\/\//, "");
-    chrome.href = `intent://${target}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(url.href)};end`;
-    chrome.hidden = false;
-  }
+  const chrome = $("#openChrome");
+  const destination = externalChromeHref(url, ios ? "ios" : android ? "android" : "");
+  chrome.hidden = !destination;
+  if (destination) chrome.href = destination;
 }
 
 if (embeddedBrowser || new URLSearchParams(location.search).get("open") === "browser") {
   browserHandoff.hidden = false;
+  updateBrowserHandoff();
 }
-browserHandoff.addEventListener("toggle", () => {
-  if (browserHandoff.open) updateBrowserHandoff();
-});
 $("#openChrome").addEventListener("click", updateBrowserHandoff);
 $("#copyBrowserLink").addEventListener("click", async () => {
   updateBrowserHandoff();
