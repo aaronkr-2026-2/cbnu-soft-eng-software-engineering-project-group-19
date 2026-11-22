@@ -63,3 +63,63 @@
     grid-column: auto;
   }
 }
+
+.browser-handoff {
+  max-width: 1180px;
+  margin: 12px auto 0;
+  padding: 9px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+}
+
+.browser-handoff summary {
+  padding-block: 4px;
+  color: var(--accent-ink);
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.browser-handoff p {
+  margin: 8px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.browser-handoff p:empty {
+  display: none;
+}
+
+.browser-handoff-actions,
+.lesson-video-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.browser-handoff-url {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.lesson-video-actions {
+  margin: 8px 0 12px;
+}
+
+.lesson-video-status {
+  flex: 0 0 100%;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 1220px) {
+  .browser-handoff {
+    margin-inline: 12px;
+  }
+}

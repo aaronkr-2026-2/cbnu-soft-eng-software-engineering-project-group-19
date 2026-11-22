@@ -13,7 +13,9 @@ class AIProviderError(RuntimeError):
     pass
 
 
-def _chat_completion(messages: list[dict], *, temperature: float = 0.2) -> dict:
+def _chat_completion(
+    messages: list[dict], *, temperature: float = 0.2, timeout: float = 60
+) -> dict:
     api_key = os.getenv("AI_API_KEY")
     if not api_key:
         raise AIConfigurationError("AI_API_KEY is not configured")
@@ -31,7 +33,7 @@ def _chat_completion(messages: list[dict], *, temperature: float = 0.2) -> dict:
         method="POST",
     )
     try:
-        with urlopen(request, timeout=60) as response:
+        with urlopen(request, timeout=timeout) as response:
             result = json.loads(response.read())
         return json.loads(result["choices"][0]["message"]["content"])
     except HTTPError as exc:
@@ -40,7 +42,9 @@ def _chat_completion(messages: list[dict], *, temperature: float = 0.2) -> dict:
         raise AIProviderError("AI service did not return valid JSON") from exc
 
 
-def translate_lesson(title: str, content: str, target_language: str) -> dict[str, str]:
+def translate_lesson(
+    title: str, content: str, target_language: str, *, timeout: float = 60
+) -> dict[str, str]:
     language_names = {"uz": "Uzbek", "en": "English", "ru": "Russian", "ko": "Korean"}
     if target_language not in language_names:
         raise ValueError("Unsupported translation language")
@@ -62,6 +66,7 @@ def translate_lesson(title: str, content: str, target_language: str) -> dict[str
             },
         ],
         temperature=0.1,
+        timeout=timeout,
     )
     translated_title, translated_content = result.get("title"), result.get("content")
     if (
@@ -98,7 +103,7 @@ def translate_module(title: str, target_language: str) -> str:
 
 
 def translate_course(
-    title: str, description: str | None, category: str, target_language: str
+    title: str, description: str | None, category: str, target_language: str, *, timeout: float = 60
 ) -> dict[str, str | None]:
     language_names = {"uz": "Uzbek", "en": "English", "ru": "Russian", "ko": "Korean"}
     if target_language not in language_names:
@@ -125,6 +130,7 @@ def translate_course(
             },
         ],
         temperature=0.1,
+        timeout=timeout,
     )
     translated_title, translated_description, translated_category = (
         result.get("title"),

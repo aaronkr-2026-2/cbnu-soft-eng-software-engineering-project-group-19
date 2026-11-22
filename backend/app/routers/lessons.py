@@ -5,6 +5,7 @@ import mimetypes
 from contextlib import asynccontextmanager
 from pathlib import Path
 from tempfile import SpooledTemporaryFile
+from time import monotonic
 from typing import Literal
 
 import jwt
@@ -15,7 +16,7 @@ from starlette.concurrency import run_in_threadpool
 
 from app.core.dependencies import get_current_user, require_author
 from app.core.ai import AIConfigurationError, AIProviderError, generate_lesson_banner
-from app.core.localization import get_lesson_translation
+from app.core.localization import TRANSLATION_LIST_BUDGET_SECONDS, get_lesson_translation
 from app.core.lesson_storage import (
     RESOURCE_CHUNK_BYTES,
     delete_resources,
@@ -586,8 +587,11 @@ def list_lessons(
         .order_by(Lesson.position, Lesson.created_at)
         .all()
     )
+    deadline = monotonic() + TRANSLATION_LIST_BUDGET_SECONDS
     return [
-        to_response(lesson, course, get_lesson_translation(lesson, course, language, db))
+        to_response(
+            lesson, course, get_lesson_translation(lesson, course, language, db, deadline=deadline)
+        )
         for lesson in lessons
     ]
 

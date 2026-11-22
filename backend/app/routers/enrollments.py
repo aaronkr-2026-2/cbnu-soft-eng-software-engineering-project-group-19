@@ -1,3 +1,4 @@
+from time import monotonic
 import uuid
 from typing import Literal
 
@@ -5,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
-from app.core.localization import get_course_translation
+from app.core.localization import TRANSLATION_LIST_BUDGET_SECONDS, get_course_translation
 from app.core.schemes.enrollment import EnrollmentResponse
 from app.database import get_db
 from app.models import Course, CoursePayment, Enrollment, User
@@ -89,10 +90,11 @@ def list_my_enrollments(
         .order_by(Enrollment.enrolled_at.desc())
         .all()
     )
+    deadline = monotonic() + TRANSLATION_LIST_BUDGET_SECONDS
     responses = []
     for enrollment, course in records:
         response = to_response(enrollment, course)
-        translation = get_course_translation(course, language, db)
+        translation = get_course_translation(course, language, db, deadline=deadline)
         if translation:
             response.course_title = translation.title
         responses.append(response)

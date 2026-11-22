@@ -24,7 +24,8 @@ from app.routers import lessons as lessons_router
 from app.routers import passkeys as passkeys_router
 from app.routers import progress as progress_router
 from app.routers import quizzes as quizzes_router
-from app.core import lesson_storage
+from app.core import lesson_storage, localization
+from app.core.ai import AIProviderError
 from app.core.site import frontend_url_for_origin
 from app.database import get_db
 from app.models import CourseTranslation, LessonResourceChunk, LessonResourceFile
@@ -929,7 +930,7 @@ def test_final_exam_requires_completed_lessons_and_certificate_is_single(client)
     assert client.get("/certificates/verify/unknown/pdf").status_code == 404
 
 
-def test_video_lesson_cannot_be_completed_by_seeking_past_end(client):
+def test_video_lesson_cannot_be_completed_by_seeking_past_end(client, monkeypatch):
     register(client, "video-author@example.com", "author")
     register(client, "video-learner@example.com")
     author_headers = login(client, "video-author@example.com", "author")
@@ -952,6 +953,20 @@ def test_video_lesson_cannot_be_completed_by_seeking_past_end(client):
     lesson_id = lesson.json()["id"]
     assert client.post(f"/courses/{course_id}/publish", headers=author_headers).status_code == 200
     assert client.post(f"/courses/{course_id}/enroll", headers=learner_headers).status_code == 201
+
+    def unavailable_translation(*_args, timeout):
+        assert 0 < timeout <= localization.TRANSLATION_LIST_BUDGET_SECONDS
+        raise AIProviderError("Translation unavailable")
+
+    monkeypatch.setattr(localization, "translate_lesson", unavailable_translation)
+    lesson_list = client.get(
+        f"/courses/{course_id}/lessons", params={"language": "en"}, headers=learner_headers
+    )
+    assert lesson_list.status_code == 200
+    localized_lesson = lesson_list.json()[0]
+    assert localized_lesson["title"] == "Video Lesson"
+    assert localized_lesson["external_video_url"] == "https://www.youtube.com/watch?v=M7lc1UVf-VE"
+    assert not localized_lesson["translated"]
 
     incomplete = client.post(
         f"/courses/{course_id}/progress/lessons/{lesson_id}/complete",

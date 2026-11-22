@@ -1349,15 +1349,26 @@ const videoWatchCopy = {
   ru: "Досмотрите видео до конца",
   ko: "영상을 끝까지 시청하세요",
 };
+const VIDEO_PLAYER_TIMEOUT_MS = 12_000;
 let youtubeIframeApiPromise;
 function loadYouTubeIframeApi() {
   if (window.YT?.Player) return Promise.resolve(window.YT);
   if (!youtubeIframeApiPromise) {
     youtubeIframeApiPromise = new Promise((resolve, reject) => {
-      window.onYouTubeIframeAPIReady = () => resolve(window.YT);
       const script = document.createElement("script");
+      const fail = () => {
+        window.clearTimeout(timeout);
+        script.remove();
+        youtubeIframeApiPromise = undefined;
+        reject(new Error("YouTube player could not be loaded"));
+      };
+      const timeout = window.setTimeout(fail, VIDEO_PLAYER_TIMEOUT_MS);
+      window.onYouTubeIframeAPIReady = () => {
+        window.clearTimeout(timeout);
+        resolve(window.YT);
+      };
       script.src = "https://www.youtube.com/iframe_api";
-      script.onerror = () => reject(new Error("YouTube player could not be loaded"));
+      script.onerror = fail;
       document.head.append(script);
     });
   }
@@ -1395,6 +1406,19 @@ function materialTypeText(type) {
     type === "pdf" ? "pdf" : type === "video" ? "video" : type === "audio" ? "audio" : "text",
   );
 }
+function renderVideoPlayer(player, source) {
+  return `<div class="lesson-resource lesson-video">
+    <div data-video-player>${player}</div>
+    <div class="lesson-video-actions">
+      <p class="lesson-video-status" data-video-error role="status" hidden>${escapeHtml(t("videoPlaybackError"))}</p>
+      <button class="button button-outline button-small" type="button" data-video-retry hidden>${escapeHtml(t("videoRetry"))}</button>
+      <button class="button button-outline button-small" type="button" data-lesson-browser>${escapeHtml(t("openInBrowser"))}</button>
+      <a class="button button-outline button-small" href="${escapeHtml(source)}" target="_blank" rel="noopener">${escapeHtml(t("videoOpenSource"))}</a>
+      <p class="lesson-video-status">${escapeHtml(t("videoProgressNote"))}</p>
+    </div>
+  </div>`;
+}
+
 function renderLessonResource(lesson) {
   const extraMaterials = (lesson.materials || [])
     .map((material) =>
@@ -1408,42 +1432,66 @@ function renderLessonResource(lesson) {
     try {
       parsed = new URL(lesson.external_video_url);
     } catch {
-      return "";
+      // Fall back to any uploaded video attached to the lesson.
     }
-    const playlistId = parsed.searchParams.get("list");
-    const videoId =
-      parsed.hostname === "youtu.be"
-        ? parsed.pathname.slice(1)
-        : parsed.searchParams.get("v") ||
-          (parsed.pathname.startsWith("/playlist")
-            ? null
-            : parsed.pathname.split("/").filter(Boolean).pop());
-    if (playlistId || videoId) {
-      const params = new URLSearchParams({
-        enablejsapi: "1",
-        origin: location.origin,
-        controls: "1",
-        disablekb: "0",
-        rel: "0",
-        playsinline: "1",
-        hl: language,
-        cc_lang_pref: language,
-      });
-      if (playlistId) params.set("list", playlistId);
-      return `<div class="lesson-resource youtube-watch"><iframe data-watch-youtube="${escapeHtml(lesson.id)}" src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId || "videoseries")}?${params}" title="${escapeHtml(lesson.title)}" allow="accelerometer; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>${extraMaterials}`;
+    const recognizedHost =
+      parsed?.protocol === "https:" &&
+      [
+        "youtu.be",
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "www.youtube-nocookie.com",
+      ].includes(parsed.hostname);
+    if (recognizedHost) {
+      const parts = parsed.pathname.split("/").filter(Boolean);
+      const videoId =
+        parsed.searchParams.get("v") ||
+        (parsed.hostname === "youtu.be"
+          ? parts[0]
+          : ["embed", "shorts", "live"].includes(parts[0])
+            ? parts[1]
+            : "");
+      const listId = parsed.searchParams.get("list");
+      const playlist = listId && /^[A-Za-z0-9_-]{10,100}$/.test(listId) ? listId : null;
+      const video = videoId && /^[A-Za-z0-9_-]{11}$/.test(videoId) ? videoId : null;
+      if (video || playlist) {
+        const params = new URLSearchParams({
+          enablejsapi: "1",
+          origin: location.origin,
+          controls: "1",
+          rel: "0",
+          playsinline: "1",
+          hl: language,
+          cc_lang_pref: language,
+        });
+        const watch = new URL(
+          video ? "https://www.youtube.com/watch" : "https://www.youtube.com/playlist",
+        );
+        if (video) watch.searchParams.set("v", video);
+        if (playlist) {
+          params.set("list", playlist);
+          if (!video) params.set("listType", "playlist");
+          watch.searchParams.set("list", playlist);
+        }
+        const embedded = `<div class="youtube-watch"><iframe data-watch-youtube="${escapeHtml(lesson.id)}" src="https://www.youtube-nocookie.com/embed/${video || "videoseries"}?${params}" title="${escapeHtml(lesson.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
+        return renderVideoPlayer(embedded, watch.href) + extraMaterials;
+      }
     }
   }
   if (!lesson.resource_url || lesson.resource_type === "text") return extraMaterials;
   const url = escapeHtml(lesson.resource_url);
-  if (lesson.resource_type === "video")
-    return `<div class="lesson-resource"><video controls preload="metadata" controlsList="nodownload noplaybackrate" disablePictureInPicture data-watch-video="${escapeHtml(lesson.id)}" src="${url}"></video></div>${extraMaterials}`;
+  if (lesson.resource_type === "video") {
+    const embedded = `<video controls playsinline preload="metadata" controlsList="nodownload noplaybackrate" disablePictureInPicture data-watch-video="${escapeHtml(lesson.id)}" src="${url}"></video>`;
+    return renderVideoPlayer(embedded, lesson.resource_url) + extraMaterials;
+  }
   if (lesson.resource_type === "audio")
     return `<div class="lesson-resource"><audio controls preload="metadata" src="${url}"></audio></div>${extraMaterials}`;
   if (lesson.resource_type === "pdf")
     return `<div class="lesson-resource"><a class="button button-outline button-small" href="${url}" target="_blank" rel="noopener">${escapeHtml(materialText("openPdf"))} <span class="ui-icon icon-arrow" aria-hidden="true"></span></a></div>${extraMaterials}`;
   return extraMaterials;
 }
-function setupVideoCompletion(container, courseId, lesson) {
+function setupVideoCompletion(container, courseId, lesson, showError) {
   const video = container.querySelector(`[data-watch-video="${lesson.id}"]`);
   const youtubeFrame = container.querySelector(`[data-watch-youtube="${lesson.id}"]`);
   if (!video && !youtubeFrame) return;
@@ -1506,7 +1554,9 @@ function setupVideoCompletion(container, courseId, lesson) {
       }
     }
   };
-  const progressReady = api(`/courses/${courseId}/progress/lessons/${lesson.id}/video-watch`)
+  const progressReady = api(`/courses/${courseId}/progress/lessons/${lesson.id}/video-watch`, {
+    timeout: CATALOG_REQUEST_TIMEOUT_MS,
+  })
     .then((result) => {
       furthest = result.furthest_position_seconds;
       updateMeter(result);
@@ -1514,8 +1564,11 @@ function setupVideoCompletion(container, courseId, lesson) {
     })
     .catch(() => null);
   if (video) {
+    video.addEventListener("error", () => showError());
+    if (video.error) showError();
     video.playbackRate = 1;
     const initializeVideo = async () => {
+      showError(false);
       await progressReady;
       if (furthest > 0 && furthest < video.duration) video.currentTime = furthest;
       report(furthest, video.duration, 0, 1, true);
@@ -1544,6 +1597,11 @@ function setupVideoCompletion(container, courseId, lesson) {
     .then(
       () =>
         new Promise((resolve) => {
+          if (!youtubeFrame.isConnected) return resolve();
+          const readyTimer = window.setTimeout(() => {
+            showError();
+            resolve();
+          }, VIDEO_PLAYER_TIMEOUT_MS);
           let player,
             activeIndex = 0,
             itemCount = 1,
@@ -1620,6 +1678,8 @@ function setupVideoCompletion(container, courseId, lesson) {
           player = new window.YT.Player(youtubeFrame, {
             events: {
               onReady: async (event) => {
+                window.clearTimeout(readyTimer);
+                showError(false);
                 player = event.target;
                 try {
                   itemCount = Math.max(1, (player.getPlaylist?.() || []).length);
@@ -1649,12 +1709,16 @@ function setupVideoCompletion(container, courseId, lesson) {
                 }
               },
               onError: () => {
-                if (meter) meter.textContent = videoWatchCopy[language];
+                window.clearTimeout(readyTimer);
+                window.clearInterval(timer);
+                showError();
+                resolve();
               },
             },
           });
           const cleanupObserver = new MutationObserver(() => {
             if (!container.isConnected || !container.contains(youtubeFrame)) {
+              window.clearTimeout(readyTimer);
               window.clearInterval(timer);
               player?.destroy?.();
               cleanupObserver.disconnect();
@@ -1666,9 +1730,7 @@ function setupVideoCompletion(container, courseId, lesson) {
           });
         }),
     )
-    .catch(() => {
-      if (meter) meter.textContent = videoWatchCopy[language];
-    });
+    .catch(() => showError());
 }
 function renderLessonBanner(lesson) {
   if (!lesson.banner_url) return "";
@@ -1695,7 +1757,9 @@ const $ = (selector) => document.querySelector(selector);
 const langPicker = $("#language");
 const dialog = $("#authDialog");
 const form = $("#authForm");
-let language = localStorage.getItem("studyflow-language") || "uz";
+const preferences = window.ScholwardPreferences;
+let chosenLanguage = preferences.selectedLanguage();
+let language = chosenLanguage || "uz";
 const CATALOG_REQUEST_TIMEOUT_MS = 75_000;
 let catalogRequestId = 0;
 let dashboardRequestId = 0;
@@ -1704,7 +1768,7 @@ let activeCourseId = null;
 let courseRequest = null;
 let courseSearchTimer = null;
 let authMode = "register";
-let accessToken = localStorage.getItem("studyflow-token");
+let accessToken = preferences.local.getItem("studyflow-token");
 let user = null;
 let resumeLesson = null;
 let resumeAccountId = null;
@@ -1797,9 +1861,59 @@ const lessonNoteCopy = {
   },
 };
 
+const browserCopy = {
+  uz: {
+    openInBrowser: "Safari yoki Chrome’da ochish",
+    browserHandoffHelp: "Ilova menyusidagi ⋯ tugmasidan brauzerda oching yoki havolani nusxalang.",
+    copyBrowserLink: "Havolani nusxalash",
+    browserLinkCopied: "Havola nusxalandi.",
+    browserCopyManual: "Havolani tanlab nusxalang va Safari yoki Chrome’ga qo‘ying.",
+    videoPlaybackError:
+      "Video yuklanmadi. Qayta urinib ko‘ring yoki Safari yoki Chrome’da shu darsni oching.",
+    videoRetry: "Videoni qayta yuklash",
+    videoOpenSource: "Videoni alohida ochish",
+    videoProgressNote: "Kurs progressi dars ichida tomosha qilinganda saqlanadi.",
+  },
+  en: {
+    openInBrowser: "Open in Safari or Chrome",
+    browserHandoffHelp: "Use the app’s ⋯ menu to open in a browser, or copy the link.",
+    copyBrowserLink: "Copy link",
+    browserLinkCopied: "Link copied.",
+    browserCopyManual: "Select and copy the link, then paste it into Safari or Chrome.",
+    videoPlaybackError: "The video did not load. Retry or open this lesson in Safari or Chrome.",
+    videoRetry: "Retry video",
+    videoOpenSource: "Open video separately",
+    videoProgressNote: "Watch in the lesson to record your course progress.",
+  },
+  ru: {
+    openInBrowser: "Открыть в Safari или Chrome",
+    browserHandoffHelp: "Откройте сайт в браузере через меню ⋯ приложения или скопируйте ссылку.",
+    copyBrowserLink: "Скопировать ссылку",
+    browserLinkCopied: "Ссылка скопирована.",
+    browserCopyManual: "Выделите и скопируйте ссылку, затем вставьте её в Safari или Chrome.",
+    videoPlaybackError:
+      "Видео не загрузилось. Попробуйте снова или откройте урок в Safari или Chrome.",
+    videoRetry: "Перезагрузить видео",
+    videoOpenSource: "Открыть видео отдельно",
+    videoProgressNote: "Прогресс курса сохраняется при просмотре видео внутри урока.",
+  },
+  ko: {
+    openInBrowser: "Safari 또는 Chrome에서 열기",
+    browserHandoffHelp: "앱의 ⋯ 메뉴에서 브라우저로 열거나 링크를 복사하세요.",
+    copyBrowserLink: "링크 복사",
+    browserLinkCopied: "링크를 복사했습니다.",
+    browserCopyManual: "링크를 선택해 복사한 뒤 Safari 또는 Chrome에 붙여넣으세요.",
+    videoPlaybackError:
+      "영상을 불러오지 못했습니다. 다시 시도하거나 Safari 또는 Chrome에서 수업을 여세요.",
+    videoRetry: "영상 다시 불러오기",
+    videoOpenSource: "영상 별도로 열기",
+    videoProgressNote: "수업 화면에서 시청하면 학습 진도가 저장됩니다.",
+  },
+};
 function t(key) {
   if (key === "resumeLearning") return resumeLearningCopy[language];
   return (
+    browserCopy[language]?.[key] ||
     quizFeedbackCopy[language]?.[key] ||
     quizUiCopy[language]?.[key] ||
     featureCopy[language]?.[key] ||
@@ -1825,8 +1939,7 @@ function choiceLetter(index) {
   return String.fromCharCode(65 + index);
 }
 function setLanguage(code, refresh = true) {
-  language = copy[code] ? code : "uz";
-  localStorage.setItem("studyflow-language", language);
+  language = preferences.validLanguage(code) || "uz";
   document.documentElement.lang = language;
   langPicker.value = language;
   const courseLanguageSelect = $("#courseCreateForm [name='language']");
@@ -1909,7 +2022,7 @@ function updateAuthUI() {
     resumeLesson = null;
     if (accountId) {
       try {
-        const saved = JSON.parse(localStorage.getItem(`studyflow-resume-${accountId}`));
+        const saved = JSON.parse(preferences.local.getItem(`studyflow-resume-${accountId}`));
         if (
           typeof saved?.courseId === "string" &&
           COURSE_ID_PATTERN.test(saved.courseId) &&
@@ -1938,8 +2051,8 @@ function saveResumeLesson(lesson) {
   resumeLesson = lesson;
   try {
     const key = `studyflow-resume-${resumeAccountId}`;
-    if (lesson) localStorage.setItem(key, JSON.stringify(lesson));
-    else localStorage.removeItem(key);
+    if (lesson) preferences.local.setItem(key, JSON.stringify(lesson));
+    else preferences.local.removeItem(key);
   } catch {
     // Keep the shortcut available for the current page.
   }
@@ -1953,15 +2066,43 @@ $("#resumeLesson").addEventListener("click", () => {
 });
 
 async function api(path, options = {}) {
-  const response = await fetch(path, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      ...(options.headers || {}),
-    },
-  });
-  const body = response.status === 204 ? null : await response.json().catch(() => null);
+  const { timeout, signal: parentSignal, ...request } = options;
+  const controller = timeout ? new AbortController() : null;
+  const abort = () => controller.abort();
+  if (controller && parentSignal) {
+    if (parentSignal.aborted) abort();
+    else parentSignal.addEventListener("abort", abort, { once: true });
+  }
+  let timedOut = false;
+  const timer =
+    controller &&
+    window.setTimeout(() => {
+      timedOut = true;
+      abort();
+    }, timeout);
+  let response;
+  let body;
+  try {
+    response = await fetch(path, {
+      ...request,
+      signal: controller?.signal || parentSignal,
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        ...(request.headers || {}),
+      },
+    });
+    body = response.status === 204 ? null : await response.json().catch(() => null);
+  } catch (error) {
+    if (timedOut) throw new DOMException("Request timed out", "TimeoutError");
+    throw error;
+  } finally {
+    if (controller) {
+      window.clearTimeout(timer);
+      parentSignal?.removeEventListener("abort", abort);
+    }
+  }
+  if (timedOut) throw new DOMException("Request timed out", "TimeoutError");
   if (!response.ok) {
     const detail = body?.detail;
     const invalidVideoLink =
@@ -1997,22 +2138,27 @@ function coursePrice(price) {
 function showMyCourses() {
   courseRequest?.abort();
   activeCourseId = null;
+  browserHandoffLesson = undefined;
   $("#activeCourse").replaceChildren();
   $("#activeCourseView").hidden = true;
   $("#enrolledCourses").hidden = false;
 }
 
 function redirectToCourseLogin(courseId, { price, lessonId, openLesson }) {
-  sessionStorage.setItem(
+  preferences.session.setItem(
     "studyflow-pending-course",
     JSON.stringify({ courseId, price, lessonId, openLesson }),
   );
   accessToken = null;
   user = null;
   learnerEnrollments = [];
-  localStorage.removeItem("studyflow-token");
+  preferences.local.removeItem("studyflow-token");
   updateAuthUI();
-  window.location.href = "/app/learner-login.html";
+  const target = languageUrl("/app/learner-login.html");
+  target.searchParams.set("course", courseId);
+  if (lessonId) target.searchParams.set("lesson", lessonId);
+  if (!openLesson) target.searchParams.set("view", "completion");
+  window.location.href = target.href;
 }
 
 function listEnrollments(options) {
@@ -2032,9 +2178,8 @@ async function openLearnerCourse(
   const request = new AbortController();
   courseRequest = request;
   activeCourseId = courseId;
-  const options = {
-    signal: AbortSignal.any([request.signal, AbortSignal.timeout(CATALOG_REQUEST_TIMEOUT_MS)]),
-  };
+  browserHandoffLesson = undefined;
+  const options = { signal: request.signal, timeout: CATALOG_REQUEST_TIMEOUT_MS };
   const view = $("#activeCourseView");
   const host = $("#activeCourse");
 
@@ -2098,8 +2243,10 @@ async function openLearnerCourse(
     }
     renderLearnerCourse(enrollment, lessons, progress, request.signal, openLesson);
     const firstToggle =
-      host.querySelector(".lesson-item:has([data-complete]) [data-toggle]") ||
-      host.querySelector("[data-toggle]");
+      host
+        .querySelector("[data-complete]")
+        ?.closest(".lesson-item")
+        ?.querySelector("[data-toggle]") || host.querySelector("[data-toggle]");
     const heading = host.querySelector("h3");
     const selectedToggle = lessonId
       ? [...host.querySelectorAll("[data-toggle]")].find(
@@ -2159,17 +2306,24 @@ async function resumePendingCourse() {
     const openLesson = url.searchParams.get("view") !== "completion";
     for (const key of ["course", "lesson", "view"]) url.searchParams.delete(key);
     window.history.replaceState(null, "", url);
-    sessionStorage.removeItem("studyflow-pending-course");
+    let pending = null;
+    try {
+      pending = JSON.parse(preferences.session.getItem("studyflow-pending-course"));
+    } catch {
+      /* Ignore unreadable pending state. */
+    }
+    preferences.session.removeItem("studyflow-pending-course");
     await openLearnerCourse(courseId.toLowerCase(), {
+      price: pending?.courseId === courseId ? pending.price : undefined,
       lessonId: lesson && COURSE_ID_PATTERN.test(lesson) ? lesson.toLowerCase() : undefined,
       openLesson,
     });
     return;
   }
 
-  const saved = sessionStorage.getItem("studyflow-pending-course");
+  const saved = preferences.session.getItem("studyflow-pending-course");
   if (!saved || !accessToken) return;
-  sessionStorage.removeItem("studyflow-pending-course");
+  preferences.session.removeItem("studyflow-pending-course");
   try {
     const { courseId, price, lessonId, openLesson } = JSON.parse(saved);
     await openLearnerCourse(courseId, { price, lessonId, openLesson });
@@ -2179,22 +2333,23 @@ async function resumePendingCourse() {
 }
 async function checkReturnedPayment() {
   const params = new URLSearchParams(window.location.search);
-  const paymentId = params.get("payment_id") || sessionStorage.getItem("studyflow-pending-payment");
+  const paymentId =
+    params.get("payment_id") || preferences.session.getItem("studyflow-pending-payment");
   if (!paymentId) return;
   if (params.has("payment_id")) {
-    sessionStorage.setItem("studyflow-pending-payment", paymentId);
+    preferences.session.setItem("studyflow-pending-payment", paymentId);
     window.history.replaceState(null, "", `${window.location.pathname}${window.location.hash}`);
   }
   if (!accessToken) return;
   try {
     const payment = await api(`/payments/${encodeURIComponent(paymentId)}`);
     if (payment.status === "success") {
-      sessionStorage.removeItem("studyflow-pending-payment");
+      preferences.session.removeItem("studyflow-pending-payment");
       alert(t("paymentSuccess"));
       await openLearnerCourse(payment.course_id);
       loadDashboard();
     } else if (["failed", "cancelled", "reverted"].includes(payment.status)) {
-      sessionStorage.removeItem("studyflow-pending-payment");
+      preferences.session.removeItem("studyflow-pending-payment");
       alert(t("paymentError"));
     } else {
       alert(t("paymentPending"));
@@ -2328,7 +2483,7 @@ async function loadCourses() {
   const query = params.toString();
   try {
     const courses = await api(`/courses/catalog?${query}`, {
-      signal: AbortSignal.timeout(CATALOG_REQUEST_TIMEOUT_MS),
+      timeout: CATALOG_REQUEST_TIMEOUT_MS,
     });
     if (requestId !== catalogRequestId) return;
     renderCourses(courses, Boolean(search));
@@ -3426,7 +3581,11 @@ async function loadDashboard() {
     const account = await api("/auth/me");
     if (!isCurrent()) return;
     user = account;
-    updateAuthUI();
+    const accountLanguage = preferences.validLanguage(account.preferred_language);
+    if (!chosenLanguage && accountLanguage && accountLanguage !== language) {
+      setLanguage(accountLanguage, false);
+      preferences.saveLanguage(accountLanguage);
+    } else updateAuthUI();
     const catalog = loadCourses();
     if (user.account_type === "author") {
       await Promise.all([catalog, loadInstructorCourses()]);
@@ -3471,7 +3630,7 @@ async function loadDashboard() {
       user = null;
       learnerEnrollments = [];
       showMyCourses();
-      localStorage.removeItem("studyflow-token");
+      preferences.local.removeItem("studyflow-token");
       updateAuthUI();
     }
   }
@@ -3513,7 +3672,7 @@ function mountLessonNote(panel, accountId, lessonId) {
   const status = form.querySelector(".lesson-note-status");
   let saved = "";
   try {
-    saved = localStorage.getItem(key) ?? "";
+    saved = preferences.local.getItem(key) ?? "";
     note.value = saved;
   } catch {
     status.textContent = c.loadError;
@@ -3527,8 +3686,8 @@ function mountLessonNote(panel, accountId, lessonId) {
     if (user?.id !== accountId || save.disabled) return;
     const value = note.value.trim();
     try {
-      if (value) localStorage.setItem(key, value);
-      else localStorage.removeItem(key);
+      if (value) preferences.local.setItem(key, value);
+      else preferences.local.removeItem(key);
       saved = value;
       note.value = value;
       save.disabled = true;
@@ -3541,7 +3700,6 @@ function mountLessonNote(panel, accountId, lessonId) {
 
 function renderLearnerCourse(enrollment, lessons, progress, signal, rememberInitialLesson) {
   const container = $("#activeCourse");
-  const courseId = enrollment.course_id;
   const completed =
     progress.total_lessons > 0 && progress.completed_lessons === progress.total_lessons;
   const items = lessons
@@ -3562,8 +3720,9 @@ function renderLearnerCourse(enrollment, lessons, progress, signal, rememberInit
       "afterbegin",
       renderLessonBanner(lesson) + contentTranslationNotice(lesson),
     );
-    host.insertAdjacentHTML("beforeend", renderLessonResource(lesson));
-    setupVideoCompletion(host.closest(".lesson-item"), courseId, lesson);
+    if (lesson.resource_type !== "video" && !lesson.external_video_url) {
+      host.insertAdjacentHTML("beforeend", renderLessonResource(lesson));
+    }
   });
 
   bindLearnerCourseActions(container, enrollment, lessonById, signal, rememberInitialLesson);
@@ -3660,6 +3819,49 @@ function bindLearnerCourseActions(
       const opened = panel.classList.toggle("open");
       const lessonId = panel.id.slice("lesson-".length);
       button.textContent = opened ? "⌃" : "⌄";
+      const lesson = lessonById.get(lessonId);
+      if (
+        opened &&
+        !panel.dataset.videoMounted &&
+        (lesson.resource_type === "video" || lesson.external_video_url)
+      ) {
+        panel.dataset.videoMounted = "true";
+        panel.insertAdjacentHTML("beforeend", renderLessonResource(lesson));
+        const player = panel.querySelector("[data-video-player]");
+        if (player) {
+          const retry = panel.querySelector("[data-video-retry]");
+          const error = panel.querySelector("[data-video-error]");
+          const initial = player.innerHTML;
+          const start = () => {
+            const current = player.firstElementChild;
+            setupVideoCompletion(
+              panel.closest(".lesson-item"),
+              courseId,
+              lesson,
+              (failed = true) => {
+                if (!current.isConnected) return;
+                error.hidden = !failed;
+                retry.hidden = !failed;
+              },
+            );
+          };
+          retry.addEventListener("click", () => {
+            error.hidden = true;
+            retry.hidden = true;
+            player.innerHTML = initial;
+            start();
+          });
+          panel.querySelector("[data-lesson-browser]").addEventListener("click", () => {
+            browserHandoffLesson = lessonId;
+            browserHandoff.hidden = false;
+            browserHandoff.open = true;
+            updateBrowserHandoff();
+            browserHandoff.scrollIntoView({ block: "center" });
+            browserHandoff.querySelector("summary").focus({ preventScroll: true });
+          });
+          start();
+        }
+      }
       if (opened && (event.isTrusted || rememberInitialLesson)) {
         saveResumeLesson({
           courseId,
@@ -3675,7 +3877,7 @@ function bindLearnerCourseActions(
         panel.dataset.assignmentLoaded = "true";
         api(
           `/courses/${courseId}/lessons/${lessonId}/assignment?language=${encodeURIComponent(language)}`,
-          { signal: AbortSignal.any([signal, AbortSignal.timeout(CATALOG_REQUEST_TIMEOUT_MS)]) },
+          { signal, timeout: CATALOG_REQUEST_TIMEOUT_MS },
         )
           .then((assignment) => {
             if (!assignment || !panel.isConnected) return;
@@ -3975,12 +4177,15 @@ $("#courseSearch").addEventListener("keydown", (event) => {
     requestSearchRecommendations();
   }
 });
-langPicker.addEventListener("change", async () => {
-  setLanguage(langPicker.value, false);
+langPicker.addEventListener("change", () => {
+  const lessonId = document.querySelector("#activeCourse .lesson-content.open")?.id.slice(7);
+  chosenLanguage = langPicker.value;
+  preferences.saveLanguage(chosenLanguage, true);
+  setLanguage(chosenLanguage, false);
   if (accessToken) {
-    await updateLanguagePreference();
+    void updateLanguagePreference();
     learnerEnrollments = [];
-    if (activeCourseId) openLearnerCourse(activeCourseId);
+    if (activeCourseId) openLearnerCourse(activeCourseId, { lessonId });
     loadDashboard();
   } else loadCourses();
 });
@@ -4001,7 +4206,7 @@ $("#loginButton").addEventListener("click", () =>
     ? (user?.account_type === "author" ? $("#myCourses") : $("#myLearning")).scrollIntoView({
         behavior: "smooth",
       })
-    : (window.location.href = "/app/learner-login.html"),
+    : (window.location.href = languageUrl("/app/learner-login.html").href),
 );
 $("#logoutButton").addEventListener("click", () => {
   showMyCourses();
@@ -4009,7 +4214,7 @@ $("#logoutButton").addEventListener("click", () => {
   $("#enrolledCourses").replaceChildren();
   accessToken = null;
   user = null;
-  localStorage.removeItem("studyflow-token");
+  preferences.local.removeItem("studyflow-token");
   updateAuthUI();
   loadCourses();
 });
@@ -4021,7 +4226,7 @@ $("#registerTab").addEventListener("click", () => setAuthMode("register"));
       ? (user?.account_type === "author" ? $("#myCourses") : $("#myLearning")).scrollIntoView({
           behavior: "smooth",
         })
-      : (window.location.href = "/app/learner-login.html"),
+      : (window.location.href = languageUrl("/app/learner-login.html").href),
   ),
 );
 const mobileNavToggle = $("#mobileNavToggle");
@@ -4153,10 +4358,10 @@ form.addEventListener("submit", async (event) => {
       body: JSON.stringify({ email: values.email, password: values.password }),
     });
     accessToken = result.access_token;
-    localStorage.setItem("studyflow-token", accessToken);
+    preferences.local.setItem("studyflow-token", accessToken);
     user = await api("/auth/me");
     if (newAccount) await registerPasskey();
-    language = user.preferred_language || language;
+    language = chosenLanguage || preferences.validLanguage(user.preferred_language) || language;
     setLanguage(language, false);
     message.className = "form-message success";
     message.textContent = t(authMode === "register" ? "registerSuccess" : "loginSuccess");
@@ -4169,6 +4374,78 @@ form.addEventListener("submit", async (event) => {
   } finally {
     submit.disabled = false;
   }
+});
+
+function languageUrl(path) {
+  const url = new URL(path, location.origin);
+  url.searchParams.set("lang", language);
+  return url;
+}
+
+function browserLessonUrl(lessonId) {
+  const url = languageUrl("/app/");
+  if (activeCourseId) {
+    url.searchParams.set("course", activeCourseId);
+    const openLesson =
+      lessonId || document.querySelector("#activeCourse .lesson-content.open")?.id.slice(7);
+    if (openLesson) url.searchParams.set("lesson", openLesson);
+  } else {
+    // Preserve public navigation state without carrying checkout or account parameters.
+    const current = new URL(location.href);
+    for (const key of ["course", "lesson", "view"]) {
+      if (current.searchParams.has(key)) url.searchParams.set(key, current.searchParams.get(key));
+    }
+    if (["#how", "#courses", "#myLearning"].includes(current.hash)) url.hash = current.hash;
+  }
+  return url;
+}
+
+const browserHandoff = $("#browserHandoff");
+const browserAgent = navigator.userAgent;
+const android = /Android/i.test(browserAgent);
+const embeddedBrowser =
+  /Instagram|FBAN|FBAV|Line\/|Snapchat|Telegram|TikTok|Bytedance|; wv\)/i.test(browserAgent) ||
+  (/iPhone|iPad|iPod/i.test(browserAgent) &&
+    /AppleWebKit/i.test(browserAgent) &&
+    !/Safari|CriOS|FxiOS|EdgiOS/i.test(browserAgent));
+let browserHandoffLesson;
+
+function updateBrowserHandoff() {
+  const url = browserLessonUrl(browserHandoffLesson);
+  $("#browserHandoffUrl").value = url.href;
+  if (android && url.protocol === "https:") {
+    const chrome = $("#openChrome");
+    const target = url.href.replace(/^https:\/\//, "");
+    chrome.href = `intent://${target}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(url.href)};end`;
+    chrome.hidden = false;
+  }
+}
+
+if (embeddedBrowser || new URLSearchParams(location.search).get("open") === "browser") {
+  browserHandoff.hidden = false;
+}
+browserHandoff.addEventListener("toggle", () => {
+  if (browserHandoff.open) updateBrowserHandoff();
+});
+$("#openChrome").addEventListener("click", updateBrowserHandoff);
+$("#copyBrowserLink").addEventListener("click", async () => {
+  updateBrowserHandoff();
+  const field = $("#browserHandoffUrl");
+  try {
+    await navigator.clipboard.writeText(field.value);
+    $("#browserHandoffStatus").textContent = t("browserLinkCopied");
+  } catch {
+    field.hidden = false;
+    field.focus();
+    field.select();
+    $("#browserHandoffStatus").textContent = t("browserCopyManual");
+  }
+});
+
+document.querySelectorAll('#mainNav a[href$=".html"]').forEach((link) => {
+  link.addEventListener("click", () => {
+    link.href = languageUrl(link.href).href;
+  });
 });
 
 setLanguage(language, false);

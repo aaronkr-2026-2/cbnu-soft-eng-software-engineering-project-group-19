@@ -112,7 +112,7 @@ const languageSelect = document.querySelector("#language");
 const codeInput = document.querySelector("#certificateCode");
 const resultBox = document.querySelector("#verificationResult");
 const query = new URLSearchParams(location.search);
-let language = query.get("lang") || localStorage.getItem("studyflow-language") || "uz";
+let language = window.ScholwardPreferences.selectedLanguage() || "uz";
 let requestedCode = "";
 let verificationRequest = 0;
 let verificationStatus = null;
@@ -120,7 +120,7 @@ let verifiedCertificate = null;
 const labels = () => verifyCopy[language] || verifyCopy.uz;
 function applyLanguage(code) {
   language = Object.hasOwn(verifyCopy, code) ? code : "uz";
-  localStorage.setItem("studyflow-language", language);
+  window.ScholwardPreferences.saveLanguage(language, true);
   document.documentElement.lang = language;
   languageSelect.value = language;
   document.querySelectorAll("[data-i18n]").forEach((element) => {

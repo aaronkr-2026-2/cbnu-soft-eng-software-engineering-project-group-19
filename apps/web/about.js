@@ -103,8 +103,8 @@ function updateAboutLanguage(language) {
   });
 }
 
-updateAboutLanguage(localStorage.getItem("studyflow-language"));
+updateAboutLanguage(window.ScholwardPreferences.selectedLanguage());
 aboutLanguage.addEventListener("change", () => {
-  localStorage.setItem("studyflow-language", aboutLanguage.value);
+  window.ScholwardPreferences.saveLanguage(aboutLanguage.value, true);
   updateAboutLanguage(aboutLanguage.value);
 });

@@ -1,3 +1,5 @@
+from time import monotonic
+
 from sqlalchemy.orm import Session
 
 from app.core.ai import (
@@ -24,7 +26,12 @@ from app.models import (
 )
 
 
-def get_course_translation(course: Course, language: str, db: Session) -> CourseTranslation | None:
+TRANSLATION_LIST_BUDGET_SECONDS = 12.0
+
+
+def get_course_translation(
+    course: Course, language: str, db: Session, *, deadline: float | None = None
+) -> CourseTranslation | None:
     if language == course.language:
         return None
     translation = (
@@ -37,8 +44,13 @@ def get_course_translation(course: Course, language: str, db: Session) -> Course
     )
     if translation:
         return translation
+    timeout = 60 if deadline is None else deadline - monotonic()
+    if timeout <= 0:
+        return None
     try:
-        localized = translate_course(course.title, course.description, course.category, language)
+        localized = translate_course(
+            course.title, course.description, course.category, language, timeout=timeout
+        )
     except (AIConfigurationError, AIProviderError):
         return None
     translation = CourseTranslation(course_id=course.id, language=language, **localized)
@@ -49,7 +61,7 @@ def get_course_translation(course: Course, language: str, db: Session) -> Course
 
 
 def get_lesson_translation(
-    lesson: Lesson, course: Course, language: str, db: Session
+    lesson: Lesson, course: Course, language: str, db: Session, *, deadline: float | None = None
 ) -> LessonTranslation | None:
     if language == course.language:
         return None
@@ -63,8 +75,11 @@ def get_lesson_translation(
     )
     if translation:
         return translation
+    timeout = 60 if deadline is None else deadline - monotonic()
+    if timeout <= 0:
+        return None
     try:
-        localized = translate_lesson(lesson.title, lesson.content, language)
+        localized = translate_lesson(lesson.title, lesson.content, language, timeout=timeout)
     except (AIConfigurationError, AIProviderError):
         return None
     translation = LessonTranslation(lesson_id=lesson.id, language=language, **localized)

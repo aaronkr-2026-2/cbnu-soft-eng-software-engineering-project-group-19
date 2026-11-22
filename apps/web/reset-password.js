@@ -90,7 +90,7 @@ const passwordToggles = Array.from(
     return { button, input, label: input.labels[0] };
   },
 );
-let language = localStorage.getItem("studyflow-language") || "uz";
+let language = window.ScholwardPreferences.selectedLanguage() || "uz";
 let passwordUpdated = false;
 
 function renderPasswordToggle({ button, input, label }) {
@@ -132,7 +132,7 @@ function render() {
 }
 languageSelect.addEventListener("change", () => {
   language = languageSelect.value;
-  localStorage.setItem("studyflow-language", language);
+  window.ScholwardPreferences.saveLanguage(language, true);
   render();
 });
 async function post(url, body) {

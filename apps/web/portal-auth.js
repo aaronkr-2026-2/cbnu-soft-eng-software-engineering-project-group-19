@@ -108,7 +108,7 @@ const message = document.querySelector("#portalMessage");
 const nameField = document.querySelector("#fullNameField");
 const languagePicker = document.querySelector("#portalLanguage");
 let mode = "login";
-let language = localStorage.getItem("studyflow-language") || "uz";
+let language = window.ScholwardPreferences.selectedLanguage() || "uz";
 
 function translate(key) {
   return portalCopy[language]?.[key] || portalCopy.uz[key] || key;
@@ -224,7 +224,7 @@ document.querySelector("#registerTab").addEventListener("click", () => {
 });
 languagePicker.addEventListener("change", () => {
   language = languagePicker.value;
-  localStorage.setItem("studyflow-language", language);
+  window.ScholwardPreferences.saveLanguage(language, true);
   renderText();
 });
 
@@ -249,7 +249,16 @@ form.addEventListener("submit", async (event) => {
       password: values.password,
       account_type: role,
     });
-    localStorage.setItem("studyflow-token", token.access_token);
+    if (!window.ScholwardPreferences.local.setItem("studyflow-token", token.access_token)) {
+      throw new Error(
+        {
+          uz: "Kirish uchun saytni Safari yoki Chrome’da oching.",
+          en: "Open this site in Safari or Chrome to sign in.",
+          ru: "Для входа откройте сайт в Safari или Chrome.",
+          ko: "로그인하려면 Safari나 Chrome에서 이 사이트를 여세요.",
+        }[language],
+      );
+    }
     if (mode === "register") {
       try {
         await setupPasskey(token.access_token);
@@ -257,7 +266,13 @@ form.addEventListener("submit", async (event) => {
         /* Continue to the profile so passkey setup can be retried there. */
       }
     }
-    window.location.replace("/app/");
+    const next = new URL("/app/", location.origin);
+    const previous = new URLSearchParams(location.search);
+    for (const key of ["course", "lesson", "view", "lang"]) {
+      if (previous.has(key))
+        next.searchParams.set(key, key === "lang" ? language : previous.get(key));
+    }
+    window.location.replace(next);
   } catch (error) {
     message.textContent = error.message || translate("genericError");
     message.className = "form-message";
