@@ -116,7 +116,32 @@
   border: 1px solid #e7cdb7;
   border-radius: 11px;
   background: #f8e6d5;
-  font-size: 17px;
+}
+
+.browser-window-icon {
+  position: relative;
+  width: 20px;
+  height: 16px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+}
+
+.browser-window-icon::before {
+  position: absolute;
+  top: 3px;
+  inset-inline: 0;
+  border-top: 1px solid currentColor;
+  content: "";
+}
+
+.browser-window-icon .icon-arrow {
+  position: absolute;
+  inset-inline-end: -4px;
+  top: -4px;
+  padding: 1px;
+  border-radius: 3px;
+  background: #f8e6d5;
+  font-size: 12px;
 }
 
 .browser-handoff-title {
