@@ -24,7 +24,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./style.css?v=scholward-13" />
-    <link rel="stylesheet" href="./media-content.css?v=3" />
+    <link rel="stylesheet" href="./media-content.css?v=2" />
     <link rel="stylesheet" href="/app/certificate.css?v=4" />
   </head>
   <body>
@@ -83,25 +83,21 @@
       </div>
     </header>
 
-    <section class="browser-handoff" id="browserHandoff" aria-label="External browser" hidden>
+    <details class="browser-handoff" id="browserHandoff" hidden>
+      <summary data-i18n="openInBrowser"></summary>
+      <p data-i18n="browserHandoffHelp"></p>
       <div class="browser-handoff-actions">
-        <a
-          class="button button-dark button-small"
-          id="openChrome"
-          data-i18n="openChrome"
-          hidden
-        ></a>
+        <a class="button button-outline button-small" id="openChrome" hidden>Chrome</a>
         <button
-          class="button button-outline button-small"
+          class="button button-dark button-small"
           id="copyBrowserLink"
           type="button"
           data-i18n="copyBrowserLink"
         ></button>
       </div>
-      <p data-i18n="browserHandoffHelp"></p>
       <input class="browser-handoff-url" id="browserHandoffUrl" type="url" readonly hidden />
       <p id="browserHandoffStatus" role="status"></p>
-    </section>
+    </details>
 
     <main>
       <section class="hero" id="heroSection">
@@ -420,6 +416,6 @@
     </dialog>
     <script src="/app/preferences.js?v=1" defer></script>
     <script src="/app/certificate.js?v=5" defer></script>
-    <script src="/app/app.js?v=scholward-17" defer></script>
+    <script src="/app/app.js?v=scholward-16" defer></script>
   </body>
 </html>
