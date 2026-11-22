@@ -4426,19 +4426,27 @@ if (embeddedBrowser || new URLSearchParams(location.search).get("open") === "bro
 }
 browserHandoff.addEventListener("toggle", () => {
   if (browserHandoff.open) updateBrowserHandoff();
+  else {
+    $("#browserHandoffStatus").textContent = "";
+    $("#browserHandoffUrl").hidden = true;
+  }
 });
 $("#openChrome").addEventListener("click", updateBrowserHandoff);
 $("#copyBrowserLink").addEventListener("click", async () => {
   updateBrowserHandoff();
   const field = $("#browserHandoffUrl");
+  const status = $("#browserHandoffStatus");
   try {
     await navigator.clipboard.writeText(field.value);
-    $("#browserHandoffStatus").textContent = t("browserLinkCopied");
+    field.hidden = true;
+    status.dataset.state = "copied";
+    status.textContent = t("browserLinkCopied");
   } catch {
     field.hidden = false;
     field.focus();
     field.select();
-    $("#browserHandoffStatus").textContent = t("browserCopyManual");
+    status.dataset.state = "manual";
+    status.textContent = t("browserCopyManual");
   }
 });
 
