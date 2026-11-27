@@ -31,6 +31,8 @@ const copy = {
       "Ingliz, rus va koreys tilini mashq qiling yoki HTML, CSS va Python bilan ilk loyihangizni yarating.",
     openCampaignCatalog: "Barcha kurslarni ko‘rish",
     openLanguageCourses: "Til kurslari",
+    openItCourses: "IT kurslari",
+    clearCatalogItFilter: "Filtrni olib tashlash",
     dismissLanguageCampaign: "Bannerni yopish",
     languageCourseCategory: "Til kurslari",
     heroBody:
@@ -140,6 +142,8 @@ const copy = {
       "Practise Uzbek, Russian, or Korean, or build your first project with HTML, CSS, and Python.",
     openCampaignCatalog: "Explore all courses",
     openLanguageCourses: "Language courses",
+    openItCourses: "IT courses",
+    clearCatalogItFilter: "Clear filter",
     dismissLanguageCampaign: "Dismiss banner",
     languageCourseCategory: "Language courses",
     heroBody:
@@ -243,11 +247,13 @@ const copy = {
     getStarted: "Начать",
     eyebrow: "Обучение в вашем ритме",
     heroTitle: "Учитесь в своём темпе.",
-    languageCampaignTitle: "Учите языки. Создавайте код.",
+    languageCampaignTitle: "Изучайте языки и программирование",
     languageCampaignBody:
-      "Практикуйте узбекский, английский или корейский или создайте первый проект на HTML, CSS и Python.",
+      "Практикуйте узбекский, английский или корейский. Создайте первый проект на HTML, CSS или Python.",
     openCampaignCatalog: "Смотреть все курсы",
     openLanguageCourses: "Языковые курсы",
+    openItCourses: "IT-курсы",
+    clearCatalogItFilter: "Сбросить фильтр",
     dismissLanguageCampaign: "Закрыть баннер",
     languageCourseCategory: "Языковые курсы",
     heroBody: "Находите интересные курсы, выполняйте практические задания и следите за прогрессом.",
@@ -354,6 +360,8 @@ const copy = {
       "우즈베크어, 영어, 러시아어를 연습하거나 HTML, CSS, Python으로 첫 프로젝트를 만들어 보세요.",
     openCampaignCatalog: "모든 강좌 보기",
     openLanguageCourses: "외국어 강좌",
+    openItCourses: "IT 강좌",
+    clearCatalogItFilter: "필터 지우기",
     dismissLanguageCampaign: "배너 닫기",
     languageCourseCategory: "외국어 강좌",
     heroBody: "관심 있는 강의를 찾고, 실습을 하며, 학습 진도를 확인하세요.",
@@ -1790,6 +1798,18 @@ let chosenLanguage = preferences.selectedLanguage();
 let language = chosenLanguage || "uz";
 const CATALOG_REQUEST_TIMEOUT_MS = 75_000;
 let catalogRequestId = 0;
+let filterItCourses = false;
+const itCourseCategories = new Set([
+  "it",
+  "veb dasturlash",
+  "dasturlash",
+  "web development",
+  "programming",
+  "веб-разработка",
+  "программирование",
+  "웹 개발",
+  "프로그래밍",
+]);
 let dashboardRequestId = 0;
 let learnerEnrollments = [];
 let activeCourseId = null;
@@ -2519,7 +2539,10 @@ async function loadCourses() {
       timeout: CATALOG_REQUEST_TIMEOUT_MS,
     });
     if (requestId !== catalogRequestId) return;
-    renderCourses(courses, Boolean(search));
+    const visibleCourses = filterItCourses
+      ? courses.filter(({ category }) => itCourseCategories.has(category.trim().toLowerCase()))
+      : courses;
+    renderCourses(visibleCourses, Boolean(search) || filterItCourses);
   } catch (error) {
     if (requestId !== catalogRequestId) return;
     const errorKey =
@@ -4500,16 +4523,29 @@ $("#dismissLanguageCampaign").addEventListener("click", () => {
   dismissLanguageCampaign();
   $("#heroSignup").focus({ preventScroll: true });
 });
-function openCampaignCatalog(event, search) {
+function setCatalogItFilter(enabled) {
+  filterItCourses = enabled;
+  $("#catalogItFilter").hidden = !enabled;
+}
+
+$("#clearCatalogItFilter").addEventListener("click", () => {
+  setCatalogItFilter(false);
+  $("#courseSearch").focus({ preventScroll: true });
+  void loadCourses();
+});
+
+function openCampaignCatalog(event, search, itOnly = false) {
   event.preventDefault();
   dismissLanguageCampaign();
   clearTimeout(courseSearchTimer);
+  setCatalogItFilter(itOnly);
   $("#courseSearch").value = search;
   void loadCourses();
-  $("#courseSearch").focus({ preventScroll: true });
+  $("#catalogTitle").focus({ preventScroll: true });
   $("#courses").scrollIntoView({ block: "start" });
 }
 $("#openCampaignCatalog").addEventListener("click", (event) => openCampaignCatalog(event, ""));
+$("#openItCourses").addEventListener("click", (event) => openCampaignCatalog(event, "", true));
 $("#openLanguageCourses").addEventListener("click", (event) =>
   openCampaignCatalog(event, t("languageCourseCategory")),
 );

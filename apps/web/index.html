@@ -23,7 +23,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./style.css?v=scholward-15" />
+    <link rel="stylesheet" href="./style.css?v=scholward-16" />
     <link rel="stylesheet" href="./media-content.css?v=5" />
     <link rel="stylesheet" href="/app/certificate.css?v=4" />
   </head>
@@ -139,6 +139,12 @@
               id="openLanguageCourses"
               data-i18n="openLanguageCourses"
             ></a>
+            <a
+              class="language-campaign-secondary"
+              href="#courses"
+              id="openItCourses"
+              data-i18n="openItCourses"
+            ></a>
           </div>
         </div>
         <div class="language-campaign-art" aria-hidden="true">
@@ -230,7 +236,7 @@
 
       <section class="course-section" id="courses" aria-labelledby="catalogTitle">
         <div class="catalog-heading">
-          <h2 id="catalogTitle" data-i18n="exploreTitle"></h2>
+          <h2 id="catalogTitle" tabindex="-1" data-i18n="exploreTitle"></h2>
           <div class="marketplace-search" role="search">
             <label class="sr-only" for="courseSearch" data-i18n="courseSearchLabel"></label>
             <input id="courseSearch" type="search" maxlength="100" />
@@ -241,6 +247,15 @@
               </svg>
             </button>
           </div>
+        </div>
+        <div class="catalog-filter" id="catalogItFilter" hidden>
+          <span data-i18n="openItCourses"></span>
+          <button
+            class="button button-outline"
+            id="clearCatalogItFilter"
+            type="button"
+            data-i18n="clearCatalogItFilter"
+          ></button>
         </div>
         <div class="course-grid" id="courseGrid">
           <div class="course-placeholder" data-i18n="coursesHint"></div>
@@ -464,6 +479,6 @@
     </dialog>
     <script src="/app/preferences.js?v=1" defer></script>
     <script src="/app/certificate.js?v=5" defer></script>
-    <script src="/app/app.js?v=scholward-21" defer></script>
+    <script src="/app/app.js?v=scholward-22" defer></script>
   </body>
 </html>

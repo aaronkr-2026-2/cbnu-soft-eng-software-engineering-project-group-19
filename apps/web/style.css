@@ -3578,11 +3578,12 @@ body[dir="rtl"] {
 .language-campaign {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(230px, 38%);
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 37%);
   align-items: center;
   isolation: isolate;
   overflow: hidden;
-  margin-bottom: 1.2rem;
+  width: min(calc(100% - 2rem), 1200px);
+  margin: clamp(0.65rem, 1.5vw, 1.15rem) auto 1.25rem;
   border: 1px solid #4a6959;
   border-radius: clamp(1rem, 3vw, 1.75rem);
   color: #fff6e8;
@@ -3594,19 +3595,18 @@ body[dir="rtl"] {
 }
 .language-campaign-copy {
   z-index: 1;
-  padding: clamp(1.4rem, 4.25vw, 3.4rem);
+  padding: clamp(1rem, 2.5vw, 1.9rem) clamp(1.1rem, 3.6vw, 2.8rem);
 }
 .language-campaign-copy h2 {
-  max-width: 19ch;
+  max-width: 26ch;
   margin: 0;
   color: inherit;
-  font: 800 clamp(1.75rem, 3.35vw, 3.3rem) / 1.08 var(--display);
-  letter-spacing: -0.055em;
-  text-wrap: balance;
+  font: 800 clamp(1.55rem, 3vw, 2.45rem) / 1.08 var(--display);
+  letter-spacing: -0.04em;
 }
 .language-campaign-copy p {
-  max-width: 50ch;
-  margin: 0.8rem 0 0;
+  max-width: 56ch;
+  margin: 0.55rem 0 0;
   color: #d9e4d8;
   font-size: clamp(0.96rem, 1.35vw, 1.1rem);
   line-height: 1.55;
@@ -3614,7 +3614,7 @@ body[dir="rtl"] {
 .language-campaign-art {
   position: absolute;
   inset: 0 0 0 auto;
-  width: 47%;
+  width: 40%;
   background: #0c2219;
 }
 .language-campaign-art img {
@@ -3625,7 +3625,7 @@ body[dir="rtl"] {
 .language-campaign-art::after {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, #142f27, transparent 28%);
+  background: linear-gradient(90deg, #142f27, transparent 52%);
   content: "";
 }
 .language-campaign-actions {
@@ -3633,7 +3633,7 @@ body[dir="rtl"] {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 1.35rem;
-  margin-top: 1.35rem;
+  margin-top: 0.9rem;
 }
 .language-campaign-action.button {
   min-height: 44px;
@@ -3679,26 +3679,43 @@ body[dir="rtl"] {
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    width: calc(100% - 1.5rem);
   }
   .language-campaign-copy {
-    padding-top: 2rem;
+    padding-top: 1.35rem;
   }
   .language-campaign-copy h2 {
-    max-width: 20ch;
-    padding-right: 30px;
+    max-width: 25ch;
+    padding-right: 36px;
   }
   .language-campaign-art {
-    position: relative;
-    width: 100%;
-    height: clamp(115px, 38vw, 200px);
+    width: 50%;
+    opacity: 0.3;
   }
   .language-campaign-art img {
-    object-position: center 52%;
+    object-position: 60% center;
   }
   .language-campaign-art::after {
-    background: linear-gradient(#142f27, transparent 44%);
+    background: linear-gradient(90deg, #142f27, transparent 76%);
   }
   .language-campaign-actions {
-    margin-top: 0.85rem;
+    margin-top: 0.6rem;
   }
+}
+
+.catalog-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0 0 1rem;
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+.catalog-filter[hidden] {
+  display: none;
+}
+.catalog-filter .button {
+  min-height: 44px;
+  padding-block: 0.45rem;
 }
