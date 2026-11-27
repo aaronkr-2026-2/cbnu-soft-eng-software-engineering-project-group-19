@@ -347,6 +347,27 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     gap: 11,
   },
+  courseListCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: color.line,
+    backgroundColor: color.white,
+  },
+  courseListLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 11,
+    minHeight: 48,
+    paddingHorizontal: 14,
+  },
+  courseRemoveAction: {
+    minHeight: 44,
+    justifyContent: "center",
+    paddingHorizontal: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: color.line,
+  },
+  courseRemoveLabel: { color: color.muted, fontSize: 13, fontWeight: "600" },
   listTitle: { color: color.ink, fontSize: 16, fontWeight: "700" },
   step: {
     minWidth: 30,

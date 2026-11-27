@@ -20,6 +20,8 @@ Connect your phone and computer to the same Wi-Fi network. On Android, scan the 
 - Watch videos in the app and resume from your saved position. You can also open the video in your browser. Progress refreshes automatically when you return to the app.
 - Take lesson quizzes and review your scores and previous attempts.
 - Check your final exam status after completing the lessons. To take the final exam or request a certificate, open SCHOLWARD Academy in your browser and verify with a passkey. If prompted, sign in with the same learner account.
+- Remove a course from **My courses** and add it back from the catalog at any time. Course progress and certificates are retained.
+- Open the web author portal from the sign-in screen.
 - View issued certificates under **My Certificates** and open their verification links.
 
 Enroll in paid courses on the [SCHOLWARD Academy website](https://scholward-academy.vercel.app/app/).
@@ -31,4 +33,4 @@ npm run check
 npx expo export --platform ios --platform android
 ```
 
-The app connects to `https://studyflow-web-1hab.vercel.app` by default. To use a test server, set `EXPO_PUBLIC_STUDYFLOW_API_URL` before starting Expo.
+The app connects to `https://scholward-academy.vercel.app` by default. To use a test server, set `EXPO_PUBLIC_STUDYFLOW_API_URL` before starting Expo.

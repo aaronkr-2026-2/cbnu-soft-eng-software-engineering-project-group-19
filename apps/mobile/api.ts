@@ -1,7 +1,9 @@
-export const API_ORIGIN = (
-  process.env.EXPO_PUBLIC_STUDYFLOW_API_URL || "https://studyflow-web-1hab.vercel.app"
-).replace(/\/$/, "");
-export const PUBLIC_WEB_APP = "https://scholward-academy.vercel.app/app/";
+const PUBLIC_ORIGIN = "https://scholward-academy.vercel.app";
+export const API_ORIGIN = (process.env.EXPO_PUBLIC_STUDYFLOW_API_URL || PUBLIC_ORIGIN).replace(
+  /\/$/,
+  "",
+);
+export const PUBLIC_WEB_APP = PUBLIC_ORIGIN + "/app/";
 export const WEB_APP = "https://studyflow-web-1hab.vercel.app/app/";
 
 export const languages = { uz: "O‘zbekcha", en: "English", ru: "Русский", ko: "한국어" };
@@ -16,7 +18,7 @@ export type Course = {
   banner_url: string | null;
 };
 
-export type Enrollment = { course_id: string; course_title: string };
+export type Enrollment = { course_id: string; course_title: string; is_hidden?: boolean };
 export type Selection = { id: string; title: string; price?: number; lessonId?: string };
 export type LessonMaterial = { id: string; title: string; resource_url: string };
 export type Lesson = {
@@ -53,7 +55,7 @@ export class ApiError extends Error {
 
 async function request<T>(
   path: string,
-  options: { signal?: AbortSignal; body?: object; token?: string; method?: "POST" } = {},
+  options: { signal?: AbortSignal; body?: object; token?: string; method?: "POST" | "DELETE" } = {},
 ): Promise<T> {
   const controller = new AbortController();
   const cancel = () => controller.abort();
@@ -71,6 +73,7 @@ async function request<T>(
       },
       body: options.body ? JSON.stringify(options.body) : undefined,
     });
+    if (response.status === 204 && options.method === "DELETE") return null as T;
     const payload = await response.json().catch(() => null);
     if (!response.ok) {
       const detail = payload?.detail;
@@ -153,6 +156,13 @@ export function getCatalog(language: CourseLanguage, signal: AbortSignal) {
 
 export function getEnrollments(token: string, language: CourseLanguage, signal: AbortSignal) {
   return request<Enrollment[]>(`/enrollments/me?language=${language}`, { token, signal });
+}
+
+export function removeEnrollment(token: string, courseId: string) {
+  return request<null>(`/enrollments/me/${encodeURIComponent(courseId)}`, {
+    token,
+    method: "DELETE",
+  });
 }
 
 export function loadProgress(token: string, courseId: string, signal?: AbortSignal) {

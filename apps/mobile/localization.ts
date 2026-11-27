@@ -265,6 +265,25 @@ const messages = {
   ],
   catalog: ["Katalog", "Catalog", "Каталог", "카탈로그"],
   myCourses: ["Kurslarim", "My courses", "Мои курсы", "내 강의"],
+  authorPortal: [
+    "Muallif panelini brauzerda ochish",
+    "Open author portal in browser",
+    "Открыть кабинет автора в браузере",
+    "브라우저에서 강사 페이지 열기",
+  ],
+  cancel: ["Bekor qilish", "Cancel", "Отмена", "취소"],
+  removeCourse: [
+    "Ro‘yxatdan olib tashlash",
+    "Remove from list",
+    "Убрать из списка",
+    "목록에서 제거",
+  ],
+  removeCourseConfirm: [
+    "Kursni katalogdan qayta qo‘sha olasiz. Avvalgi natijalaringiz saqlanadi.",
+    "You can add it again from the catalog. Your progress is saved.",
+    "Вы сможете добавить курс снова из каталога. Ваш прогресс сохранится.",
+    "카탈로그에서 다시 추가할 수 있습니다. 학습 기록은 저장됩니다.",
+  ],
   noEnrollments: [
     "Hali kursga yozilmagansiz.",
     "You haven’t enrolled in any courses yet.",

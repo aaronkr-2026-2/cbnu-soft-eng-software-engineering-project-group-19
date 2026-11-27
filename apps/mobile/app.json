@@ -2,17 +2,18 @@
   "expo": {
     "name": "SCHOLWARD Academy",
     "slug": "studyflow-mobile",
-    "version": "0.1.17",
+    "version": "0.1.18",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "platforms": ["ios", "android"],
     "plugins": ["expo-secure-store", "expo-image"],
     "ios": {
-      "bundleIdentifier": "com.mirzakhidovic.studyflow"
+      "bundleIdentifier": "com.mirzakhidovic.studyflow",
+      "buildNumber": "19"
     },
     "android": {
       "package": "com.mirzakhidovic.studyflow",
-      "versionCode": 18,
+      "versionCode": 19,
       "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.READ_MEDIA_IMAGES",

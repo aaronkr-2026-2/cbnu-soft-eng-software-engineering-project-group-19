@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import {
   ActivityIndicator,
+  Alert,
   BackHandler,
   Image,
   KeyboardAvoidingView,
@@ -21,7 +22,6 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import {
   ApiError,
   PUBLIC_WEB_APP,
-  WEB_APP,
   completeLesson,
   courseWebLink,
   getCatalog,
@@ -32,6 +32,7 @@ import {
   loadProgress,
   loadSession,
   requestPasswordReset,
+  removeEnrollment,
   resourceUrl,
   signIn,
 } from "./api";
@@ -49,7 +50,7 @@ import { LocaleContext, useTranslate } from "./localization";
 const SESSION_KEY = "studyflow-learner-token";
 const LANGUAGE_KEY = "studyflow-mobile-language";
 const LANGUAGE_CAMPAIGN_KEY = "scholward-course-campaign-v2";
-const FOUNDER_PHOTO = { uri: WEB_APP + "founder.webp?v=portrait-2" };
+const FOUNDER_PHOTO = { uri: PUBLIC_WEB_APP + "founder.webp?v=portrait-2" };
 const RESUME_KEY_PREFIX = "studyflow-resume-";
 const ID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
 type ResumeLesson = { id: string; title: string; lessonId: string; lessonTitle: string };
@@ -436,6 +437,14 @@ function Login({
               disabled={pending}
               secondary
             />
+            <Button
+              title={t("authorPortal")}
+              onPress={() =>
+                void Linking.openURL(PUBLIC_WEB_APP + "author-login.html").catch(setError)
+              }
+              disabled={pending}
+              secondary
+            />
             <Button title={t("backToCatalog")} onPress={cancel} disabled={pending} secondary />
           </>
         )}
@@ -451,6 +460,7 @@ function MyCourses({
   onSignOut,
   onExpired,
   onChangePassword,
+  onCourseRemoved,
   resumeCard,
 }: {
   session: Session;
@@ -459,6 +469,7 @@ function MyCourses({
   onSignOut: () => void;
   onExpired: () => void;
   onChangePassword: () => void;
+  onCourseRemoved: (courseId: string) => void;
   resumeCard: ReactNode;
 }) {
   const t = useTranslate();
@@ -467,6 +478,34 @@ function MyCourses({
     [session.token, language],
   );
   const { value, loading, error, refresh } = useResource(load);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [removalError, setRemovalError] = useState<unknown>();
+  const courses = value?.filter((course) => !course.is_hidden);
+  useRefreshOnReturn(refresh);
+
+  async function removeCourse(courseId: string) {
+    if (removing) return;
+    setRemoving(courseId);
+    setRemovalError(undefined);
+    try {
+      await removeEnrollment(session.token, courseId);
+      onCourseRemoved(courseId);
+      refresh();
+    } catch (failure) {
+      if (failure instanceof ApiError && failure.status === 401) onExpired();
+      else setRemovalError(failure);
+    } finally {
+      setRemoving(null);
+    }
+  }
+
+  function confirmRemoval(courseId: string) {
+    Alert.alert(t("removeCourse"), t("removeCourseConfirm"), [
+      { text: t("cancel"), style: "cancel" },
+      { text: t("removeCourse"), style: "destructive", onPress: () => void removeCourse(courseId) },
+    ]);
+  }
+
   useEffect(() => {
     if (error instanceof ApiError && error.status === 401) onExpired();
   }, [error, onExpired]);
@@ -479,19 +518,31 @@ function MyCourses({
       {resumeCard}
       <Button title={t("changePassword")} onPress={onChangePassword} secondary />
       {error !== undefined && <ErrorNotice error={error} retry={refresh} />}
-      {!loading && value?.length === 0 && <Text style={styles.body}>{t("noEnrollments")}</Text>}
-      {value?.map((course) => (
-        <Pressable
-          key={course.course_id}
-          accessibilityRole="button"
-          onPress={() => openCourse({ id: course.course_id, title: course.course_title })}
-          style={styles.listItem}
-        >
-          <Text style={[styles.listTitle, styles.fill]}>{course.course_title}</Text>
-          <Text style={styles.category} accessibilityElementsHidden>
-            →
-          </Text>
-        </Pressable>
+      {removalError !== undefined && <ErrorNotice error={removalError} />}
+      {!loading && courses?.length === 0 && <Text style={styles.body}>{t("noEnrollments")}</Text>}
+      {courses?.map((course) => (
+        <View key={course.course_id} style={styles.courseListCard}>
+          <Pressable
+            accessibilityRole="button"
+            disabled={removing === course.course_id}
+            onPress={() => openCourse({ id: course.course_id, title: course.course_title })}
+            style={styles.courseListLink}
+          >
+            <Text style={[styles.listTitle, styles.fill]}>{course.course_title}</Text>
+            <Text style={styles.category} accessibilityElementsHidden>
+              →
+            </Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: loading || removing !== null }}
+            disabled={loading || removing !== null}
+            onPress={() => confirmRemoval(course.course_id)}
+            style={styles.courseRemoveAction}
+          >
+            <Text style={styles.courseRemoveLabel}>{t("removeCourse")}</Text>
+          </Pressable>
+        </View>
       ))}
       <Button title={t("signOut")} onPress={onSignOut} secondary />
     </Content>
@@ -1171,6 +1222,9 @@ function StudyFlow({
               onSignOut={logOut}
               onExpired={expireSession}
               onChangePassword={() => setChangingPassword(true)}
+              onCourseRemoved={(courseId) => {
+                if (savedLesson?.id === courseId) saveResume(null);
+              }}
               resumeCard={resumeCard}
             />
           ) : (
