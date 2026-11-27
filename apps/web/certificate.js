@@ -68,7 +68,7 @@
     <div class="certificate-frame">
       <header class="certificate-header">
         <div class="certificate-logo">
-          <img src="/app/scholward-crest.svg" width="48" height="48" alt="">
+          <img src="/app/scholward-crest-sage.svg" width="48" height="48" alt="">
           <span class="certificate-wordmark">SCHOLWARD <span>Academy</span></span>
         </div>
         <div class="certificate-level">

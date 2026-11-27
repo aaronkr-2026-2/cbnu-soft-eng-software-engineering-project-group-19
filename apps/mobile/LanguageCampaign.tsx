@@ -45,8 +45,8 @@ export function LanguageCampaign({
       <Image
         accessibilityElementsHidden
         importantForAccessibility="no"
-        source={require("./assets/academy-study.jpg")}
-        contentFit="cover"
+        source={require("./assets/academy-lesson.webp")}
+        contentFit="contain"
         contentPosition="center"
         style={styles.art}
       />
@@ -112,6 +112,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textDecorationLine: "underline",
   },
-  art: { width: "100%", height: 160, backgroundColor: "#e7eddf" },
+  art: { width: "100%", height: 170, backgroundColor: "#b3c4b0" },
   pressed: { opacity: 0.75 },
 });

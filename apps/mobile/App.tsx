@@ -129,8 +129,8 @@ function AboutScreen() {
   return (
     <Content>
       <View style={styles.aboutHero}>
-        <Image
-          source={require("./assets/scholward-mark.png")}
+        <CourseImage
+          source={require("./assets/scholward-crest-sage.svg")}
           style={styles.aboutEmblem}
           accessible={false}
         />
@@ -1093,8 +1093,8 @@ function StudyFlow({
       </View>
       <View style={styles.header}>
         <View style={styles.brand}>
-          <Image
-            source={require("./assets/scholward-mark.png")}
+          <CourseImage
+            source={require("./assets/scholward-crest-sage.svg")}
             style={styles.logo}
             accessible={false}
           />

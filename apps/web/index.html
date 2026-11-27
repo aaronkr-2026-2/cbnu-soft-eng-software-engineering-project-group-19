@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f7f8f4" />
-    <link rel="icon" href="/app/scholward-crest.svg" type="image/svg+xml" />
+    <link rel="icon" href="/app/scholward-crest-sage.svg" type="image/svg+xml" />
     <title>SCHOLWARD Academy — Learn at your pace</title>
     <script>
       if (location.hostname === "127.0.0.1") {
@@ -23,7 +23,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./style.css?v=scholward-18" />
+    <link rel="stylesheet" href="./style.css?v=scholward-20" />
     <link rel="stylesheet" href="./media-content.css?v=5" />
     <link rel="stylesheet" href="/app/certificate.css?v=4" />
   </head>
@@ -32,7 +32,7 @@
       <a class="brand" href="/app" aria-label="SCHOLWARD Academy"
         ><img
           class="brand-mark"
-          src="/app/scholward-crest.svg"
+          src="/app/scholward-crest-sage.svg"
           width="32"
           height="32"
           alt=""
@@ -139,7 +139,13 @@
           </div>
         </div>
         <div class="hero-visual">
-          <img src="/app/academy-study.jpg" width="1050" height="788" alt="" fetchpriority="high" />
+          <img
+            src="/app/academy-lesson.webp"
+            width="1120"
+            height="747"
+            alt=""
+            fetchpriority="high"
+          />
         </div>
         <div class="hero-bottom">
           <div>
@@ -222,7 +228,7 @@
           </div>
         </div>
         <div class="language-campaign-art" aria-hidden="true">
-          <img src="./course-campaign.jpg" alt="" width="1024" height="576" loading="lazy" />
+          <img src="./academy-lesson.webp" alt="" width="1120" height="747" loading="lazy" />
         </div>
         <button class="language-campaign-close" type="button" id="dismissLanguageCampaign">
           <span aria-hidden="true">×</span>
@@ -416,12 +422,17 @@
       <a class="brand" href="/app"
         ><img
           class="brand-mark"
-          src="/app/scholward-crest.svg"
+          src="/app/scholward-crest-sage.svg"
           width="32"
           height="32"
           alt=""
         /><span class="brand-name">SCHOLWARD <span class="brand-academy">Academy</span></span></a
-      ><span data-i18n="footerText"></span><span>© 2026 SCHOLWARD Academy</span>
+      >
+      <nav class="footer-links">
+        <a href="#courses" data-i18n="browseCatalog"></a>
+        <a href="/app/about.html" data-i18n="aboutTitle"></a>
+      </nav>
+      <small>© 2026 SCHOLWARD Academy</small>
     </footer>
 
     <dialog id="courseDetailsDialog" class="course-details-dialog">
@@ -433,10 +444,13 @@
     <dialog id="authDialog" class="auth-dialog">
       <form method="dialog"><button class="dialog-close" aria-label="Close">×</button></form>
       <div class="auth-brand">
-        <img class="brand-mark" src="/app/scholward-crest.svg" width="32" height="32" alt="" /><span
-          class="brand-name"
-          >SCHOLWARD <span class="brand-academy">Academy</span></span
-        >
+        <img
+          class="brand-mark"
+          src="/app/scholward-crest-sage.svg"
+          width="32"
+          height="32"
+          alt=""
+        /><span class="brand-name">SCHOLWARD <span class="brand-academy">Academy</span></span>
       </div>
       <div class="auth-tabs">
         <button class="active" id="registerTab" data-i18n="register"></button
@@ -473,7 +487,7 @@
       <div id="finalExamBody" class="final-exam-body"></div>
     </dialog>
     <script src="/app/preferences.js?v=1" defer></script>
-    <script src="/app/certificate.js?v=5" defer></script>
+    <script src="/app/certificate.js?v=6" defer></script>
     <script src="/app/app.js?v=scholward-24" defer></script>
   </body>
 </html>
