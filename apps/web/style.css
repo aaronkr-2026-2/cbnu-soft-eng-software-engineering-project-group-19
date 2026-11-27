@@ -2394,6 +2394,7 @@ body[dir="rtl"] {
   object-fit: cover;
 }
 .profile-photo-controls {
+  min-width: 0;
   display: grid;
   gap: 6px;
 }
@@ -2406,6 +2407,8 @@ body[dir="rtl"] {
   font-weight: 600;
 }
 .profile-photo-controls input {
+  width: 100%;
+  min-width: 0;
   max-width: 320px;
   font: 11px var(--body);
 }
