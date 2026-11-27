@@ -6,6 +6,9 @@ const copy = {
     noCourseLessons: "Darslar ro‘yxati hozircha kiritilmagan.",
     enrollFromPreview: "Kursni boshlash",
     coursePreviewError: "Kurs ma’lumotlarini yuklab bo‘lmadi.",
+    authorPreviewButton: "O‘quvchi ko‘rinishida ko‘rish",
+    authorPreviewTitle: "O‘quvchi ko‘rinishi",
+    authorPreviewHint: "Kursga yozilish va natija saqlash bu ko‘rinishda o‘chirilgan.",
     courseLessonCount: "dars",
     moduleTitleLabel: "Modul nomi",
     modulePositionLabel: "Modul tartibi",
@@ -120,6 +123,9 @@ const copy = {
     noCourseLessons: "The lesson outline is not available yet.",
     enrollFromPreview: "Start this course",
     coursePreviewError: "Could not load course details.",
+    authorPreviewButton: "Preview as learner",
+    authorPreviewTitle: "Learner preview",
+    authorPreviewHint: "Enrollment and progress tracking are disabled in this preview.",
     courseLessonCount: "lessons",
     moduleTitleLabel: "Module title",
     modulePositionLabel: "Module order",
@@ -234,6 +240,9 @@ const copy = {
     noCourseLessons: "Список уроков пока не добавлен.",
     enrollFromPreview: "Начать курс",
     coursePreviewError: "Не удалось загрузить информацию о курсе.",
+    authorPreviewButton: "Посмотреть как ученик",
+    authorPreviewTitle: "Просмотр от лица ученика",
+    authorPreviewHint: "В режиме просмотра запись на курс и сохранение прогресса отключены.",
     courseLessonCount: "уроков",
     moduleTitleLabel: "Название модуля",
     modulePositionLabel: "Порядок модуля",
@@ -345,6 +354,9 @@ const copy = {
     noCourseLessons: "아직 강의 목록이 없어요.",
     enrollFromPreview: "강의 시작하기",
     coursePreviewError: "강의 정보를 불러오지 못했어요.",
+    authorPreviewButton: "학습자 화면 미리보기",
+    authorPreviewTitle: "학습자 화면",
+    authorPreviewHint: "미리보기에서는 수강 신청과 진도 저장이 비활성화됩니다.",
     courseLessonCount: "개 강의",
     moduleTitleLabel: "모듈 이름",
     modulePositionLabel: "모듈 순서",
@@ -1458,20 +1470,24 @@ function materialTypeText(type) {
     type === "pdf" ? "pdf" : type === "video" ? "video" : type === "audio" ? "audio" : "text",
   );
 }
-function renderVideoPlayer(player, source) {
+function renderVideoPlayer(player, source, preview) {
+  const sourceLink = `<a class="button button-outline button-small" href="${escapeHtml(source)}" target="_blank" rel="noopener">${escapeHtml(t("videoOpenSource"))}</a>`;
+  if (preview) {
+    return `<div class="lesson-resource lesson-video">${player}<div class="lesson-video-actions">${sourceLink}</div></div>`;
+  }
   return `<div class="lesson-resource lesson-video">
     <div data-video-player>${player}</div>
     <div class="lesson-video-actions">
       <p class="lesson-video-status" data-video-error role="status" hidden>${escapeHtml(t("videoPlaybackError"))}</p>
       <button class="button button-outline button-small" type="button" data-video-retry hidden>${escapeHtml(t("videoRetry"))}</button>
       <button class="button button-outline button-small" type="button" data-lesson-browser>${escapeHtml(t("openInBrowser"))}</button>
-      <a class="button button-outline button-small" href="${escapeHtml(source)}" target="_blank" rel="noopener">${escapeHtml(t("videoOpenSource"))}</a>
+      ${sourceLink}
       <p class="lesson-video-status">${escapeHtml(t("videoProgressNote"))}</p>
     </div>
   </div>`;
 }
 
-function renderLessonResource(lesson) {
+function renderLessonResource(lesson, { preview = false } = {}) {
   const extraMaterials = (lesson.materials || [])
     .map((material) =>
       material.resource_type === "audio"
@@ -1527,7 +1543,7 @@ function renderLessonResource(lesson) {
           watch.searchParams.set("list", playlist);
         }
         const embedded = `<div class="youtube-watch"><iframe data-watch-youtube="${escapeHtml(lesson.id)}" src="https://www.youtube-nocookie.com/embed/${video || "videoseries"}?${params}" title="${escapeHtml(lesson.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
-        return renderVideoPlayer(embedded, watch.href) + extraMaterials;
+        return renderVideoPlayer(embedded, watch.href, preview) + extraMaterials;
       }
     }
   }
@@ -1535,7 +1551,7 @@ function renderLessonResource(lesson) {
   const url = escapeHtml(lesson.resource_url);
   if (lesson.resource_type === "video") {
     const embedded = `<video controls playsinline preload="metadata" controlsList="nodownload noplaybackrate" disablePictureInPicture data-watch-video="${escapeHtml(lesson.id)}" src="${url}"></video>`;
-    return renderVideoPlayer(embedded, lesson.resource_url) + extraMaterials;
+    return renderVideoPlayer(embedded, lesson.resource_url, preview) + extraMaterials;
   }
   if (lesson.resource_type === "audio")
     return `<div class="lesson-resource"><audio controls preload="metadata" src="${url}"></audio></div>${extraMaterials}`;
@@ -2070,6 +2086,12 @@ function updateAuthUI() {
   $("#logoutButton").hidden = !accessToken;
   $("#myLearning").hidden = !isLearner;
   $("#myCourses").hidden = !isAuthor;
+  const profile = $("#myProfile");
+  const profileHost = isAuthor ? $("#authorProfileSlot") : $("#myLearning");
+  if (signedIn && profile.parentElement !== profileHost) {
+    if (isAuthor) profileHost.append(profile);
+    else profileHost.insertBefore(profile, $("#learningOverview"));
+  }
   $("#heroSection").hidden = isAuthor;
   $("#how").hidden = isAuthor;
   $("#closingBanner").hidden = isAuthor;
@@ -2493,38 +2515,138 @@ function escapeHtml(value) {
     (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char],
   );
 }
+function renderCoursePreviewHeader(course, label) {
+  const languageKey = `language${course.language[0].toUpperCase()}${course.language.slice(1)}`;
+  const banner = course.banner_url
+    ? `<img class="course-preview-banner" src="${escapeHtml(course.banner_url)}" alt="">`
+    : "";
+  return `${banner}
+    <div class="section-label">${escapeHtml(t(label))}</div>
+    <h2>${escapeHtml(course.title)}</h2>
+    <p class="course-preview-description">${escapeHtml(course.description || "")}</p>
+    <div class="course-preview-meta">
+      <span>${escapeHtml(t(languageKey))}</span>
+      <span>${escapeHtml(humanLevel(course.level))}</span>
+      <span>${course.lessons.length} ${escapeHtml(t("courseLessonCount"))}</span>
+    </div>`;
+}
+
+function renderCourseOutline(course, lessonList) {
+  const modules = course.modules || [];
+  const empty = `<p class="panel-empty">${escapeHtml(t("noCourseLessons"))}</p>`;
+  if (!modules.length) return lessonList(course.lessons) || empty;
+  const groups = modules.map(
+    (module) => `<section class="course-outline-module">
+      <h4>${escapeHtml(module.position)}. ${escapeHtml(module.title)}</h4>
+      ${lessonList(module.lessons || []) || empty}
+    </section>`,
+  );
+  if (course.unassigned_lessons?.length) {
+    groups.push(`<section class="course-outline-module">
+      <h4>${escapeHtml(t("unassignedLessonsLabel"))}</h4>
+      ${lessonList(course.unassigned_lessons)}
+    </section>`);
+  }
+  return groups.join("");
+}
+
+function renderPreviewAssessment(assessment) {
+  if (!assessment?.questions?.length) return "";
+  return `<details class="author-preview-lesson author-preview-assessment">
+    <summary>${escapeHtml(assessment.title)}</summary>
+    <div class="author-preview-content">
+      <ol>${assessment.questions
+        .map(
+          (question) => `<li>
+        <strong>${escapeHtml(question.prompt)}</strong>
+        <ul>${question.choices.map((choice) => `<li>${escapeHtml(choice)}</li>`).join("")}</ul>
+      </li>`,
+        )
+        .join("")}</ol>
+    </div>
+  </details>`;
+}
+
+async function openAuthorPreview(course, lessonData, finalExam) {
+  const dialog = $("#courseDetailsDialog");
+  const host = $("#courseDetailsBody");
+  const token = accessToken;
+  host.innerHTML = `<p class="panel-empty" role="status">${escapeHtml(t("loadingCourse"))}</p>`;
+  const loading = host.firstElementChild;
+  dialog.showModal();
+  const isCurrent = () =>
+    dialog.open && host.firstElementChild === loading && accessToken === token;
+  try {
+    const path = `/courses/${course.id}`;
+    const [lessons, modules] = await Promise.all([
+      api(`${path}/lessons?language=${encodeURIComponent(course.language)}`),
+      api(`${path}/modules`),
+    ]);
+    if (!isCurrent()) return;
+    const byId = new Map(lessons.map((lesson) => [lesson.id, lesson]));
+    const assessments = new Map(lessonData.map(({ lesson, quiz }) => [lesson.id, quiz]));
+    const outline = renderCourseOutline(
+      {
+        lessons,
+        modules: modules.map((module) => ({
+          ...module,
+          lessons: lessons.filter((lesson) => lesson.module_id === module.id),
+        })),
+        unassigned_lessons: lessons.filter((lesson) => !lesson.module_id),
+      },
+      (items) =>
+        items
+          .map(
+            (lesson) => `
+        <details class="author-preview-lesson" data-preview-lesson="${escapeHtml(lesson.id)}">
+          <summary>${escapeHtml(lesson.position)}. ${escapeHtml(lesson.title)}</summary>
+          <div class="author-preview-content"></div>
+        </details>`,
+          )
+          .join(""),
+    );
+    host.innerHTML = `${renderCoursePreviewHeader({ ...course, lessons }, "authorPreviewTitle")}
+      <p class="author-preview-note">${escapeHtml(t("authorPreviewHint"))}</p>
+      <h3>${escapeHtml(t("courseOutline"))}</h3>${outline}${renderPreviewAssessment(finalExam)}`;
+    for (const details of host.querySelectorAll("[data-preview-lesson]")) {
+      const lesson = byId.get(details.dataset.previewLesson);
+      const content = details.querySelector(".author-preview-content");
+      details.addEventListener("toggle", () => {
+        content.innerHTML = details.open
+          ? `${renderLessonBanner(lesson)}<p class="lesson-copy">${escapeHtml(lesson.content)}</p>${renderLessonResource(lesson, { preview: true })}${renderPreviewAssessment(assessments.get(lesson.id))}`
+          : "";
+      });
+    }
+  } catch (error) {
+    if (isCurrent())
+      host.innerHTML = `<p class="form-error" role="alert">${escapeHtml(error.message || t("coursePreviewError"))}</p>`;
+  }
+}
+
 async function openCourseDetails(courseId) {
   const dialog = $("#courseDetailsDialog");
   const host = $("#courseDetailsBody");
   host.innerHTML = `<p class="panel-empty">${escapeHtml(t("courseDetails"))}…</p>`;
+  const loading = host.firstElementChild;
+  const isCurrent = () => dialog.open && host.firstElementChild === loading;
   dialog.showModal();
   try {
     const course = await api(
       `/courses/catalog/${courseId}/outline?language=${encodeURIComponent(language)}`,
     );
-    const lessonList = (items) =>
+    if (!isCurrent()) return;
+    const lessons = renderCourseOutline(course, (items) =>
       items.length
         ? `<ol class="course-outline-list">${items.map((lesson) => `<li><span>${escapeHtml(lesson.position)}</span><b>${escapeHtml(lesson.title)}</b></li>`).join("")}</ol>`
-        : "";
-    const modules = course.modules || [];
-    const groupedLessons = modules
-      .map(
-        (module) =>
-          `<section class="course-outline-module"><h4>${escapeHtml(module.position)}. ${escapeHtml(module.title)}</h4>${lessonList(module.lessons || []) || `<p class="panel-empty">${escapeHtml(t("noCourseLessons"))}</p>`}</section>`,
-      )
-      .join("");
-    const unassigned = course.unassigned_lessons || [];
-    const lessons = modules.length
-      ? `${groupedLessons}${unassigned.length ? `<section class="course-outline-module"><h4>${escapeHtml(t("unassignedLessonsLabel"))}</h4>${lessonList(unassigned)}</section>` : ""}`
-      : lessonList(course.lessons) ||
-        `<p class="panel-empty">${escapeHtml(t("noCourseLessons"))}</p>`;
+        : "",
+    );
     const startLabel =
       user?.account_type === "author"
         ? "switchToLearner"
         : course.price_uzs > 0
           ? "buyCourse"
           : "enrollFromPreview";
-    host.innerHTML = `${course.banner_url ? `<img class="course-preview-banner" src="${escapeHtml(course.banner_url)}" alt="${escapeHtml(course.title)}">` : ""}<div class="section-label">${escapeHtml(t("courseDetails"))}</div><h2>${escapeHtml(course.title)}</h2><p class="course-preview-description">${escapeHtml(course.description || "")}</p>${courseTranslationNotice(course)}<div class="course-preview-meta"><span>${escapeHtml(t(`language${course.language[0].toUpperCase()}${course.language.slice(1)}`))}</span><span>${escapeHtml(humanLevel(course.level))}</span><span>${course.lessons.length} ${escapeHtml(t("courseLessonCount"))}</span></div><div class="course-price course-preview-price">${escapeHtml(coursePrice(course.price_uzs))}</div>${course.price_uzs > 0 ? `<p class="payment-provider-note">${escapeHtml(t("paymentProviderLabel"))}</p>` : ""}<h3>${escapeHtml(t("courseOutline"))}</h3>${lessons}<div class="course-review-summary"><h3>${escapeHtml(t("reviewTitle"))} ${course.average_rating !== null ? `★ ${course.average_rating.toFixed(1)} · ${course.review_count} ${escapeHtml(t("reviewsCount"))}` : escapeHtml(t("noReviews"))}</h3>${course.reviews.length ? `<div class="public-review-list">${course.reviews.map((review) => `<article class="public-review"><div><b>${escapeHtml(review.reviewer_name)}</b><span>${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</span></div>${review.comment ? `<p>${escapeHtml(review.comment)}</p>` : ""}</article>`).join("")}</div>` : ""}</div><button id="enrollFromPreview" class="button button-dark" data-course="${course.id}">${escapeHtml(t(startLabel))} <span class="ui-icon icon-arrow" aria-hidden="true"></span></button>`;
+    host.innerHTML = `${renderCoursePreviewHeader(course, "courseDetails")}${courseTranslationNotice(course)}<div class="course-price course-preview-price">${escapeHtml(coursePrice(course.price_uzs))}</div>${course.price_uzs > 0 ? `<p class="payment-provider-note">${escapeHtml(t("paymentProviderLabel"))}</p>` : ""}<h3>${escapeHtml(t("courseOutline"))}</h3>${lessons}<div class="course-review-summary"><h3>${escapeHtml(t("reviewTitle"))} ${course.average_rating !== null ? `★ ${course.average_rating.toFixed(1)} · ${course.review_count} ${escapeHtml(t("reviewsCount"))}` : escapeHtml(t("noReviews"))}</h3>${course.reviews.length ? `<div class="public-review-list">${course.reviews.map((review) => `<article class="public-review"><div><b>${escapeHtml(review.reviewer_name)}</b><span>${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</span></div>${review.comment ? `<p>${escapeHtml(review.comment)}</p>` : ""}</article>`).join("")}</div>` : ""}</div><button id="enrollFromPreview" class="button button-dark" data-course="${course.id}">${escapeHtml(t(startLabel))} <span class="ui-icon icon-arrow" aria-hidden="true"></span></button>`;
     $("#enrollFromPreview").addEventListener("click", async (event) => {
       const button = event.currentTarget;
       button.disabled = true;
@@ -2537,7 +2659,8 @@ async function openCourseDetails(courseId) {
       }
     });
   } catch (error) {
-    host.innerHTML = `<p class="form-error">${escapeHtml(error.message || t("coursePreviewError"))}</p>`;
+    if (isCurrent())
+      host.innerHTML = `<p class="form-error">${escapeHtml(error.message || t("coursePreviewError"))}</p>`;
   }
 }
 
@@ -2865,7 +2988,7 @@ async function loadInstructorCourses() {
           analytics,
           modules,
         }) => `<article class="owned-course-card" data-owned-course="${course.id}">
-      <div class="owned-course-head"><div class="owned-course-overview">${course.banner_url ? `<img class="owned-course-banner" src="${escapeHtml(course.banner_url)}" alt="${escapeHtml(course.title)}">` : ""}<div><span class="studio-status ${course.is_published ? "is-published" : "is-draft"}">${escapeHtml(t(course.is_published ? "publishedLabel" : "draftLabel"))}</span><h3>${escapeHtml(course.title)}</h3><p>${escapeHtml(course.description || "")}</p></div></div><div class="owned-course-actions"><button class="button button-outline" data-edit-course="${course.id}">${escapeHtml(t("editCourseButton"))}</button><button class="button button-outline" data-select-course-banner="${course.id}">${escapeHtml(bannerUiCopy[language].upload)}</button><input type="file" data-course-banner-file="${course.id}" accept="image/png,image/jpeg,image/webp" hidden><button class="button button-outline" data-delete-course="${course.id}">${escapeHtml(t("deleteCourseButton"))}</button><button class="button button-outline" data-publish-course="${course.id}" data-published="${course.is_published}">${escapeHtml(t(course.is_published ? "unpublishButton" : "publishButton"))}</button></div></div>
+      <div class="owned-course-head"><div class="owned-course-overview">${course.banner_url ? `<img class="owned-course-banner" src="${escapeHtml(course.banner_url)}" alt="${escapeHtml(course.title)}">` : ""}<div><span class="studio-status ${course.is_published ? "is-published" : "is-draft"}">${escapeHtml(t(course.is_published ? "publishedLabel" : "draftLabel"))}</span><h3>${escapeHtml(course.title)}</h3><p>${escapeHtml(course.description || "")}</p></div></div><div class="owned-course-actions"><button class="button button-outline" data-edit-course="${course.id}">${escapeHtml(t("editCourseButton"))}</button><button class="button button-outline" type="button" data-author-preview>${escapeHtml(t("authorPreviewButton"))}</button><button class="button button-outline" data-select-course-banner="${course.id}">${escapeHtml(bannerUiCopy[language].upload)}</button><input type="file" data-course-banner-file="${course.id}" accept="image/png,image/jpeg,image/webp" hidden><button class="button button-outline" data-delete-course="${course.id}">${escapeHtml(t("deleteCourseButton"))}</button><button class="button button-outline" data-publish-course="${course.id}" data-published="${course.is_published}">${escapeHtml(t(course.is_published ? "unpublishButton" : "publishButton"))}</button></div></div>
       <form class="studio-form course-edit-form" data-course-edit="${course.id}" hidden><label><span>${escapeHtml(t("courseTitleLabel"))}</span><input name="title" minlength="3" maxlength="200" value="${escapeHtml(course.title)}" required /></label><label><span>${escapeHtml(t("courseDescriptionLabel"))}</span><textarea name="description" rows="2">${escapeHtml(course.description || "")}</textarea></label><div class="studio-form-row"><label><span>${escapeHtml(t("courseLanguageLabel"))}</span><select name="language" ${lessonData.length || modules.length ? "disabled" : ""}>${[
         ["uz", "O‘zbekcha"],
         ["en", "English"],
@@ -2899,9 +3022,12 @@ async function loadInstructorCourses() {
       )
       .join("");
     addResourceControls(container, cards);
-    cards.forEach(({ course, finalExam }) => {
+    cards.forEach(({ course, lessonData, finalExam }) => {
       const card = container.querySelector(`[data-owned-course="${course.id}"]`);
       card.insertAdjacentHTML("beforeend", renderFinalExamEditor(course, finalExam));
+      card
+        .querySelector("[data-author-preview]")
+        .addEventListener("click", () => openAuthorPreview(course, lessonData, finalExam));
     });
     container.querySelectorAll("[data-course-edit]").forEach((editForm) => {
       const course = cards.find((entry) => entry.course.id === editForm.dataset.courseEdit)?.course;
@@ -3658,7 +3784,12 @@ async function loadDashboard() {
     } else updateAuthUI();
     const catalog = loadCourses();
     if (user.account_type === "author") {
-      await Promise.all([catalog, loadInstructorCourses()]);
+      await Promise.allSettled([
+        catalog,
+        loadInstructorCourses(),
+        renderProfile(account),
+        refreshPasskeyStatus(),
+      ]);
       return;
     }
     if (!coursesArea.hasChildNodes()) {
@@ -4322,6 +4453,9 @@ $("#backToMyCourses").addEventListener("click", () => {
 });
 $("#finalExamClose").addEventListener("click", () => $("#finalExamDialog").close());
 $("#courseDetailsClose").addEventListener("click", () => $("#courseDetailsDialog").close());
+$("#courseDetailsDialog").addEventListener("close", () => {
+  if (!$("#courseDetailsDialog").open) $("#courseDetailsBody").replaceChildren();
+});
 $("#loginButton").addEventListener("click", () => {
   window.location.href = languageUrl("/app/learner-login.html").href;
 });

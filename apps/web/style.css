@@ -1994,6 +1994,45 @@ body[dir="rtl"] {
 .course-outline-list b {
   font-size: 11px;
 }
+.author-preview-note {
+  margin: 0 0 18px;
+  padding: 10px 12px;
+  border: 1px solid #c9d8c8;
+  border-radius: 8px;
+  background: #edf4e8;
+  color: #28503c;
+  font-size: 13px;
+}
+.author-preview-lesson {
+  margin: 0 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fbfcf8;
+}
+.author-preview-lesson > summary {
+  padding: 12px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.author-preview-content {
+  display: grid;
+  gap: 12px;
+  padding: 0 14px 14px;
+  color: var(--muted);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.author-preview-content ol,
+.author-preview-content ul {
+  margin: 0;
+  padding-inline-start: 1.25rem;
+}
+.author-preview-assessment {
+  margin-top: 12px;
+}
+#authorProfileSlot > .learner-profile {
+  margin-bottom: 24px;
+}
 .course-details-body > .button {
   margin-top: 10px;
   padding: 11px 15px;
