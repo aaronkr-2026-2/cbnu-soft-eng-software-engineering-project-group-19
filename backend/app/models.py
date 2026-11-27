@@ -12,6 +12,7 @@ from sqlalchemy import (
     LargeBinary,
     String,
     UniqueConstraint,
+    false,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
@@ -340,6 +341,7 @@ class Enrollment(Base):
         server_default=func.now(),
         nullable=False,
     )
+    is_hidden: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=false())
 
 
 class CoursePayment(Base):

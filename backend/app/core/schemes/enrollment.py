@@ -8,3 +8,4 @@ class EnrollmentResponse(BaseModel):
     course_id: str
     course_title: str
     enrolled_at: datetime
+    is_hidden: bool = False

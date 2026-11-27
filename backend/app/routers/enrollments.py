@@ -20,6 +20,7 @@ def to_response(enrollment: Enrollment, course: Course) -> EnrollmentResponse:
         course_id=str(course.id),
         course_title=course.title,
         enrolled_at=enrollment.enrolled_at,
+        is_hidden=enrollment.is_hidden,
     )
 
 
@@ -65,6 +66,10 @@ def enroll_in_course(
         .first()
     )
     if existing_enrollment is not None:
+        if existing_enrollment.is_hidden:
+            existing_enrollment.is_hidden = False
+            db.commit()
+            return to_response(existing_enrollment, course)
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Already enrolled in this course",
@@ -99,3 +104,19 @@ def list_my_enrollments(
             response.course_title = translation.title
         responses.append(response)
     return responses
+
+
+@router.delete("/enrollments/me/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
+def hide_my_enrollment(
+    course_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    enrollment = (
+        db.query(Enrollment).filter_by(user_id=current_user.id, course_id=course_id).first()
+    )
+    if enrollment is None:
+        raise HTTPException(status_code=404, detail="Course enrollment not found")
+    if not enrollment.is_hidden:
+        enrollment.is_hidden = True
+        db.commit()

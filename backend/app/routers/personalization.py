@@ -1,5 +1,7 @@
 import math
 import uuid
+from time import monotonic
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import or_
@@ -7,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.ai import AIConfigurationError, AIProviderError, generate_course_recommendations
 from app.core.dependencies import get_current_user
+from app.core.localization import TRANSLATION_LIST_BUDGET_SECONDS, get_course_translation
 from app.core.schemes.personalization import (
     CourseRecommendation,
     LearningPlanGenerate,
@@ -133,9 +136,11 @@ def build_reasons(
 def get_my_recommendations(
     limit: int = Query(default=5, ge=1, le=20),
     interest: str | None = Query(default=None, min_length=1, max_length=100),
+    language: Literal["uz", "en", "ru", "ko"] | None = Query(default=None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> RecommendationResponse:
+    locale = language or current_user.preferred_language
     average_score, estimated_level = learner_profile(current_user.id, db)
     enrolled_ids = {
         row[0]
@@ -164,14 +169,16 @@ def get_my_recommendations(
             continue
         score, reasons = build_reasons(
             course,
-            current_user.preferred_language,
+            locale,
             estimated_level,
             average_score is not None,
             interest or "",
             course.id in matching_course_ids,
         )
         candidates.append((score, course, reasons))
-    candidates.sort(key=lambda item: (item[0], item[1].created_at), reverse=True)
+    candidates.sort(
+        key=lambda item: (item[0], item[1].language == locale, item[1].created_at), reverse=True
+    )
 
     ai_powered = False
     recommended_courses: list[tuple[int, Course, list[str]]] | None = None
@@ -186,9 +193,7 @@ def get_my_recommendations(
             for _, course, _ in candidates[:30]
         ]
         try:
-            result = generate_course_recommendations(
-                interest, estimated_level, current_user.preferred_language, available
-            )
+            result = generate_course_recommendations(interest, estimated_level, locale, available)
             course_map = {
                 str(course.id): (score, course, reasons) for score, course, reasons in candidates
             }
@@ -220,23 +225,28 @@ def get_my_recommendations(
     if recommended_courses is None:
         recommended_courses = candidates
 
-    return RecommendationResponse(
-        preferred_language=current_user.preferred_language,
-        estimated_level=estimated_level,
-        average_quiz_score=average_score,
-        ai_powered=ai_powered,
-        recommendations=[
+    deadline = monotonic() + TRANSLATION_LIST_BUDGET_SECONDS
+    recommendations = []
+    for score, course, reasons in recommended_courses[:limit]:
+        copy = get_course_translation(course, locale, db, deadline=deadline) or course
+        recommendations.append(
             CourseRecommendation(
                 course_id=course.id,
-                title=course.title,
-                description=course.description,
+                title=copy.title,
+                description=copy.description,
                 language=course.language,
                 level=course.level,
                 match_score=score,
                 reasons=reasons,
             )
-            for score, course, reasons in recommended_courses[:limit]
-        ],
+        )
+
+    return RecommendationResponse(
+        preferred_language=locale,
+        estimated_level=estimated_level,
+        average_quiz_score=average_score,
+        ai_powered=ai_powered,
+        recommendations=recommendations,
     )
 
 

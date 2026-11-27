@@ -102,6 +102,9 @@ const copy = {
     backToMyCourses: "Kurslarimga qaytish",
     loadingCourse: "Kurs yuklanmoqda…",
     openCourse: "Kursni ochish",
+    removeCourse: "Ro‘yxatdan olib tashlash",
+    removeCourseConfirm:
+      "Kursni ro‘yxatdan olib tashlaysizmi? Keyin qayta qo‘shishingiz mumkin. Natijalaringiz saqlanadi.",
     switchToLearner: "O‘quvchi sifatida kirish",
     courseSearchLabel: "Kurslarni qidirish",
     filterLanguageLabel: "Til bo‘yicha",
@@ -213,6 +216,9 @@ const copy = {
     backToMyCourses: "Back to my courses",
     loadingCourse: "Loading course…",
     openCourse: "Open course",
+    removeCourse: "Remove from list",
+    removeCourseConfirm:
+      "Remove this course from your list? You can add it again. Your progress is saved.",
     switchToLearner: "Sign in as a learner",
     courseSearchLabel: "Search courses",
     filterLanguageLabel: "Language",
@@ -321,6 +327,9 @@ const copy = {
     backToMyCourses: "К моим курсам",
     loadingCourse: "Загрузка курса…",
     openCourse: "Открыть курс",
+    removeCourse: "Убрать из списка",
+    removeCourseConfirm:
+      "Убрать курс из списка? Вы сможете добавить его снова. Ваш прогресс сохранится.",
     switchToLearner: "Войти как учащийся",
     courseSearchLabel: "Поиск курсов",
     filterLanguageLabel: "Язык",
@@ -429,6 +438,9 @@ const copy = {
     backToMyCourses: "내 강의로 돌아가기",
     loadingCourse: "강의를 불러오는 중…",
     openCourse: "강의 열기",
+    removeCourse: "목록에서 제거",
+    removeCourseConfirm:
+      "강의를 목록에서 제거할까요? 다시 추가할 수 있으며 학습 기록은 저장됩니다.",
     switchToLearner: "학습자로 로그인",
     courseSearchLabel: "강의 검색",
     filterLanguageLabel: "언어",
@@ -2049,12 +2061,9 @@ function updateAuthUI() {
   const signedIn = Boolean(accessToken && user);
   const isLearner = signedIn && user.account_type === "learner";
   const isAuthor = signedIn && user.account_type === "author";
-  $("#loginButton").textContent = t(
-    isAuthor ? "instructorTitle" : isLearner ? "myLearning" : "login",
-  );
+  $("#loginButton").hidden = signedIn;
   $("#signupButton").hidden = Boolean(accessToken);
   $("#logoutButton").hidden = !accessToken;
-  $(".landing-topbar").classList.toggle("is-signed-in", Boolean(accessToken));
   $("#myLearning").hidden = !isLearner;
   $("#myCourses").hidden = !isAuthor;
   $("#heroSection").hidden = isAuthor;
@@ -2254,10 +2263,12 @@ async function openLearnerCourse(
     view.scrollIntoView({ behavior: "instant", block: "start" });
 
     let enrollment = learnerEnrollments.find((item) => item.course_id === courseId);
-    if (!enrollment && price !== undefined) {
+    if (price !== undefined && (!enrollment || enrollment.is_hidden)) {
+      enrollment = null;
       try {
-        enrollment = await api(`/courses/${courseId}/enroll`, { ...options, method: "POST" });
-        if (!request.signal.aborted) loadDashboard();
+        await api(`/courses/${courseId}/enroll`, { ...options, method: "POST" });
+        if (request.signal.aborted) return;
+        loadDashboard();
       } catch (error) {
         if (error.status === 402) {
           const payment = await api(`/payments/courses/${courseId}`, {
@@ -3650,7 +3661,7 @@ async function loadDashboard() {
       coursesArea.innerHTML = `<div class="course-placeholder">${escapeHtml(t("dashboardTitle"))}…</div>`;
     }
     Promise.allSettled([
-      api("/recommendations/me?limit=4"),
+      api(`/recommendations/me?limit=4&language=${language}`),
       renderProfile(user),
       refreshPasskeyStatus(),
       catalog,
@@ -3662,7 +3673,12 @@ async function loadDashboard() {
     const enrollments = await listEnrollments();
     if (!isCurrent()) return;
     learnerEnrollments = enrollments;
-    if (resumeLesson && !enrollments.some(({ course_id }) => course_id === resumeLesson.courseId)) {
+    if (
+      resumeLesson &&
+      !enrollments.some(
+        ({ course_id, is_hidden }) => course_id === resumeLesson.courseId && !is_hidden,
+      )
+    ) {
       saveResumeLesson(null);
     }
     renderEnrollmentList(enrollments);
@@ -3693,11 +3709,12 @@ async function loadDashboard() {
 
 function renderEnrollmentList(enrollments) {
   const container = $("#enrolledCourses");
-  container.innerHTML = enrollments.length
-    ? enrollments
+  const visible = enrollments.filter(({ is_hidden }) => !is_hidden);
+  container.innerHTML = visible.length
+    ? visible
         .map(
           ({ course_id, course_title }) =>
-            `<article class="learner-list-card"><div><b>${escapeHtml(course_title)}</b></div><button type="button" class="button button-outline button-small" data-open-enrollment="${escapeHtml(course_id)}">${escapeHtml(t("openCourse"))}</button></article>`,
+            `<article class="learner-list-card"><div><b>${escapeHtml(course_title)}</b></div><div class="enrollment-actions"><button type="button" class="button button-outline button-small" data-open-enrollment="${escapeHtml(course_id)}">${escapeHtml(t("openCourse"))}</button><button type="button" class="button button-quiet button-small" data-remove-enrollment="${escapeHtml(course_id)}">${escapeHtml(t("removeCourse"))}</button></div></article>`,
         )
         .join("")
     : `<div class="course-placeholder">${escapeHtml(t("emptyEnrollments"))}</div>`;
@@ -3794,7 +3811,7 @@ function renderLearningOverview(entries) {
   );
   const certificates = entries.filter(({ certificate }) => certificate);
   const summaryItems = [
-    [entries.length, t("courseCountLabel")],
+    [entries.filter(({ enrollment }) => !enrollment.is_hidden).length, t("courseCountLabel")],
     [
       entries.every(({ progress }) => progress) ? completeEntries.length : "–",
       t("completedCoursesCountLabel"),
@@ -4210,9 +4227,13 @@ function updateLanguagePreference() {
 
 async function requestSearchRecommendations() {
   const interest = $("#courseSearch").value.trim();
+  const requestedLanguage = language;
   if (!interest || user?.account_type !== "learner") return;
   try {
-    const data = await api(`/recommendations/me?limit=4&interest=${encodeURIComponent(interest)}`);
+    const data = await api(
+      `/recommendations/me?limit=4&language=${requestedLanguage}&interest=${encodeURIComponent(interest)}`,
+    );
+    if (requestedLanguage !== language || interest !== $("#courseSearch").value.trim()) return;
     renderRecommendations(data.recommendations || [], data.ai_powered || false);
   } catch {}
 }
@@ -4244,7 +4265,32 @@ langPicker.addEventListener("change", () => {
     loadDashboard();
   } else loadCourses();
 });
+async function removeLearnerCourse(button) {
+  if (!window.confirm(t("removeCourseConfirm"))) return;
+  const courseId = button.dataset.removeEnrollment;
+  const token = accessToken;
+  button.disabled = true;
+  try {
+    await api(`/enrollments/me/${encodeURIComponent(courseId)}`, { method: "DELETE" });
+    if (token !== accessToken) return;
+    learnerEnrollments = learnerEnrollments.map((entry) =>
+      entry.course_id === courseId ? { ...entry, is_hidden: true } : entry,
+    );
+    if (resumeLesson?.courseId === courseId) saveResumeLesson(null);
+    renderEnrollmentList(learnerEnrollments);
+    $("#enrolledCoursesSection > h3").focus({ preventScroll: true });
+    void loadDashboard();
+  } catch (error) {
+    button.disabled = false;
+    if (token === accessToken) alert(error.message);
+  }
+}
 $("#myLearning").addEventListener("click", (event) => {
+  const removeButton = event.target.closest("[data-remove-enrollment]");
+  if (removeButton) {
+    void removeLearnerCourse(removeButton);
+    return;
+  }
   const button = event.target.closest("[data-open-enrollment]");
   if (button) openLearnerCourse(button.dataset.openEnrollment);
 });
@@ -4256,13 +4302,9 @@ $("#backToMyCourses").addEventListener("click", () => {
 });
 $("#finalExamClose").addEventListener("click", () => $("#finalExamDialog").close());
 $("#courseDetailsClose").addEventListener("click", () => $("#courseDetailsDialog").close());
-$("#loginButton").addEventListener("click", () =>
-  accessToken
-    ? (user?.account_type === "author" ? $("#myCourses") : $("#myLearning")).scrollIntoView({
-        behavior: "smooth",
-      })
-    : (window.location.href = languageUrl("/app/learner-login.html").href),
-);
+$("#loginButton").addEventListener("click", () => {
+  window.location.href = languageUrl("/app/learner-login.html").href;
+});
 $("#logoutButton").addEventListener("click", () => {
   showMyCourses();
   learnerEnrollments = [];

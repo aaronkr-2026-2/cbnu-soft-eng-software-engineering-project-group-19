@@ -22,6 +22,10 @@ attach_bundled_videos = import_module(
     "migrations.versions.8cde17f45a20_academy_lesson_videos"
 ).attach_bundled_videos
 
+youtube_migration = import_module(
+    "migrations.versions.92f3ab46c18d_use_youtube_for_academy_lessons"
+)
+
 LANGUAGE_PAIRS = [(source, target) for source in USAGE for target in USAGE[source]]
 
 
@@ -179,3 +183,56 @@ def test_preserves_existing_it_video_and_fills_empty_lessons(client):
         assert unfilled.resource_key == video_key("python", "ko", 2)
         assert unfilled.resource_type == "video" and unfilled.resource_mime_type == "video/mp4"
         assert "프로그래밍" in render_subject_banner(course).decode()
+
+        youtube_migration.replace_videos(db.connection())
+        db.refresh(external)
+        db.refresh(unfilled)
+        assert external.external_video_url.endswith("abc12345678")
+        assert unfilled.resource_key is None and unfilled.resource_mime_type is None
+        assert unfilled.external_video_url.endswith(youtube_migration.YOUTUBE["python"]["ko"][1])
+
+
+def test_starter_videos_and_course_copy_follow_the_selected_languages(client):
+    with contextmanager(client.app.dependency_overrides[get_db])() as db:
+        seed_language_courses(db.connection())
+        attach_bundled_videos(db.connection())
+        youtube_migration.replace_videos(db.connection())
+        youtube_migration.add_starter_lesson_translations(db.connection())
+        db.commit()
+
+    email = "russian-interface@example.com"
+    register(client, email)
+    learner = login(client, email)
+    recommendations = client.get(
+        "/recommendations/me", params={"language": "ru", "limit": 12}, headers=learner
+    ).json()
+    assert recommendations["preferred_language"] == "ru"
+    assert {item["title"] for item in recommendations["recommendations"]} == set(
+        COPY["ru"]["titles"].values()
+    )
+
+    course_id = youtube_migration.bundled.starter_id("uz", "ko")
+    course_path = f"/courses/{course_id}"
+    assert client.post(f"{course_path}/enroll", headers=learner).status_code == 201
+    enrollments = client.get("/enrollments/me", params={"language": "ru"}, headers=learner).json()
+    assert enrollments[0]["course_title"] == COPY["ru"]["titles"]["ko"]
+    original_id = enrollments[0]["id"]
+    assert not enrollments[0]["is_hidden"]
+    removal = f"/enrollments/me/{course_id}"
+    assert client.delete(removal, headers=learner).status_code == 204
+    assert client.delete(removal, headers=learner).status_code == 204
+    hidden = client.get("/enrollments/me", headers=learner).json()[0]
+    assert hidden["id"] == original_id and hidden["is_hidden"]
+    assert client.get(f"{course_path}/progress/me", headers=learner).status_code == 200
+    restored = client.post(f"{course_path}/enroll", headers=learner)
+    assert restored.status_code == 201
+    assert restored.json()["id"] == original_id and not restored.json()["is_hidden"]
+    lessons = client.get(
+        f"{course_path}/lessons", params={"language": "ru"}, headers=learner
+    ).json()
+    for unit, lesson in enumerate(lessons):
+        assert lesson["title"] == LESSONS[unit]["ru"][0]
+        assert PHRASES[unit]["ru"][0] in lesson["content"]
+        assert PHRASES[unit]["ko"][0] in lesson["content"]
+        assert lesson["resource_url"] is None
+        assert lesson["external_video_url"].endswith(youtube_migration.YOUTUBE["ko"][unit])
