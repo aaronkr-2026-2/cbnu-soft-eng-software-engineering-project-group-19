@@ -41,6 +41,7 @@ import { CertificatesScreen, CourseCompletion, QuizScreen } from "./Assessments"
 import { ChangePassword } from "./ChangePassword";
 import { LessonVideo } from "./LessonVideo";
 import { LessonNote } from "./LessonNote";
+import { LessonCaptureGuard } from "./LessonCaptureGuard";
 import { LocaleContext, useTranslate } from "./localization";
 
 const SESSION_KEY = "studyflow-learner-token";
@@ -611,106 +612,107 @@ function CourseScreen({
     const media =
       lesson.resource_type !== "video" && lesson.resource_url && resourceUrl(lesson.resource_url);
     return (
-      <KeyboardAvoidingView
-        key={lesson.id}
-        style={styles.fill}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <Content>
-          <Button
-            title={t("backToLessons")}
-            secondary
-            disabled={working}
-            onPress={() => setOpenedLessonId(undefined)}
-          />
-          <View style={styles.lessonHeading}>
-            <Text style={styles.lessonCourse}>{selection.title}</Text>
-            <Text accessibilityRole="header" style={styles.title}>
-              {lesson.title}
-            </Text>
-          </View>
-          {media ? (
+      <LessonCaptureGuard key={lesson.id} onBack={() => setOpenedLessonId(undefined)}>
+        <KeyboardAvoidingView
+          style={styles.fill}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <Content>
             <Button
-              title={t("openMaterial")}
+              title={t("backToLessons")}
               secondary
-              onPress={() => {
-                void Linking.openURL(media).catch(setActionError);
-              }}
+              disabled={working}
+              onPress={() => setOpenedLessonId(undefined)}
             />
-          ) : null}
-          {requireVideo && (
-            <View style={styles.notice}>
-              <LessonVideo
-                course={id}
-                lesson={lesson}
-                token={token}
-                language={language}
-                onProgress={setVideo}
-                onExpired={onExpired}
-              />
-              {video && (
-                <Text accessibilityLiveRegion="polite" style={styles.muted}>
-                  {t("videoProgress", { progress: Math.floor(video.completion_percent) })}
-                </Text>
-              )}
-              <Button
-                title={t("openBrowser")}
-                onPress={() => openWeb(courseWebLink(id, { lesson: lesson.id }), lesson.id)}
-                disabled={working}
-                secondary
-              />
-              <Button
-                title={t("refreshVideo")}
-                onPress={updateProgress}
-                disabled={working}
-                secondary
-              />
-            </View>
-          )}
-          <View style={styles.lessonReading}>
-            <Text selectable style={styles.lessonText}>
-              {lesson.content}
-            </Text>
-          </View>
-          {!!lesson.materials?.length && (
-            <View style={styles.notice}>
-              <Text accessibilityRole="header" style={styles.listTitle}>
-                {t("supplementalMaterials")}
+            <View style={styles.lessonHeading}>
+              <Text style={styles.lessonCourse}>{selection.title}</Text>
+              <Text accessibilityRole="header" style={styles.title}>
+                {lesson.title}
               </Text>
-              {lesson.materials.map((material) => (
+            </View>
+            {media ? (
+              <Button
+                title={t("openMaterial")}
+                secondary
+                onPress={() => {
+                  void Linking.openURL(media).catch(setActionError);
+                }}
+              />
+            ) : null}
+            {requireVideo && (
+              <View style={styles.notice}>
+                <LessonVideo
+                  course={id}
+                  lesson={lesson}
+                  token={token}
+                  language={language}
+                  onProgress={setVideo}
+                  onExpired={onExpired}
+                />
+                {video && (
+                  <Text accessibilityLiveRegion="polite" style={styles.muted}>
+                    {t("videoProgress", { progress: Math.floor(video.completion_percent) })}
+                  </Text>
+                )}
                 <Button
-                  key={material.id}
-                  title={material.title}
-                  onPress={() => {
-                    const url = resourceUrl(material.resource_url);
-                    if (url) void openWeb(url);
-                  }}
+                  title={t("openBrowser")}
+                  onPress={() => openWeb(courseWebLink(id, { lesson: lesson.id }), lesson.id)}
+                  disabled={working}
                   secondary
                 />
-              ))}
+                <Button
+                  title={t("refreshVideo")}
+                  onPress={updateProgress}
+                  disabled={working}
+                  secondary
+                />
+              </View>
+            )}
+            <View style={styles.lessonReading}>
+              <Text selectable style={styles.lessonText}>
+                {lesson.content}
+              </Text>
             </View>
-          )}
-          <Button
-            title={t("takeQuiz")}
-            onPress={() => setQuizOpen(true)}
-            disabled={working}
-            secondary
-          />
-          {actionError !== undefined && <ErrorNotice error={actionError} />}
-          {done ? (
-            <Text accessibilityRole="text" style={styles.category}>
-              {t("lessonDone")}
-            </Text>
-          ) : (
+            {!!lesson.materials?.length && (
+              <View style={styles.notice}>
+                <Text accessibilityRole="header" style={styles.listTitle}>
+                  {t("supplementalMaterials")}
+                </Text>
+                {lesson.materials.map((material) => (
+                  <Button
+                    key={material.id}
+                    title={material.title}
+                    onPress={() => {
+                      const url = resourceUrl(material.resource_url);
+                      if (url) void openWeb(url);
+                    }}
+                    secondary
+                  />
+                ))}
+              </View>
+            )}
             <Button
-              title={working ? t("refreshing") : t("markComplete")}
-              onPress={markDone}
-              disabled={working || (requireVideo && !video?.can_complete)}
+              title={t("takeQuiz")}
+              onPress={() => setQuizOpen(true)}
+              disabled={working}
+              secondary
             />
-          )}
-          <LessonNote accountId={session.id} lessonId={lesson.id} />
-        </Content>
-      </KeyboardAvoidingView>
+            {actionError !== undefined && <ErrorNotice error={actionError} />}
+            {done ? (
+              <Text accessibilityRole="text" style={styles.category}>
+                {t("lessonDone")}
+              </Text>
+            ) : (
+              <Button
+                title={working ? t("refreshing") : t("markComplete")}
+                onPress={markDone}
+                disabled={working || (requireVideo && !video?.can_complete)}
+              />
+            )}
+            <LessonNote accountId={session.id} lessonId={lesson.id} />
+          </Content>
+        </KeyboardAvoidingView>
+      </LessonCaptureGuard>
     );
   }
 

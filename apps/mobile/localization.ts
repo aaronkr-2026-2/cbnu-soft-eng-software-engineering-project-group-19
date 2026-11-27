@@ -4,6 +4,18 @@ import type { CourseLanguage } from "./api";
 const languageIndex: Record<CourseLanguage, number> = { uz: 0, en: 1, ru: 2, ko: 3 };
 
 const messages = {
+  lessonProtectionLoading: [
+    "Dars himoyasi yoqilmoqda",
+    "Enabling lesson protection",
+    "Включаем защиту урока",
+    "수업 보호를 켜는 중입니다",
+  ],
+  lessonProtectionUnavailable: [
+    "Ekran yozuvidan himoyani yoqib bo‘lmadi. Qayta urinib ko‘ring.",
+    "Screen capture protection could not be enabled. Try again.",
+    "Не удалось включить защиту от записи экрана. Попробуйте ещё раз.",
+    "화면 녹화 방지를 켜지 못했습니다. 다시 시도해 주세요.",
+  ],
   chooseLanguage: ["Tilni tanlang", "Choose language", "Выберите язык", "언어 선택"],
   closeLanguageMenu: [
     "Til menyusini yopish",

@@ -2,7 +2,7 @@
   "expo": {
     "name": "SCHOLWARD Academy",
     "slug": "studyflow-mobile",
-    "version": "0.1.10",
+    "version": "0.1.11",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "platforms": ["ios", "android"],
@@ -12,7 +12,12 @@
     },
     "android": {
       "package": "com.mirzakhidovic.studyflow",
-      "versionCode": 11
+      "versionCode": 12,
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.DETECT_SCREEN_CAPTURE"
+      ]
     },
     "extra": {
       "eas": {
