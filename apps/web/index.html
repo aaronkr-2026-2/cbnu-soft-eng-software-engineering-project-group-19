@@ -23,7 +23,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./style.css?v=scholward-13" />
+    <link rel="stylesheet" href="./style.css?v=scholward-14" />
     <link rel="stylesheet" href="./media-content.css?v=5" />
     <link rel="stylesheet" href="/app/certificate.css?v=4" />
   </head>
@@ -117,6 +117,29 @@
     </details>
 
     <main>
+      <aside
+        class="language-campaign"
+        id="languageCampaign"
+        aria-labelledby="languageCampaignTitle"
+        hidden
+      >
+        <div class="language-campaign-script" aria-hidden="true">
+          <span>Aa</span><span>Я</span><span>한</span>
+        </div>
+        <div class="language-campaign-copy">
+          <h2 id="languageCampaignTitle" data-i18n="languageCampaignTitle"></h2>
+          <p data-i18n="languageCampaignBody"></p>
+        </div>
+        <a
+          class="button language-campaign-action"
+          href="#courses"
+          id="openLanguageCourses"
+          data-i18n="openLanguageCourses"
+        ></a>
+        <button class="language-campaign-close" type="button" id="dismissLanguageCampaign">
+          <span aria-hidden="true">×</span>
+        </button>
+      </aside>
       <section class="hero" id="heroSection">
         <div class="hero-copy">
           <h1 data-i18n="heroTitle"></h1>
@@ -433,6 +456,6 @@
     </dialog>
     <script src="/app/preferences.js?v=1" defer></script>
     <script src="/app/certificate.js?v=5" defer></script>
-    <script src="/app/app.js?v=scholward-19" defer></script>
+    <script src="/app/app.js?v=scholward-20" defer></script>
   </body>
 </html>

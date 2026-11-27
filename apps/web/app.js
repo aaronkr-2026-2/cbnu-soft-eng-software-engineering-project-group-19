@@ -26,6 +26,12 @@ const copy = {
     getStarted: "Boshlash",
     eyebrow: "O‘zingizga mos o‘rganish",
     heroTitle: "Bilim olish — o‘z maromingizda.",
+    languageCampaignTitle: "Yangi tilni o‘z tilingizda o‘rganing",
+    languageCampaignBody:
+      "Ingliz, rus yoki koreys tilini boshlang. Darslar bepul, yakuniy imtihondan o‘tsangiz sertifikat olasiz.",
+    openLanguageCourses: "Til kurslarini ko‘rish",
+    dismissLanguageCampaign: "Bannerni yopish",
+    languageCourseCategory: "Til kurslari",
     heroBody:
       "Qiziqishingizga mos kurslarni toping, amaliy mashqlarni bajaring va yutuqlaringizni kuzating.",
     startLearning: "O‘rganishni boshlash",
@@ -128,6 +134,12 @@ const copy = {
     getStarted: "Get started",
     eyebrow: "Learning that fits you",
     heroTitle: "Learn at your own pace.",
+    languageCampaignTitle: "Learn a new language in your own language",
+    languageCampaignBody:
+      "Start Uzbek, Russian, or Korean. Study for free and earn a certificate by passing the final exam.",
+    openLanguageCourses: "Explore language courses",
+    dismissLanguageCampaign: "Dismiss banner",
+    languageCourseCategory: "Language courses",
     heroBody:
       "Find courses that match your interests, practise what you learn, and track your progress.",
     startLearning: "Start learning",
@@ -229,6 +241,12 @@ const copy = {
     getStarted: "Начать",
     eyebrow: "Обучение в вашем ритме",
     heroTitle: "Учитесь в своём темпе.",
+    languageCampaignTitle: "Изучайте новый язык на родном языке",
+    languageCampaignBody:
+      "Начните учить узбекский, английский или корейский бесплатно. Сдайте итоговый экзамен и получите сертификат.",
+    openLanguageCourses: "Смотреть языковые курсы",
+    dismissLanguageCampaign: "Закрыть баннер",
+    languageCourseCategory: "Языковые курсы",
     heroBody: "Находите интересные курсы, выполняйте практические задания и следите за прогрессом.",
     startLearning: "Начать обучение",
     browseCatalog: "Посмотреть курсы",
@@ -328,6 +346,12 @@ const copy = {
     getStarted: "시작하기",
     eyebrow: "나에게 맞는 학습",
     heroTitle: "나만의 속도로 배워 보세요.",
+    languageCampaignTitle: "모국어로 새로운 언어를 배워 보세요",
+    languageCampaignBody:
+      "우즈베크어, 영어, 러시아어를 무료로 배우세요. 최종 시험에 합격하면 수료증을 받을 수 있어요.",
+    openLanguageCourses: "외국어 강좌 보기",
+    dismissLanguageCampaign: "배너 닫기",
+    languageCourseCategory: "외국어 강좌",
     heroBody: "관심 있는 강의를 찾고, 실습을 하며, 학습 진도를 확인하세요.",
     startLearning: "학습 시작하기",
     browseCatalog: "강의 둘러보기",
@@ -1939,9 +1963,13 @@ function choiceLetter(index) {
   return String.fromCharCode(65 + index);
 }
 function setLanguage(code, refresh = true) {
+  const search = $("#courseSearch");
+  const campaignFilter = search.value === t("languageCourseCategory");
   language = preferences.validLanguage(code) || "uz";
   document.documentElement.lang = language;
   document.title = `SCHOLWARD Academy — ${t("heroTitle")}`;
+  if (campaignFilter) search.value = t("languageCourseCategory");
+  $("#dismissLanguageCampaign").setAttribute("aria-label", t("dismissLanguageCampaign"));
   langPicker.value = language;
   const courseLanguageSelect = $("#courseCreateForm [name='language']");
   if (courseLanguageSelect) courseLanguageSelect.value = language;
@@ -4455,6 +4483,27 @@ document.querySelectorAll('#mainNav a[href$=".html"]').forEach((link) => {
   link.addEventListener("click", () => {
     link.href = languageUrl(link.href).href;
   });
+});
+
+const languageCampaignKey = "scholward-language-catalog-banner-v1";
+const languageCampaign = $("#languageCampaign");
+languageCampaign.hidden = preferences.local.getItem(languageCampaignKey) === "seen";
+function dismissLanguageCampaign() {
+  languageCampaign.hidden = true;
+  preferences.local.setItem(languageCampaignKey, "seen");
+}
+$("#dismissLanguageCampaign").addEventListener("click", () => {
+  dismissLanguageCampaign();
+  $("#heroSignup").focus({ preventScroll: true });
+});
+$("#openLanguageCourses").addEventListener("click", (event) => {
+  event.preventDefault();
+  dismissLanguageCampaign();
+  clearTimeout(courseSearchTimer);
+  $("#courseSearch").value = t("languageCourseCategory");
+  void loadCourses();
+  $("#courseSearch").focus({ preventScroll: true });
+  $("#courses").scrollIntoView({ block: "start" });
 });
 
 setLanguage(language, false);

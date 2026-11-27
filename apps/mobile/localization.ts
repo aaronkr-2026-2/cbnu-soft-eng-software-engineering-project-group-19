@@ -4,6 +4,26 @@ import type { CourseLanguage } from "./api";
 const languageIndex: Record<CourseLanguage, number> = { uz: 0, en: 1, ru: 2, ko: 3 };
 
 const messages = {
+  languageCampaignTitle: [
+    "Yangi tilni o‘z tilingizda o‘rganing",
+    "Learn a new language in your own language",
+    "Изучайте новый язык на родном языке",
+    "모국어로 새로운 언어를 배워 보세요",
+  ],
+  languageCampaignBody: [
+    "Ingliz, rus yoki koreys tilini boshlang. Darslar bepul, yakuniy imtihondan o‘tsangiz sertifikat olasiz.",
+    "Start Uzbek, Russian, or Korean. Study for free and earn a certificate by passing the final exam.",
+    "Начните учить узбекский, английский или корейский бесплатно. Сдайте итоговый экзамен и получите сертификат.",
+    "우즈베크어, 영어, 러시아어를 무료로 배우세요. 최종 시험에 합격하면 수료증을 받을 수 있어요.",
+  ],
+  openLanguageCourses: [
+    "Til kurslarini ko‘rish",
+    "Explore language courses",
+    "Смотреть языковые курсы",
+    "외국어 강좌 보기",
+  ],
+  dismissLanguageCampaign: ["Bannerni yopish", "Dismiss banner", "Закрыть баннер", "배너 닫기"],
+  languageCourseCategory: ["Til kurslari", "Language courses", "Языковые курсы", "외국어 강좌"],
   lessonProtectionLoading: [
     "Dars himoyasi yoqilmoqda",
     "Enabling lesson protection",

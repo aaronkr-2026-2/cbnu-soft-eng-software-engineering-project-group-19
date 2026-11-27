@@ -42,10 +42,12 @@ import { ChangePassword } from "./ChangePassword";
 import { LessonVideo } from "./LessonVideo";
 import { LessonNote } from "./LessonNote";
 import { LessonCaptureGuard } from "./LessonCaptureGuard";
+import { LanguageCampaign } from "./LanguageCampaign";
 import { LocaleContext, useTranslate } from "./localization";
 
 const SESSION_KEY = "studyflow-learner-token";
 const LANGUAGE_KEY = "studyflow-mobile-language";
+const LANGUAGE_CAMPAIGN_KEY = "scholward-language-banner-v1";
 const FOUNDER_PHOTO = { uri: WEB_APP + "founder.webp?v=portrait-2" };
 const RESUME_KEY_PREFIX = "studyflow-resume-";
 const ID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
@@ -189,10 +191,14 @@ function Catalog({
   language,
   openCourse,
   resumeCard,
+  showLanguageCampaign,
+  dismissLanguageCampaign,
 }: {
   language: CourseLanguage;
   openCourse: (selection: Selection) => void;
   resumeCard: ReactNode;
+  showLanguageCampaign: boolean;
+  dismissLanguageCampaign: () => void;
 }) {
   const t = useTranslate();
   const { width } = useWindowDimensions();
@@ -208,6 +214,15 @@ function Catalog({
 
   return (
     <Content refreshing={loading} refresh={refresh}>
+      {showLanguageCampaign && (
+        <LanguageCampaign
+          dismiss={dismissLanguageCampaign}
+          open={() => {
+            setQuery(t("languageCourseCategory"));
+            dismissLanguageCampaign();
+          }}
+        />
+      )}
       <View style={styles.catalogHeader}>
         <Text accessibilityRole="header" style={styles.catalogTitle}>
           {t("catalogTitle")}
@@ -885,6 +900,7 @@ function StudyFlow({
   const t = useTranslate();
   const [restoring, setRestoring] = useState(true);
   const [restoreError, setRestoreError] = useState<unknown>();
+  const [showLanguageCampaign, setShowLanguageCampaign] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [tab, setTab] = useState<"catalog" | "mine" | "certificates" | "about">("catalog");
   const lastLearnerTab = useRef<"catalog" | "mine" | "certificates">("catalog");
@@ -895,6 +911,23 @@ function StudyFlow({
   const [resume, setResume] = useState<{ accountId: string; lesson: ResumeLesson | null }>();
   const savingResume = useRef(Promise.resolve());
   const accountId = session?.id;
+
+  useEffect(() => {
+    let active = true;
+    void SecureStore.getItemAsync(LANGUAGE_CAMPAIGN_KEY)
+      .catch(() => null)
+      .then((seen) => {
+        if (active) setShowLanguageCampaign(seen !== "seen");
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  function dismissLanguageCampaign() {
+    setShowLanguageCampaign(false);
+    void SecureStore.setItemAsync(LANGUAGE_CAMPAIGN_KEY, "seen").catch(() => undefined);
+  }
 
   useEffect(() => {
     if (!accountId) return;
@@ -1127,6 +1160,8 @@ function StudyFlow({
               language={language}
               openCourse={openCourse}
               resumeCard={resumeCard}
+              showLanguageCampaign={showLanguageCampaign}
+              dismissLanguageCampaign={dismissLanguageCampaign}
             />
           )}
           <View style={styles.tabBar}>
