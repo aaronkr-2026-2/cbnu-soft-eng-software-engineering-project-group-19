@@ -3790,7 +3790,6 @@ body[dir="rtl"] {
   --accent-ink: #345f49;
   --academy-sage: #a3b7a6;
   --academy-moss: #315743;
-  --academy-clay: #a35030;
   background-color: #9eb4a2;
 }
 .academy-home::before {
@@ -3804,14 +3803,16 @@ body[dir="rtl"] {
   border-color: #dbe1d3;
 }
 .academy-home #signupButton,
-.academy-home .hero .hero-actions .button {
+.academy-home .hero .hero-actions .button,
+.academy-home #closingSignup {
   color: #fffaf1;
-  background: var(--academy-clay);
+  background: #355d48;
   border-color: transparent;
 }
 .academy-home #signupButton:hover,
-.academy-home .hero .hero-actions .button:hover {
-  background: #884229;
+.academy-home .hero .hero-actions .button:hover,
+.academy-home #closingSignup:hover {
+  background: #284c39;
 }
 .academy-home .hero {
   position: relative;
@@ -3925,11 +3926,6 @@ body[dir="rtl"] {
 .academy-home .language-campaign-action.button:hover {
   background: #fffaf1;
 }
-.academy-home footer {
-  background: #e5ecdf;
-  border-color: #c3d1c1;
-}
-
 @media (max-width: 800px) {
   .academy-home .hero {
     grid-template-columns: minmax(0, 1fr);
@@ -4019,19 +4015,26 @@ body[dir="rtl"] {
   outline-color: #345f49;
 }
 .academy-home footer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px 26px;
-  align-items: center;
-  justify-content: space-between;
-  width: min(calc(100% - 32px), 1180px);
+  display: block;
+  width: 100%;
   max-width: none;
-  margin: 0 auto 18px;
-  padding: clamp(16px, 2.5vw, 30px);
-  border: 1px solid #b8cabb;
-  border-radius: 23px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid #b8cabb;
+  border-radius: 0;
   background: var(--paper);
   color: var(--muted);
+}
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 26px;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1180px;
+  margin-inline: auto;
+  padding: clamp(17px, 2.5vw, 30px) 16px;
 }
 .footer-links {
   display: flex;
