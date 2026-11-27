@@ -161,14 +161,24 @@ function AboutScreen() {
   );
 }
 
-function CatalogCover({ course }: { course: Course }) {
+function CatalogCover({ course, open }: { course: Course; open: () => void }) {
   const [failed, setFailed] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const uri = course.banner_url && resourceUrl(course.banner_url);
   return (
-    <View
-      style={styles.banner}
+    <Pressable
+      onPress={open}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
+      style={({ pressed }) => [
+        styles.banner,
+        hovered && styles.bannerHovered,
+        pressed && styles.bannerPressed,
+      ]}
+      accessible={false}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
+      focusable={false}
     >
       {uri && !failed ? (
         <CourseImage
@@ -183,7 +193,7 @@ function CatalogCover({ course }: { course: Course }) {
           {Array.from(course.title.trim())[0]?.toUpperCase() || "S"}
         </Text>
       )}
-    </View>
+    </Pressable>
   );
 }
 
@@ -251,37 +261,36 @@ function Catalog({
         </View>
       )}
       <View style={[styles.catalogGrid, showTwoColumns && styles.catalogGridWide]}>
-        {matches.map((course) => (
-          <View
-            key={course.id}
-            style={[styles.card, styles.catalogCard, showTwoColumns && styles.catalogCardWide]}
-          >
-            <CatalogCover key={course.banner_url ?? ""} course={course} />
-            <View style={styles.cardBody}>
-              <View style={styles.catalogCardMeta}>
-                <Text style={styles.category}>{course.category}</Text>
-                <Text style={styles.catalogPrice}>
-                  {course.price_uzs > 0
-                    ? new Intl.NumberFormat(language, {
-                        style: "currency",
-                        currency: "UZS",
-                      }).format(course.price_uzs)
-                    : t("free")}
+        {matches.map((course) => {
+          const open = () =>
+            openCourse({ id: course.id, title: course.title, price: course.price_uzs });
+          return (
+            <View
+              key={course.id}
+              style={[styles.card, styles.catalogCard, showTwoColumns && styles.catalogCardWide]}
+            >
+              <CatalogCover key={course.banner_url ?? ""} course={course} open={open} />
+              <View style={styles.cardBody}>
+                <View style={styles.catalogCardMeta}>
+                  <Text style={styles.category}>{course.category}</Text>
+                  <Text style={styles.catalogPrice}>
+                    {course.price_uzs > 0
+                      ? new Intl.NumberFormat(language, {
+                          style: "currency",
+                          currency: "UZS",
+                        }).format(course.price_uzs)
+                      : t("free")}
+                  </Text>
+                </View>
+                <Text accessibilityRole="header" style={styles.cardTitle}>
+                  {course.title}
                 </Text>
+                {course.description && <Text style={styles.muted}>{course.description}</Text>}
+                <Button title={t("openCourse")} onPress={open} />
               </View>
-              <Text accessibilityRole="header" style={styles.cardTitle}>
-                {course.title}
-              </Text>
-              {course.description && <Text style={styles.muted}>{course.description}</Text>}
-              <Button
-                title={t("openCourse")}
-                onPress={() =>
-                  openCourse({ id: course.id, title: course.title, price: course.price_uzs })
-                }
-              />
             </View>
-          </View>
-        ))}
+          );
+        })}
       </View>
     </Content>
   );
@@ -1073,9 +1082,14 @@ function StudyFlow({
   return (
     <SafeAreaView style={styles.screen}>
       <StatusBar style="dark" />
-      <View pointerEvents="none" style={styles.backgroundDecoration}>
-        <View style={styles.backgroundClay} />
-        <View style={styles.backgroundSand} />
+      <View pointerEvents="none" style={styles.backgroundDecoration} accessibilityElementsHidden>
+        <CourseImage
+          source={require("./assets/academy-paper.jpg")}
+          contentFit="cover"
+          contentPosition="left center"
+          style={styles.fill}
+          accessible={false}
+        />
       </View>
       <View style={styles.header}>
         <View style={styles.brand}>

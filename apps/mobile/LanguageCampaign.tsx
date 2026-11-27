@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslate } from "./localization";
 
@@ -12,8 +13,13 @@ export function LanguageCampaign({
   dismiss: () => void;
 }) {
   const t = useTranslate();
+  const [hovered, setHovered] = useState(false);
   return (
-    <View style={styles.panel}>
+    <View
+      onPointerEnter={() => setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
+      style={[styles.panel, hovered && styles.panelHovered]}
+    >
       <View style={styles.copy}>
         <Text accessibilityRole="header" style={styles.title}>
           {t("languageCampaignTitle")}
@@ -64,6 +70,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 23,
   },
+  panelHovered: { borderColor: "#87a58d" },
   copy: { gap: 10, padding: 18 },
   dismiss: {
     position: "absolute",

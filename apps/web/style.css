@@ -21,12 +21,21 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse 64rem 36rem at 100% 0, #f3dfcd, transparent 70%),
-    radial-gradient(ellipse 50rem 30rem at 0 26rem, #ffebd0, transparent 70%), var(--paper);
+  isolation: isolate;
+  background: var(--paper);
   color: var(--ink);
   font-family: var(--font);
   font-size: 15px;
+}
+body::before {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 70% 18%, #fffaf266, transparent 66%),
+    url("./academy-paper.jpg") center 12% / cover no-repeat;
+  pointer-events: none;
+  content: "";
 }
 button,
 input,
@@ -1435,7 +1444,6 @@ body[dir="rtl"] {
 
 .verify-page {
   min-height: 100vh;
-  background: radial-gradient(ellipse at 50% 0, #f5e5d4, transparent 64%), var(--paper);
 }
 .verify-main {
   max-width: 760px;
@@ -2612,14 +2620,29 @@ body[dir="rtl"] {
   background: #fffdf9;
   box-shadow: 0 7px 22px #30251f0b;
   transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    border-color 0.18s ease;
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease;
 }
-.course-card:hover {
-  transform: translateY(-3px);
-  border-color: #d7b29c;
-  box-shadow: 0 15px 30px #30251f17;
+.course-card:focus-within {
+  border-color: #9d7559;
+  box-shadow: 0 10px 28px #30251f20;
+}
+.course-cover {
+  position: relative;
+  aspect-ratio: 5 / 2;
+  overflow: hidden;
+  border-radius: 13px;
+}
+.course-cover::after {
+  position: absolute;
+  inset: 0;
+  border: 1px solid #fff5d778;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+  content: "";
 }
 .course-card-art {
   position: relative;
@@ -2637,6 +2660,11 @@ body[dir="rtl"] {
   border-radius: 13px;
   object-fit: contain;
   background: #f4e1ce;
+}
+.course-cover > :is(.course-card-art, .course-card-image) {
+  transition:
+    transform 320ms cubic-bezier(0.22, 0.7, 0.28, 1),
+    filter 220ms ease;
 }
 .course-preview-banner {
   display: block;
@@ -3563,18 +3591,6 @@ body[dir="rtl"] {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-  .course-card {
-    transition: none;
-  }
-  .course-card:hover {
-    transform: none;
-  }
-}
-
 .language-campaign {
   position: relative;
   display: grid;
@@ -3589,6 +3605,9 @@ body[dir="rtl"] {
   color: #fff6e8;
   background: #142f27;
   box-shadow: 0 12px 30px #192d231e;
+  transition:
+    box-shadow 220ms ease,
+    border-color 220ms ease;
 }
 .language-campaign[hidden] {
   display: none;
@@ -3621,6 +3640,7 @@ body[dir="rtl"] {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 420ms cubic-bezier(0.22, 0.7, 0.28, 1);
 }
 .language-campaign-art::after {
   position: absolute;
@@ -3675,6 +3695,11 @@ body[dir="rtl"] {
 }
 
 @media (max-width: 720px) {
+  body::before {
+    background-position:
+      center,
+      18% center;
+  }
   .language-campaign {
     display: flex;
     flex-direction: column;
@@ -3718,4 +3743,45 @@ body[dir="rtl"] {
 .catalog-filter .button {
   min-height: 44px;
   padding-block: 0.45rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .course-card:hover {
+    transform: translateY(-3px);
+    border-color: #bc967c;
+    box-shadow: 0 16px 34px #30251f22;
+  }
+  .course-card:hover .course-cover::after,
+  .course-card:focus-within .course-cover::after {
+    opacity: 1;
+  }
+  .course-card:hover .course-cover > :is(.course-card-art, .course-card-image) {
+    transform: scale(1.035);
+    filter: brightness(1.06);
+  }
+  .language-campaign:hover,
+  .language-campaign:focus-within {
+    border-color: #78947e;
+    box-shadow: 0 17px 37px #192d2338;
+  }
+  .language-campaign:hover .language-campaign-art img {
+    transform: scale(1.04);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .course-card,
+  .course-cover::after,
+  .course-cover > :is(.course-card-art, .course-card-image),
+  .language-campaign,
+  .language-campaign-art img {
+    transition: none;
+  }
+  .course-card:hover,
+  .course-card:hover .course-cover > :is(.course-card-art, .course-card-image),
+  .language-campaign:hover .language-campaign-art img {
+    transform: none;
+  }
 }

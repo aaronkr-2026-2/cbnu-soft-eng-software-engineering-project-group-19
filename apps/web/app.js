@@ -2425,7 +2425,7 @@ function renderCatalogCard(course, index, showEnrollment) {
       </button>`
     : "";
   return `<article class="course-card">
-    ${cover}
+    <div class="course-cover">${cover}</div>
     <div class="course-card-content">
       <div class="course-meta">
         <span>${escapeHtml(course.category || t("courseCategoryLabel"))}</span>

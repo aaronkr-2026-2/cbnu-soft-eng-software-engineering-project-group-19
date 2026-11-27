@@ -23,24 +23,6 @@ export const styles = StyleSheet.create({
     left: 0,
     overflow: "hidden",
   },
-  backgroundClay: {
-    position: "absolute",
-    right: -140,
-    top: -105,
-    width: 420,
-    height: 420,
-    borderRadius: 210,
-    backgroundColor: "#f3e1d3",
-  },
-  backgroundSand: {
-    position: "absolute",
-    left: -155,
-    bottom: -120,
-    width: 365,
-    height: 365,
-    borderRadius: 182.5,
-    backgroundColor: "#ffecd4",
-  },
   header: {
     minHeight: 66,
     paddingHorizontal: 14,
@@ -311,6 +293,8 @@ export const styles = StyleSheet.create({
     borderRadius: 13,
     justifyContent: "center",
   },
+  bannerHovered: { opacity: 0.9 },
+  bannerPressed: { opacity: 0.76 },
   bannerMark: {
     textAlign: "center",
     color: color.leaf,
