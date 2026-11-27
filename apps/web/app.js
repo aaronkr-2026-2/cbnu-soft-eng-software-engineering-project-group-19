@@ -1941,6 +1941,7 @@ function choiceLetter(index) {
 function setLanguage(code, refresh = true) {
   language = preferences.validLanguage(code) || "uz";
   document.documentElement.lang = language;
+  document.title = `SCHOLWARD Academy — ${t("heroTitle")}`;
   langPicker.value = language;
   const courseLanguageSelect = $("#courseCreateForm [name='language']");
   if (courseLanguageSelect) courseLanguageSelect.value = language;

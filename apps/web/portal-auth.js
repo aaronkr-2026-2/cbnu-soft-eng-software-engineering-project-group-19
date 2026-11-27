@@ -115,6 +115,7 @@ function translate(key) {
 }
 function renderText() {
   document.documentElement.lang = language;
+  document.title = `${translate(role === "author" ? "authorPortal" : "learnerPortal")} — SCHOLWARD Academy`;
   languagePicker.value = language;
   document.querySelectorAll("[data-copy]").forEach((element) => {
     element.textContent = translate(element.dataset.copy);

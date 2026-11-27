@@ -110,6 +110,7 @@ for (const field of passwordToggles) {
 function render() {
   const c = resetCopy[language] || resetCopy.uz;
   document.documentElement.lang = language;
+  document.title = `${c.title} — SCHOLWARD Academy`;
   languageSelect.value = language;
   for (const [id, key] of [
     ["languageLabel", "language"],

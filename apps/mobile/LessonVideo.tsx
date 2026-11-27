@@ -9,6 +9,7 @@ import { color, styles } from "./styles";
 import { useTranslate } from "./localization";
 import type { MessageKey } from "./localization";
 import { Button } from "./ui";
+import { createPlaybackProgressQueue } from "./playbackProgressQueue";
 
 const START_FROM_BEGINNING = { item: 0, seconds: 0 };
 const MIN_PLAYER_HEIGHT = 200;
@@ -96,13 +97,20 @@ export function LessonVideo({
   const [playerError, setPlayerError] = useState<MessageKey | null>(null);
   const [trackingError, setTrackingError] = useState(false);
   const [reload, setReload] = useState(0);
-  const pending = useRef<PlaybackSample[]>([]);
-  const sending = useRef(false);
-  const connection = useRef<AbortController | null>(null);
+  const record = useRef<((sample: PlaybackSample) => void) | null>(null);
 
   useEffect(() => {
     const request = new AbortController();
-    connection.current = request;
+    record.current = createPlaybackProgressQueue({
+      signal: request.signal,
+      send: (sample) => reportVideoProgress(token, course, lesson.id, sample, request.signal),
+      onSaved: (progress) => {
+        setTrackingError(false);
+        onProgress(progress);
+      },
+      onError: () => setTrackingError(true),
+      onExpired,
+    });
     if (video) {
       getVideoProgress(token, course, lesson.id, request.signal).then(
         (progress) => {
@@ -119,7 +127,7 @@ export function LessonVideo({
     }
     return () => {
       request.abort();
-      pending.current = [];
+      record.current = null;
     };
   }, [course, lesson.id, token, video, onExpired, onProgress]);
 
@@ -128,46 +136,6 @@ export function LessonVideo({
     const timeout = setTimeout(() => setPlayerError("videoLoadError"), 20_000);
     return () => clearTimeout(timeout);
   }, [source, ready, playerError, reload]);
-
-  async function record(sample: PlaybackSample) {
-    const request = connection.current;
-    if (!request || request.signal.aborted) return;
-    const previous = pending.current.at(-1);
-    if (previous && !previous.ended && previous.item_index === sample.item_index)
-      pending.current.pop();
-    pending.current.push(sample);
-    if (sending.current) return;
-
-    sending.current = true;
-    try {
-      while (!request.signal.aborted) {
-        const next = pending.current.shift();
-        if (!next) break;
-        try {
-          const progress = await reportVideoProgress(
-            token,
-            course,
-            lesson.id,
-            next,
-            request.signal,
-          );
-          if (!request.signal.aborted) {
-            setTrackingError(false);
-            onProgress(progress);
-          }
-        } catch (error) {
-          if (request.signal.aborted) break;
-          if (error instanceof ApiError && error.status === 401) {
-            onExpired();
-            break;
-          }
-          setTrackingError(true);
-        }
-      }
-    } finally {
-      sending.current = false;
-    }
-  }
 
   if (!video) return <Text style={styles.error}>{t("videoSourceError")}</Text>;
   if (!source || !start) {
@@ -222,7 +190,7 @@ export function LessonVideo({
                 markReady();
               } else if (message.type === "progress" && validSample(message.sample)) {
                 markReady();
-                void record(message.sample);
+                record.current?.(message.sample);
               } else if (message.type === "error") {
                 setPlayerError(
                   [100, 101, 150].includes(message.code)

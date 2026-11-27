@@ -122,6 +122,7 @@ function applyLanguage(code) {
   language = Object.hasOwn(verifyCopy, code) ? code : "uz";
   window.ScholwardPreferences.saveLanguage(language, true);
   document.documentElement.lang = language;
+  document.title = `SCHOLWARD Academy — ${labels().verifyTitle}`;
   languageSelect.value = language;
   document.querySelectorAll("[data-i18n]").forEach((element) => {
     const key = element.dataset.i18n;
