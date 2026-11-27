@@ -1,6 +1,7 @@
 export const API_ORIGIN = (
   process.env.EXPO_PUBLIC_STUDYFLOW_API_URL || "https://studyflow-web-1hab.vercel.app"
 ).replace(/\/$/, "");
+export const PUBLIC_WEB_APP = "https://scholward-academy.vercel.app/app/";
 export const WEB_APP = "https://studyflow-web-1hab.vercel.app/app/";
 
 export const languages = { uz: "O‘zbekcha", en: "English", ru: "Русский", ko: "한국어" };
@@ -362,9 +363,9 @@ export function courseWebLink(course: string, destination: { lesson: string } | 
     typeof destination === "string"
       ? "view=completion"
       : `lesson=${encodeURIComponent(destination.lesson)}`;
-  return `${WEB_APP}?course=${encodeURIComponent(course)}&${query}`;
+  return `${PUBLIC_WEB_APP}?course=${encodeURIComponent(course)}&${query}`;
 }
 
 export function certificateWebLink(code: string, language: CourseLanguage) {
-  return `https://scholward-academy.vercel.app/app/verify.html?code=${encodeURIComponent(code)}&lang=${language}`;
+  return `${PUBLIC_WEB_APP}verify.html?code=${encodeURIComponent(code)}&lang=${language}`;
 }

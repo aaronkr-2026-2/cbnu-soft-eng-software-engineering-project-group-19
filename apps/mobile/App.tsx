@@ -20,6 +20,7 @@ import {
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import {
   ApiError,
+  PUBLIC_WEB_APP,
   WEB_APP,
   completeLesson,
   courseWebLink,
@@ -760,7 +761,7 @@ function CourseScreen({
         (error instanceof ApiError && error.status === 402 ? (
           <View style={styles.notice}>
             <Text style={styles.body}>{t("paidWeb")}</Text>
-            <Button title={t("openWebsite")} onPress={() => openWeb(WEB_APP + "#courses")} />
+            <Button title={t("openWebsite")} onPress={() => openWeb(PUBLIC_WEB_APP + "#courses")} />
           </View>
         ) : (
           <ErrorNotice error={error} retry={refresh} />
