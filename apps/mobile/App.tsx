@@ -47,7 +47,7 @@ import { LocaleContext, useTranslate } from "./localization";
 
 const SESSION_KEY = "studyflow-learner-token";
 const LANGUAGE_KEY = "studyflow-mobile-language";
-const LANGUAGE_CAMPAIGN_KEY = "scholward-language-banner-v1";
+const LANGUAGE_CAMPAIGN_KEY = "scholward-course-campaign-v2";
 const FOUNDER_PHOTO = { uri: WEB_APP + "founder.webp?v=portrait-2" };
 const RESUME_KEY_PREFIX = "studyflow-resume-";
 const ID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
@@ -217,7 +217,11 @@ function Catalog({
       {showLanguageCampaign && (
         <LanguageCampaign
           dismiss={dismissLanguageCampaign}
-          open={() => {
+          openAll={() => {
+            setQuery("");
+            dismissLanguageCampaign();
+          }}
+          openLanguages={() => {
             setQuery(t("languageCourseCategory"));
             dismissLanguageCampaign();
           }}

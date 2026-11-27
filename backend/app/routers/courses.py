@@ -10,6 +10,7 @@ import jwt
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
+from app.core.catalog_art import render_subject_banner
 from app.core.dependencies import require_author
 from app.core.lesson_storage import delete_resources, legacy_resource_path
 from app.core.localization import (
@@ -48,10 +49,13 @@ router = APIRouter(prefix="/courses", tags=["Courses"])
 BANNER_DIR = Path(__file__).resolve().parents[2] / "storage" / "lesson-banners"
 COURSE_BANNER_DIR = Path(__file__).resolve().parents[2] / "storage" / "course-banners"
 MAX_BANNER_BYTES = 8 * 1024 * 1024
-COURSE_BANNER_STYLE_VERSION = 2
+COURSE_BANNER_STYLE_VERSION = 3
 
 
 def render_course_banner(course: Course) -> bytes:
+    subject_banner = render_subject_banner(course)
+    if subject_banner is not None:
+        return subject_banner
     title, category = html.escape(course.title[:60]), html.escape(course.category[:35].upper())
     tagline = html.escape(
         {

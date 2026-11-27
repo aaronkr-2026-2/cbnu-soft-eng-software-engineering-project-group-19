@@ -23,7 +23,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./style.css?v=scholward-14" />
+    <link rel="stylesheet" href="./style.css?v=scholward-15" />
     <link rel="stylesheet" href="./media-content.css?v=5" />
     <link rel="stylesheet" href="/app/certificate.css?v=4" />
   </head>
@@ -123,19 +123,27 @@
         aria-labelledby="languageCampaignTitle"
         hidden
       >
-        <div class="language-campaign-script" aria-hidden="true">
-          <span>Aa</span><span>Я</span><span>한</span>
-        </div>
         <div class="language-campaign-copy">
           <h2 id="languageCampaignTitle" data-i18n="languageCampaignTitle"></h2>
           <p data-i18n="languageCampaignBody"></p>
+          <div class="language-campaign-actions">
+            <a
+              class="button language-campaign-action"
+              href="#courses"
+              id="openCampaignCatalog"
+              data-i18n="openCampaignCatalog"
+            ></a>
+            <a
+              class="language-campaign-secondary"
+              href="#courses"
+              id="openLanguageCourses"
+              data-i18n="openLanguageCourses"
+            ></a>
+          </div>
         </div>
-        <a
-          class="button language-campaign-action"
-          href="#courses"
-          id="openLanguageCourses"
-          data-i18n="openLanguageCourses"
-        ></a>
+        <div class="language-campaign-art" aria-hidden="true">
+          <img src="./course-campaign.jpg" alt="" width="1024" height="576" fetchpriority="high" />
+        </div>
         <button class="language-campaign-close" type="button" id="dismissLanguageCampaign">
           <span aria-hidden="true">×</span>
         </button>
@@ -456,6 +464,6 @@
     </dialog>
     <script src="/app/preferences.js?v=1" defer></script>
     <script src="/app/certificate.js?v=5" defer></script>
-    <script src="/app/app.js?v=scholward-20" defer></script>
+    <script src="/app/app.js?v=scholward-21" defer></script>
   </body>
 </html>

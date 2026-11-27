@@ -26,10 +26,11 @@ const copy = {
     getStarted: "Boshlash",
     eyebrow: "O‘zingizga mos o‘rganish",
     heroTitle: "Bilim olish — o‘z maromingizda.",
-    languageCampaignTitle: "Yangi tilni o‘z tilingizda o‘rganing",
+    languageCampaignTitle: "Til o‘rganing. Dasturlashni boshlang.",
     languageCampaignBody:
-      "Ingliz, rus yoki koreys tilini boshlang. Darslar bepul, yakuniy imtihondan o‘tsangiz sertifikat olasiz.",
-    openLanguageCourses: "Til kurslarini ko‘rish",
+      "Ingliz, rus va koreys tilini mashq qiling yoki HTML, CSS va Python bilan ilk loyihangizni yarating.",
+    openCampaignCatalog: "Barcha kurslarni ko‘rish",
+    openLanguageCourses: "Til kurslari",
     dismissLanguageCampaign: "Bannerni yopish",
     languageCourseCategory: "Til kurslari",
     heroBody:
@@ -134,10 +135,11 @@ const copy = {
     getStarted: "Get started",
     eyebrow: "Learning that fits you",
     heroTitle: "Learn at your own pace.",
-    languageCampaignTitle: "Learn a new language in your own language",
+    languageCampaignTitle: "Learn a language. Build with code.",
     languageCampaignBody:
-      "Start Uzbek, Russian, or Korean. Study for free and earn a certificate by passing the final exam.",
-    openLanguageCourses: "Explore language courses",
+      "Practise Uzbek, Russian, or Korean, or build your first project with HTML, CSS, and Python.",
+    openCampaignCatalog: "Explore all courses",
+    openLanguageCourses: "Language courses",
     dismissLanguageCampaign: "Dismiss banner",
     languageCourseCategory: "Language courses",
     heroBody:
@@ -241,10 +243,11 @@ const copy = {
     getStarted: "Начать",
     eyebrow: "Обучение в вашем ритме",
     heroTitle: "Учитесь в своём темпе.",
-    languageCampaignTitle: "Изучайте новый язык на родном языке",
+    languageCampaignTitle: "Учите языки. Создавайте код.",
     languageCampaignBody:
-      "Начните учить узбекский, английский или корейский бесплатно. Сдайте итоговый экзамен и получите сертификат.",
-    openLanguageCourses: "Смотреть языковые курсы",
+      "Практикуйте узбекский, английский или корейский или создайте первый проект на HTML, CSS и Python.",
+    openCampaignCatalog: "Смотреть все курсы",
+    openLanguageCourses: "Языковые курсы",
     dismissLanguageCampaign: "Закрыть баннер",
     languageCourseCategory: "Языковые курсы",
     heroBody: "Находите интересные курсы, выполняйте практические задания и следите за прогрессом.",
@@ -346,10 +349,11 @@ const copy = {
     getStarted: "시작하기",
     eyebrow: "나에게 맞는 학습",
     heroTitle: "나만의 속도로 배워 보세요.",
-    languageCampaignTitle: "모국어로 새로운 언어를 배워 보세요",
+    languageCampaignTitle: "언어를 배우고, 코딩을 시작하세요.",
     languageCampaignBody:
-      "우즈베크어, 영어, 러시아어를 무료로 배우세요. 최종 시험에 합격하면 수료증을 받을 수 있어요.",
-    openLanguageCourses: "외국어 강좌 보기",
+      "우즈베크어, 영어, 러시아어를 연습하거나 HTML, CSS, Python으로 첫 프로젝트를 만들어 보세요.",
+    openCampaignCatalog: "모든 강좌 보기",
+    openLanguageCourses: "외국어 강좌",
     dismissLanguageCampaign: "배너 닫기",
     languageCourseCategory: "외국어 강좌",
     heroBody: "관심 있는 강의를 찾고, 실습을 하며, 학습 진도를 확인하세요.",
@@ -4485,7 +4489,7 @@ document.querySelectorAll('#mainNav a[href$=".html"]').forEach((link) => {
   });
 });
 
-const languageCampaignKey = "scholward-language-catalog-banner-v1";
+const languageCampaignKey = "scholward-course-campaign-v2";
 const languageCampaign = $("#languageCampaign");
 languageCampaign.hidden = preferences.local.getItem(languageCampaignKey) === "seen";
 function dismissLanguageCampaign() {
@@ -4496,15 +4500,19 @@ $("#dismissLanguageCampaign").addEventListener("click", () => {
   dismissLanguageCampaign();
   $("#heroSignup").focus({ preventScroll: true });
 });
-$("#openLanguageCourses").addEventListener("click", (event) => {
+function openCampaignCatalog(event, search) {
   event.preventDefault();
   dismissLanguageCampaign();
   clearTimeout(courseSearchTimer);
-  $("#courseSearch").value = t("languageCourseCategory");
+  $("#courseSearch").value = search;
   void loadCourses();
   $("#courseSearch").focus({ preventScroll: true });
   $("#courses").scrollIntoView({ block: "start" });
-});
+}
+$("#openCampaignCatalog").addEventListener("click", (event) => openCampaignCatalog(event, ""));
+$("#openLanguageCourses").addEventListener("click", (event) =>
+  openCampaignCatalog(event, t("languageCourseCategory")),
+);
 
 setLanguage(language, false);
 if (!accessToken) loadCourses();

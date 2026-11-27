@@ -12,6 +12,8 @@ from sqlalchemy.orm import Session
 
 from app.models import LessonResourceChunk, LessonResourceFile
 
+ACADEMY_MEDIA_DIR = Path(__file__).resolve().parents[1] / "media" / "academy"
+ACADEMY_VIDEO_KEY = re.compile(r"academy-v1-(?:uz|en|ru|ko|html|python)-(?:uz|en|ru|ko)-[1-3]\.mp4")
 RESOURCE_DIR = Path(__file__).resolve().parents[2] / "storage" / "course-materials"
 RESOURCE_CHUNK_BYTES = 1024 * 1024
 MAX_TOTAL_RESOURCE_BYTES = 512 * 1024 * 1024
@@ -67,6 +69,11 @@ def iter_resource(db: Session, key: str, start: int, end: int) -> Iterator[bytes
 
 
 def resource_response(db: Session, key: str, media_type: str, range_header: str | None) -> Response:
+    if media_type == "video/mp4" and ACADEMY_VIDEO_KEY.fullmatch(key):
+        path = ACADEMY_MEDIA_DIR / key
+        if not path.is_file():
+            raise HTTPException(status_code=404, detail="Course resource not found")
+        return FileResponse(path, media_type=media_type, headers=RESOURCE_HEADERS)
     resource = db.scalar(
         select(LessonResourceFile).where(LessonResourceFile.key == key).with_for_update(read=True)
     )

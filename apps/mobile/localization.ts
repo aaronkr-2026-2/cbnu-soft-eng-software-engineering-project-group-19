@@ -5,23 +5,24 @@ const languageIndex: Record<CourseLanguage, number> = { uz: 0, en: 1, ru: 2, ko:
 
 const messages = {
   languageCampaignTitle: [
-    "Yangi tilni o‘z tilingizda o‘rganing",
-    "Learn a new language in your own language",
-    "Изучайте новый язык на родном языке",
-    "모국어로 새로운 언어를 배워 보세요",
+    "Til o‘rganing. Dasturlashni boshlang.",
+    "Learn a language. Build with code.",
+    "Учите языки. Создавайте код.",
+    "언어를 배우고, 코딩을 시작하세요.",
   ],
   languageCampaignBody: [
-    "Ingliz, rus yoki koreys tilini boshlang. Darslar bepul, yakuniy imtihondan o‘tsangiz sertifikat olasiz.",
-    "Start Uzbek, Russian, or Korean. Study for free and earn a certificate by passing the final exam.",
-    "Начните учить узбекский, английский или корейский бесплатно. Сдайте итоговый экзамен и получите сертификат.",
-    "우즈베크어, 영어, 러시아어를 무료로 배우세요. 최종 시험에 합격하면 수료증을 받을 수 있어요.",
+    "Ingliz, rus va koreys tilini mashq qiling yoki HTML, CSS va Python bilan ilk loyihangizni yarating.",
+    "Practise Uzbek, Russian, or Korean, or build your first project with HTML, CSS, and Python.",
+    "Практикуйте узбекский, английский или корейский или создайте первый проект на HTML, CSS и Python.",
+    "우즈베크어, 영어, 러시아어를 연습하거나 HTML, CSS, Python으로 첫 프로젝트를 만들어 보세요.",
   ],
-  openLanguageCourses: [
-    "Til kurslarini ko‘rish",
-    "Explore language courses",
-    "Смотреть языковые курсы",
-    "외국어 강좌 보기",
+  openCampaignCatalog: [
+    "Barcha kurslarni ko‘rish",
+    "Explore all courses",
+    "Смотреть все курсы",
+    "모든 강좌 보기",
   ],
+  openLanguageCourses: ["Til kurslari", "Language courses", "Языковые курсы", "외국어 강좌"],
   dismissLanguageCampaign: ["Bannerni yopish", "Dismiss banner", "Закрыть баннер", "배너 닫기"],
   languageCourseCategory: ["Til kurslari", "Language courses", "Языковые курсы", "외국어 강좌"],
   lessonProtectionLoading: [

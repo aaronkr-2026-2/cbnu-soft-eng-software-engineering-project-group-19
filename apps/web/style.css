@@ -3576,105 +3576,129 @@ body[dir="rtl"] {
 }
 
 .language-campaign {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: clamp(0.75rem, 2vw, 1.5rem);
   position: relative;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1.125rem;
-  border: 1px solid #315850;
-  border-radius: 1.25rem;
-  color: #fffaf0;
-  background: radial-gradient(ellipse at 8% 0%, #35675a, transparent 55%), #173a34;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(230px, 38%);
+  align-items: center;
+  isolation: isolate;
+  overflow: hidden;
+  margin-bottom: 1.2rem;
+  border: 1px solid #4a6959;
+  border-radius: clamp(1rem, 3vw, 1.75rem);
+  color: #fff6e8;
+  background: #142f27;
+  box-shadow: 0 12px 30px #192d231e;
 }
-
 .language-campaign[hidden] {
   display: none;
 }
-
-.language-campaign-script {
-  display: flex;
-  align-items: center;
-  gap: 0.225rem;
+.language-campaign-copy {
+  z-index: 1;
+  padding: clamp(1.4rem, 4.25vw, 3.4rem);
 }
-
-.language-campaign-script span {
-  display: grid;
-  min-width: 2.5rem;
-  height: 2.5rem;
-  place-items: center;
-  padding: 0.25rem;
-  border: 1px solid #7ba194;
-  border-radius: 0.65rem;
-  color: #fff3dd;
-  background: #24493f;
-  font: 800 1rem / 1 var(--display);
-}
-
 .language-campaign-copy h2 {
+  max-width: 19ch;
   margin: 0;
   color: inherit;
-  font: 800 clamp(1.1rem, 2vw, 1.4rem) / 1.25 var(--display);
-  letter-spacing: -0.02em;
+  font: 800 clamp(1.75rem, 3.35vw, 3.3rem) / 1.08 var(--display);
+  letter-spacing: -0.055em;
+  text-wrap: balance;
 }
-
 .language-campaign-copy p {
-  margin: 0.3rem 0 0;
-  color: #e6eee4;
-  line-height: 1.5;
+  max-width: 50ch;
+  margin: 0.8rem 0 0;
+  color: #d9e4d8;
+  font-size: clamp(0.96rem, 1.35vw, 1.1rem);
+  line-height: 1.55;
 }
-
+.language-campaign-art {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 47%;
+  background: #0c2219;
+}
+.language-campaign-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.language-campaign-art::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #142f27, transparent 28%);
+  content: "";
+}
+.language-campaign-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.35rem;
+  margin-top: 1.35rem;
+}
 .language-campaign-action.button {
-  color: #183630;
-  background: #f2dcc2;
+  min-height: 44px;
+  color: #17362e;
+  background: #f6d9a9;
   border-color: transparent;
-  white-space: normal;
   text-align: center;
 }
-
 .language-campaign-action.button:hover {
-  background: #fff0dc;
+  background: #ffebc7;
 }
-
-.language-campaign-close {
-  min-width: 44px;
+.language-campaign-secondary {
+  display: inline-flex;
+  align-items: center;
   min-height: 44px;
+  color: #f6e2bd;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.23em;
+}
+.language-campaign-close {
+  position: absolute;
+  z-index: 2;
+  top: 0.85rem;
+  right: 0.85rem;
+  width: 44px;
+  height: 44px;
   padding: 0;
-  border: 1px solid #7ba194;
+  border: 1px solid #a3b1a58f;
   border-radius: 50%;
   color: #fffaf0;
-  background: #24493f;
+  background: #142f27e8;
   font-size: 1.4rem;
   line-height: 1;
   cursor: pointer;
 }
-
 .language-campaign :focus-visible {
   outline-color: #ffecbd;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 720px) {
   .language-campaign {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
   }
-
-  .language-campaign-script {
-    grid-column: 1;
-  }
-
   .language-campaign-copy {
-    grid-column: 1 / -1;
+    padding-top: 2rem;
   }
-
-  .language-campaign-action {
-    grid-column: 1 / -1;
-    justify-self: start;
+  .language-campaign-copy h2 {
+    max-width: 20ch;
+    padding-right: 30px;
   }
-
-  .language-campaign-close {
-    grid-column: 2;
-    grid-row: 1;
+  .language-campaign-art {
+    position: relative;
+    width: 100%;
+    height: clamp(115px, 38vw, 200px);
+  }
+  .language-campaign-art img {
+    object-position: center 52%;
+  }
+  .language-campaign-art::after {
+    background: linear-gradient(#142f27, transparent 44%);
+  }
+  .language-campaign-actions {
+    margin-top: 0.85rem;
   }
 }

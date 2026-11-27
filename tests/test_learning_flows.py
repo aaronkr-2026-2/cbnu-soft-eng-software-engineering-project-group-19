@@ -363,7 +363,7 @@ def test_missing_course_banner_is_regenerated_without_exposing_draft(client, mon
     assert f".svg-{courses_router.COURSE_BANNER_STYLE_VERSION}" in banner_url
     refreshed = client.get(banner_url)
     assert refreshed.status_code == 200
-    assert "#874531" in refreshed.text
+    assert "#3b465c" in refreshed.text
     assert "previous palette" not in refreshed.text
     original[0].unlink()
 
@@ -378,7 +378,7 @@ def test_missing_course_banner_is_regenerated_without_exposing_draft(client, mon
     cover = client.get(published.json()["banner_url"])
     assert cover.status_code == 200
     assert cover.headers["content-type"] == "image/svg+xml"
-    assert any(node.text == "R&D" for node in ElementTree.fromstring(cover.content))
+    assert any(node.text == "</>" for node in ElementTree.fromstring(cover.content))
     assert not list(tmp_path.iterdir())
 
 

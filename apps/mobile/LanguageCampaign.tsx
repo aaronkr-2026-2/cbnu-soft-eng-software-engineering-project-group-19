@@ -1,42 +1,56 @@
+import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslate } from "./localization";
 
-export function LanguageCampaign({ open, dismiss }: { open: () => void; dismiss: () => void }) {
+export function LanguageCampaign({
+  openAll,
+  openLanguages,
+  dismiss,
+}: {
+  openAll: () => void;
+  openLanguages: () => void;
+  dismiss: () => void;
+}) {
   const t = useTranslate();
   return (
     <View style={styles.panel}>
-      <View style={styles.header}>
-        <View
-          style={styles.scripts}
-          accessible={false}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        >
-          {["Aa", "Я", "한"].map((script) => (
-            <Text key={script} style={styles.symbol}>
-              {script}
-            </Text>
-          ))}
+      <View style={styles.copy}>
+        <Text accessibilityRole="header" style={styles.title}>
+          {t("languageCampaignTitle")}
+        </Text>
+        <Text style={styles.body}>{t("languageCampaignBody")}</Text>
+        <View style={styles.actions}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={openAll}
+            style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+          >
+            <Text style={styles.actionText}>{t("openCampaignCatalog")}</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={openLanguages}
+            style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}
+          >
+            <Text style={styles.secondaryText}>{t("openLanguageCourses")}</Text>
+          </Pressable>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t("dismissLanguageCampaign")}
-          onPress={dismiss}
-          style={({ pressed }) => [styles.dismiss, pressed && styles.pressed]}
-        >
-          <Text style={styles.dismissText}>×</Text>
-        </Pressable>
       </View>
-      <Text accessibilityRole="header" style={styles.title}>
-        {t("languageCampaignTitle")}
-      </Text>
-      <Text style={styles.body}>{t("languageCampaignBody")}</Text>
+      <Image
+        accessibilityElementsHidden
+        importantForAccessibility="no"
+        source={require("./assets/course-campaign.jpg")}
+        contentFit="cover"
+        contentPosition="center"
+        style={styles.art}
+      />
       <Pressable
         accessibilityRole="button"
-        onPress={open}
-        style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+        accessibilityLabel={t("dismissLanguageCampaign")}
+        onPress={dismiss}
+        style={({ pressed }) => [styles.dismiss, pressed && styles.pressed]}
       >
-        <Text style={styles.actionText}>{t("openLanguageCourses")}</Text>
+        <Text style={styles.dismissText}>×</Text>
       </Pressable>
     </View>
   );
@@ -44,50 +58,53 @@ export function LanguageCampaign({ open, dismiss }: { open: () => void; dismiss:
 
 const styles = StyleSheet.create({
   panel: {
-    backgroundColor: "#173a34",
-    borderColor: "#315850",
-    borderWidth: 1,
-    borderRadius: 22,
-    padding: 17,
-    gap: 9,
-  },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
-  scripts: { flexDirection: "row", gap: 5, flexShrink: 1 },
-  symbol: {
-    borderWidth: 1,
-    borderColor: "#7ba194",
-    borderRadius: 9,
     overflow: "hidden",
-    backgroundColor: "#24493f",
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    color: "#fff3dd",
-    fontSize: 15,
-    fontWeight: "800",
+    backgroundColor: "#142f27",
+    borderColor: "#4a6959",
+    borderWidth: 1,
+    borderRadius: 23,
   },
+  copy: { gap: 10, padding: 18 },
   dismiss: {
-    minWidth: 44,
-    minHeight: 44,
+    position: "absolute",
+    top: 9,
+    right: 9,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 22,
-    backgroundColor: "#24493f",
-    borderColor: "#7ba194",
+    backgroundColor: "#142f27",
+    borderColor: "#a3b1a5",
     borderWidth: 1,
   },
   dismissText: { color: "#fffaf0", fontSize: 24, lineHeight: 27 },
-  title: { color: "#fffaf0", fontSize: 23, fontWeight: "800", lineHeight: 29 },
-  body: { color: "#e6eee4", fontSize: 15, lineHeight: 22 },
+  title: {
+    paddingRight: 41,
+    color: "#fff6e8",
+    fontSize: 28,
+    lineHeight: 33,
+    fontWeight: "800",
+    letterSpacing: -0.8,
+  },
+  body: { color: "#d9e4d8", fontSize: 15, lineHeight: 22 },
+  actions: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 10, marginTop: 3 },
   action: {
-    alignSelf: "flex-start",
     minHeight: 44,
     justifyContent: "center",
-    backgroundColor: "#f2dcc2",
+    backgroundColor: "#f6d9a9",
     borderRadius: 12,
     paddingVertical: 9,
     paddingHorizontal: 13,
-    marginTop: 4,
   },
-  actionText: { color: "#183630", fontSize: 15, fontWeight: "800" },
+  actionText: { color: "#17362e", fontSize: 15, fontWeight: "800" },
+  secondary: { minHeight: 44, justifyContent: "center" },
+  secondaryText: {
+    color: "#f6e2bd",
+    fontSize: 15,
+    fontWeight: "700",
+    textDecorationLine: "underline",
+  },
+  art: { width: "100%", height: 136, backgroundColor: "#0c2219" },
   pressed: { opacity: 0.75 },
 });
