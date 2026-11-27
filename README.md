@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://github.com/aaronkr-2026-2/cbnu-soft-eng-software-engineering-project-group-19">
-    <img src="docs/assets/studyflow-logo.svg" alt="SCHOLWARD Academy logo" width="480" />
+    <img src="docs/assets/scholward-academy-logo.svg" alt="SCHOLWARD Academy logo" width="480" />
   </a>
 </p>
 

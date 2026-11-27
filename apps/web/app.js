@@ -597,7 +597,7 @@ const dashboardCopy = {
     lessonCount: "dars",
     completed: "Bajarildi",
     markComplete: "Tugatdim",
-    emptyEnrollments: "Siz hali kursga yozilmagansiz. Pastdagi kurslardan boshlang.",
+    emptyEnrollments: "Ro‘yxatingiz bo‘sh. Katalogdan o‘zingizga mos kursni tanlang.",
     emptyLessons: "Bu kursda hali dars yo‘q.",
     recommendationsTitle: "Sizga tavsiya etiladi",
     recommendationReason: "Nega mos",
@@ -771,7 +771,7 @@ const dashboardCopy = {
     lessonCount: "lessons",
     completed: "Completed",
     markComplete: "Mark complete",
-    emptyEnrollments: "You haven’t enrolled in a course yet. Pick one below to get started.",
+    emptyEnrollments: "Your course list is empty. Choose a course from the catalog.",
     emptyLessons: "This course has no lessons yet.",
     recommendationsTitle: "Picked for you",
     recommendationReason: "Why it fits",
@@ -944,7 +944,7 @@ const dashboardCopy = {
     lessonCount: "уроков",
     completed: "Завершено",
     markComplete: "Отметить",
-    emptyEnrollments: "Вы ещё не записались на курс. Выберите подходящий ниже.",
+    emptyEnrollments: "Ваш список пуст. Выберите подходящий курс в каталоге.",
     emptyLessons: "В этом курсе пока нет уроков.",
     recommendationsTitle: "Рекомендуем вам",
     recommendationReason: "Почему подходит",
@@ -1114,7 +1114,7 @@ const dashboardCopy = {
     lessonCount: "개 강의",
     completed: "완료",
     markComplete: "완료 표시",
-    emptyEnrollments: "아직 신청한 강의가 없어요. 아래에서 시작해 보세요.",
+    emptyEnrollments: "강의 목록이 비어 있어요. 카탈로그에서 원하는 강의를 선택하세요.",
     emptyLessons: "이 강의에는 아직 수업이 없어요.",
     recommendationsTitle: "나를 위한 추천",
     recommendationReason: "추천 이유",
@@ -3849,10 +3849,16 @@ function renderEnrollmentList(enrollments) {
     ? visible
         .map(
           ({ course_id, course_title }) =>
-            `<article class="learner-list-card"><div><b>${escapeHtml(course_title)}</b></div><div class="enrollment-actions"><button type="button" class="button button-outline button-small" data-open-enrollment="${escapeHtml(course_id)}">${escapeHtml(t("openCourse"))}</button><button type="button" class="button button-quiet button-small" data-remove-enrollment="${escapeHtml(course_id)}">${escapeHtml(t("removeCourse"))}</button></div></article>`,
+            `<article class="learner-list-card learner-library-card"><div class="learner-library-info"><span class="learner-library-mark ui-icon icon-play" aria-hidden="true"></span><div><h4>${escapeHtml(course_title)}</h4></div></div><div class="enrollment-actions"><button type="button" class="button button-outline button-small" data-open-enrollment="${escapeHtml(course_id)}">${escapeHtml(t("openCourse"))}</button><button type="button" class="button button-quiet button-small" data-remove-enrollment="${escapeHtml(course_id)}">${escapeHtml(t("removeCourse"))}</button></div></article>`,
         )
         .join("")
-    : `<div class="course-placeholder">${escapeHtml(t("emptyEnrollments"))}</div>`;
+    : `<div class="learner-list-card learner-library-card learner-library-empty">
+      <div class="learner-library-info">
+        <span class="learner-library-mark ui-icon icon-target" aria-hidden="true"></span>
+        <p>${escapeHtml(t("emptyEnrollments"))}</p>
+      </div>
+      <a class="button button-dark" href="#courses">${escapeHtml(t("navCourses"))} <span class="ui-icon icon-arrow" aria-hidden="true"></span></a>
+    </div>`;
 }
 function renderLearnerAssignment(lesson, assignment) {
   const submission = assignment.my_submission;
@@ -3967,7 +3973,7 @@ function renderLearningOverview(entries) {
     ? completeEntries
         .map(
           ({ enrollment, progress }) =>
-            `<article class="learner-list-card"><div><b>${escapeHtml(enrollment.course_title)}</b><span>${progress.completed_lessons}/${progress.total_lessons} ${escapeHtml(t("completed"))}</span></div><button type="button" class="button button-outline button-small" data-open-enrollment="${escapeHtml(enrollment.course_id)}">${escapeHtml(t("openCourse"))}</button></article>`,
+            `<article class="learner-list-card learner-library-card"><div class="learner-library-info"><span class="learner-library-mark ui-icon icon-check" aria-hidden="true"></span><div><h4>${escapeHtml(enrollment.course_title)}</h4><p class="learner-completion-count">${progress.completed_lessons}/${progress.total_lessons} ${escapeHtml(t("completed"))}</p></div></div><button type="button" class="button button-outline button-small" data-open-enrollment="${escapeHtml(enrollment.course_id)}">${escapeHtml(t("openCourse"))}</button></article>`,
         )
         .join("")
     : `<p class="panel-empty">${escapeHtml(t("emptyCompletedCourses"))}</p>`;
@@ -3983,7 +3989,16 @@ function renderLearningOverview(entries) {
             certificate.certificate_code,
             language,
           );
-          return `<article class="learner-list-card certificate-list-card"><div><b>${escapeHtml(certificate.course_title)}</b><span>${escapeHtml(t("certificateCode"))}: ${escapeHtml(certificate.certificate_code)}</span><span>${escapeHtml(t("issuedOn"))}: ${escapeHtml(issuedDate)}</span></div><div class="certificate-list-actions"><a class="button button-dark button-small" download href="${escapeHtml(pdfUrl)}">${escapeHtml(t("downloadCertificateAgain"))}</a><a class="button button-outline button-small" href="/app/verify.html?code=${encodeURIComponent(certificate.certificate_code)}">${escapeHtml(t("navVerifyCertificate"))}</a></div></article>`;
+          return `<article class="learner-list-card learner-library-card certificate-list-card">
+            <div class="learner-library-info">
+              <span class="learner-library-mark ui-icon icon-diamond" aria-hidden="true"></span>
+              <div><h4>${escapeHtml(certificate.course_title)}</h4>
+                <dl class="learner-certificate-meta">
+                  <dt>${escapeHtml(t("issuedOn"))}</dt><dd>${escapeHtml(issuedDate)}</dd>
+                  <dt>${escapeHtml(t("certificateCode"))}</dt><dd><code>${escapeHtml(certificate.certificate_code)}</code></dd>
+                </dl>
+              </div>
+            </div><div class="certificate-list-actions"><a class="button button-dark button-small" download href="${escapeHtml(pdfUrl)}">${escapeHtml(t("downloadCertificateAgain"))}</a><a class="button button-outline button-small" href="/app/verify.html?code=${encodeURIComponent(certificate.certificate_code)}">${escapeHtml(t("navVerifyCertificate"))}</a></div></article>`;
         })
         .join("")
     : `<p class="panel-empty">${escapeHtml(t("emptyCertificates"))}</p>`;
