@@ -2066,7 +2066,6 @@ function updateAuthUI() {
   $("#mainNav a[href='#how']").hidden = isAuthor;
   const main = document.querySelector("main");
   if (isAuthor) main.insertBefore($("#myCourses"), $("#courses"));
-  else main.insertBefore($("#courses"), $("#how"));
   $("#heroSignup").textContent = t(isLearner ? "myLearning" : "startLearning");
   $("#closingSignup").textContent = t(isLearner ? "myLearning" : "startToday");
   const accountId = isLearner ? user.id : null;

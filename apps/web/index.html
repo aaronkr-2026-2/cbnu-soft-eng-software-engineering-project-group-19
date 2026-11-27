@@ -23,11 +23,11 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./style.css?v=scholward-17" />
+    <link rel="stylesheet" href="./style.css?v=scholward-18" />
     <link rel="stylesheet" href="./media-content.css?v=5" />
     <link rel="stylesheet" href="/app/certificate.css?v=4" />
   </head>
-  <body>
+  <body class="academy-home">
     <header class="topbar landing-topbar">
       <a class="brand" href="/app" aria-label="SCHOLWARD Academy"
         ><img
@@ -117,43 +117,6 @@
     </details>
 
     <main>
-      <aside
-        class="language-campaign"
-        id="languageCampaign"
-        aria-labelledby="languageCampaignTitle"
-        hidden
-      >
-        <div class="language-campaign-copy">
-          <h2 id="languageCampaignTitle" data-i18n="languageCampaignTitle"></h2>
-          <p data-i18n="languageCampaignBody"></p>
-          <div class="language-campaign-actions">
-            <a
-              class="button language-campaign-action"
-              href="#courses"
-              id="openCampaignCatalog"
-              data-i18n="openCampaignCatalog"
-            ></a>
-            <a
-              class="language-campaign-secondary"
-              href="#courses"
-              id="openLanguageCourses"
-              data-i18n="openLanguageCourses"
-            ></a>
-            <a
-              class="language-campaign-secondary"
-              href="#courses"
-              id="openItCourses"
-              data-i18n="openItCourses"
-            ></a>
-          </div>
-        </div>
-        <div class="language-campaign-art" aria-hidden="true">
-          <img src="./course-campaign.jpg" alt="" width="1024" height="576" fetchpriority="high" />
-        </div>
-        <button class="language-campaign-close" type="button" id="dismissLanguageCampaign">
-          <span aria-hidden="true">×</span>
-        </button>
-      </aside>
       <section class="hero" id="heroSection">
         <div class="hero-copy">
           <h1 data-i18n="heroTitle"></h1>
@@ -176,13 +139,7 @@
           </div>
         </div>
         <div class="hero-visual">
-          <img
-            src="/app/scholward-lesson-diagram.webp"
-            width="574"
-            height="840"
-            alt=""
-            fetchpriority="high"
-          />
+          <img src="/app/academy-study.jpg" width="1050" height="788" alt="" fetchpriority="high" />
         </div>
         <div class="hero-bottom">
           <div>
@@ -233,6 +190,44 @@
           </article>
         </div>
       </section>
+
+      <aside
+        class="language-campaign"
+        id="languageCampaign"
+        aria-labelledby="languageCampaignTitle"
+        hidden
+      >
+        <div class="language-campaign-copy">
+          <h2 id="languageCampaignTitle" data-i18n="languageCampaignTitle"></h2>
+          <p data-i18n="languageCampaignBody"></p>
+          <div class="language-campaign-actions">
+            <a
+              class="button language-campaign-action"
+              href="#courses"
+              id="openCampaignCatalog"
+              data-i18n="openCampaignCatalog"
+            ></a>
+            <a
+              class="language-campaign-secondary"
+              href="#courses"
+              id="openLanguageCourses"
+              data-i18n="openLanguageCourses"
+            ></a>
+            <a
+              class="language-campaign-secondary"
+              href="#courses"
+              id="openItCourses"
+              data-i18n="openItCourses"
+            ></a>
+          </div>
+        </div>
+        <div class="language-campaign-art" aria-hidden="true">
+          <img src="./course-campaign.jpg" alt="" width="1024" height="576" loading="lazy" />
+        </div>
+        <button class="language-campaign-close" type="button" id="dismissLanguageCampaign">
+          <span aria-hidden="true">×</span>
+        </button>
+      </aside>
 
       <section class="course-section" id="courses" aria-labelledby="catalogTitle">
         <div class="catalog-heading">
@@ -479,6 +474,6 @@
     </dialog>
     <script src="/app/preferences.js?v=1" defer></script>
     <script src="/app/certificate.js?v=5" defer></script>
-    <script src="/app/app.js?v=scholward-23" defer></script>
+    <script src="/app/app.js?v=scholward-24" defer></script>
   </body>
 </html>

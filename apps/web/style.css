@@ -3785,3 +3785,175 @@ body[dir="rtl"] {
     transform: none;
   }
 }
+
+/* Sage and paper palette for the academy landing page. */
+.academy-home {
+  --ink: #233529;
+  --muted: #405348;
+  --paper: #f7f1e7;
+  --white: #fffaf1;
+  --line: #cbd6c6;
+  --accent-ink: #345f49;
+  --academy-sage: #a3b7a6;
+  --academy-moss: #315743;
+  --academy-clay: #a35030;
+  background-color: #9eb4a2;
+}
+.academy-home::before {
+  background:
+    linear-gradient(155deg, #a7bcaaef 0%, #d9e4d7ed 49%, #92ad98ed 100%),
+    url("./academy-paper.jpg") center / cover no-repeat;
+}
+.academy-home .topbar {
+  background: #fffaf2f5;
+  border-color: #dbe1d3;
+}
+.academy-home #signupButton,
+.academy-home .hero .hero-actions .button {
+  color: #fffaf1;
+  background: var(--academy-clay);
+  border-color: transparent;
+}
+.academy-home #signupButton:hover,
+.academy-home .hero .hero-actions .button:hover {
+  background: #884229;
+}
+.academy-home .hero {
+  position: relative;
+  overflow: hidden;
+  width: min(calc(100% - 32px), 1180px);
+  margin: 18px auto 0;
+  padding: clamp(23px, 4.4vw, 59px);
+  padding-bottom: clamp(42px, 6vw, 74px);
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+  gap: 18px 26px;
+  color: var(--ink);
+  background: linear-gradient(125deg, #a2b6a3 12%, #c1d0bf 100%);
+  border-color: #a0b4a1;
+  border-radius: 34px 34px 0 0;
+  box-shadow: none;
+}
+.academy-home .hero::after {
+  position: absolute;
+  inset: auto -5% -28px;
+  height: clamp(50px, 7vw, 80px);
+  background: var(--paper);
+  border-radius: 58% 47% 0 0 / 87% 71% 0 0;
+  transform: rotate(1.6deg);
+  pointer-events: none;
+  content: "";
+}
+.academy-home .hero-copy,
+.academy-home .hero-bottom {
+  position: relative;
+  z-index: 1;
+}
+.academy-home .hero h1 {
+  margin-top: 0;
+  font-size: clamp(36px, 4.5vw, 61px);
+  text-wrap: pretty;
+}
+.academy-home .hero-description,
+.academy-home .hero .hero-actions .text-link,
+.academy-home .hero .hero-bottom div span {
+  color: #2e4537;
+}
+.academy-home .hero .hero-actions :focus-visible {
+  outline-color: var(--academy-moss);
+}
+.academy-home .hero-visual {
+  padding: 0;
+  overflow: hidden;
+  background: #efe6d7;
+  border: 0;
+  border-radius: 23% 25px 25px 17% / 22% 25px 25px 21%;
+  box-shadow: 0 16px 36px #27433624;
+}
+.academy-home .hero-visual img {
+  aspect-ratio: 4 / 3;
+  max-height: 397px;
+  object-fit: cover;
+}
+.academy-home .hero .hero-bottom {
+  grid-column: 1;
+  padding: 0;
+  border: 0;
+}
+.academy-home .intro-section {
+  width: min(calc(100% - 32px), 1180px);
+  max-width: unset;
+  margin: 0 auto 28px;
+  padding: clamp(20px, 4.3vw, 58px);
+  border-radius: 0 0 32px 32px;
+  background: var(--paper);
+}
+.academy-home .feature-grid {
+  margin-top: 26px;
+}
+.academy-home .feature-card {
+  background: #fffaf2;
+  border-radius: 19px;
+}
+.academy-home .feature-icon {
+  background: #e1eadb;
+  color: #3e634c;
+}
+.academy-home .course-section {
+  width: min(calc(100% - 32px), 1180px);
+  margin-inline: auto;
+  background: var(--paper);
+}
+.academy-home .catalog-heading {
+  border-color: #9cac99;
+  background: linear-gradient(115deg, #adc0ac, #d0ddcd);
+}
+.academy-home .marketplace-search {
+  border-color: #8ca38f;
+}
+.academy-home .course-card {
+  background: #fffaf2;
+}
+.academy-home .language-campaign {
+  width: min(calc(100% - 32px), 1180px);
+  background-color: #315241;
+}
+.academy-home .language-campaign-art::after {
+  background: linear-gradient(90deg, #315241, transparent 52%);
+}
+.academy-home .language-campaign-action.button {
+  background: #f7eddf;
+  color: #30483a;
+}
+.academy-home .language-campaign-action.button:hover {
+  background: #fffaf1;
+}
+.academy-home footer {
+  background: #e5ecdf;
+  border-color: #c3d1c1;
+}
+
+@media (max-width: 800px) {
+  .academy-home .hero {
+    grid-template-columns: minmax(0, 1fr);
+    border-radius: 24px 24px 0 0;
+  }
+  .academy-home .hero-visual {
+    border-radius: 16% 18px 18px 9% / 19% 18px 18px 15%;
+  }
+  .academy-home .hero-visual img {
+    max-height: 320px;
+  }
+  .academy-home .intro-section {
+    border-radius: 0 0 24px 24px;
+  }
+}
+
+.academy-home .closing-banner {
+  color: var(--ink);
+  background: linear-gradient(120deg, #c9d8c7, #abbfaa);
+  border-color: #93ab95;
+}
+.academy-home .closing-banner p,
+.academy-home .closing-banner .banner-spark {
+  color: #365848;
+}

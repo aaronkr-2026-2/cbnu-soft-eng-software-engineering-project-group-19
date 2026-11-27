@@ -1,14 +1,14 @@
 import { StyleSheet } from "react-native";
 
 export const color = {
-  ink: "#30251f",
-  muted: "#665346",
-  line: "#e7d5c4",
-  paper: "#faf7ef",
-  white: "#ffffff",
-  lime: "#efd7c5",
-  leaf: "#87432f",
-  pale: "#faeee3",
+  ink: "#23382d",
+  muted: "#40564a",
+  line: "#cbd4c3",
+  paper: "#f5f0e5",
+  white: "#fffaf0",
+  lime: "#dce5d7",
+  leaf: "#40634d",
+  pale: "#e7eddf",
   error: "#982b26",
 };
 
@@ -153,15 +153,15 @@ export const styles = StyleSheet.create({
     color: color.ink,
   },
   catalogHeader: {
-    backgroundColor: "#382721",
-    borderColor: "#624337",
+    backgroundColor: "#afc0ae",
+    borderColor: "#91a991",
     borderWidth: 1,
     borderRadius: 25,
     padding: 19,
     gap: 15,
   },
   catalogTitle: {
-    color: color.white,
+    color: color.ink,
     fontSize: 27,
     lineHeight: 33,
     fontWeight: "800",
@@ -197,7 +197,7 @@ export const styles = StyleSheet.create({
     overflow: "hidden",
   },
   aboutHero: {
-    backgroundColor: "#382721",
+    backgroundColor: "#afc0ae",
     borderRadius: 26,
     padding: 22,
     gap: 13,

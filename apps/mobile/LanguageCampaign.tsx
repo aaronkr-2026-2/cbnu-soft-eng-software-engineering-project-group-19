@@ -45,7 +45,7 @@ export function LanguageCampaign({
       <Image
         accessibilityElementsHidden
         importantForAccessibility="no"
-        source={require("./assets/course-campaign.jpg")}
+        source={require("./assets/academy-study.jpg")}
         contentFit="cover"
         contentPosition="center"
         style={styles.art}
@@ -65,8 +65,8 @@ export function LanguageCampaign({
 const styles = StyleSheet.create({
   panel: {
     overflow: "hidden",
-    backgroundColor: "#142f27",
-    borderColor: "#4a6959",
+    backgroundColor: "#b3c4b0",
+    borderColor: "#96a995",
     borderWidth: 1,
     borderRadius: 23,
   },
@@ -81,37 +81,37 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 22,
-    backgroundColor: "#142f27",
+    backgroundColor: "#b3c4b0",
     borderColor: "#a3b1a5",
     borderWidth: 1,
   },
-  dismissText: { color: "#fffaf0", fontSize: 24, lineHeight: 27 },
+  dismissText: { color: "#263d30", fontSize: 24, lineHeight: 27 },
   title: {
     paddingRight: 41,
-    color: "#fff6e8",
+    color: "#23382d",
     fontSize: 28,
     lineHeight: 33,
     fontWeight: "800",
     letterSpacing: -0.8,
   },
-  body: { color: "#d9e4d8", fontSize: 15, lineHeight: 22 },
+  body: { color: "#3e5648", fontSize: 15, lineHeight: 22 },
   actions: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 10, marginTop: 3 },
   action: {
     minHeight: 44,
     justifyContent: "center",
-    backgroundColor: "#f6d9a9",
+    backgroundColor: "#a14f2d",
     borderRadius: 12,
     paddingVertical: 9,
     paddingHorizontal: 13,
   },
-  actionText: { color: "#17362e", fontSize: 15, fontWeight: "800" },
+  actionText: { color: "#fffdf5", fontSize: 15, fontWeight: "800" },
   secondary: { minHeight: 44, justifyContent: "center" },
   secondaryText: {
-    color: "#f6e2bd",
+    color: "#2d533c",
     fontSize: 15,
     fontWeight: "700",
     textDecorationLine: "underline",
   },
-  art: { width: "100%", height: 136, backgroundColor: "#0c2219" },
+  art: { width: "100%", height: 160, backgroundColor: "#e7eddf" },
   pressed: { opacity: 0.75 },
 });
