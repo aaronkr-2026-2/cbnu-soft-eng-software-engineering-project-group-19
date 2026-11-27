@@ -550,6 +550,7 @@ const dashboardCopy = {
     profileAgeLabel: "Yosh (ixtiyoriy)",
     profileBioLabel: "Men haqimda",
     profilePhotoLabel: "Profil rasmi",
+    profilePhotoChoose: "Profil rasmini tanlash",
     profilePhotoHint: "JPG, PNG yoki WebP. Rasm markazdan kvadrat kesiladi.",
     saveProfileButton: "Profilni saqlash",
     profileSaved: "Profil saqlandi.",
@@ -723,6 +724,7 @@ const dashboardCopy = {
     profileAgeLabel: "Age (optional)",
     profileBioLabel: "About me",
     profilePhotoLabel: "Profile photo",
+    profilePhotoChoose: "Choose profile photo",
     profilePhotoHint: "JPG, PNG, or WebP. The image is center-cropped to a square.",
     saveProfileButton: "Save profile",
     profileSaved: "Profile saved.",
@@ -895,6 +897,7 @@ const dashboardCopy = {
     profileAgeLabel: "Возраст (необязательно)",
     profileBioLabel: "О себе",
     profilePhotoLabel: "Фото профиля",
+    profilePhotoChoose: "Выбрать фото профиля",
     profilePhotoHint: "JPG, PNG или WebP. Изображение будет обрезано по центру в квадрат.",
     saveProfileButton: "Сохранить профиль",
     profileSaved: "Профиль сохранён.",
@@ -1065,6 +1068,7 @@ const dashboardCopy = {
     profileAgeLabel: "나이 (선택 사항)",
     profileBioLabel: "소개",
     profilePhotoLabel: "프로필 사진",
+    profilePhotoChoose: "프로필 사진 선택",
     profilePhotoHint: "JPG, PNG 또는 WebP. 사진은 가운데를 기준으로 정사각형으로 잘라요.",
     saveProfileButton: "프로필 저장",
     profileSaved: "프로필을 저장했어요.",
@@ -4181,28 +4185,44 @@ function renderQuizHistory(container, attempts) {
 
 function renderRecommendations(recommendations, aiPowered = false) {
   const container = $("#recommendationList");
-  const mode = `<p class="ai-recommendation-mode">${escapeHtml(t(aiPowered ? "aiRecommendation" : "localRecommendation"))}</p>`;
-  if (!recommendations.length) {
-    container.innerHTML = `${mode}<div class="panel-empty">${t("emptyRecommendations")}</div>`;
+  $("#recommendationMode").textContent = t(aiPowered ? "aiRecommendation" : "localRecommendation");
+  const shown = new Set();
+  const unique = recommendations.filter(({ title, description }) => {
+    const key = JSON.stringify([title, description]);
+    if (shown.has(key)) return false;
+    shown.add(key);
+    return true;
+  });
+  if (!unique.length) {
+    container.innerHTML = `<div class="panel-empty">${escapeHtml(t("emptyRecommendations"))}</div>`;
     return;
   }
-  container.innerHTML =
-    mode +
-    recommendations
-      .map(
-        (item) =>
-          `<article class="recommendation-card"><h4>${escapeHtml(item.title)}</h4><p>${escapeHtml(item.description || "")}</p><p class="reasons">${escapeHtml((item.reasons || []).join(" · "))}</p><button class="button button-outline" data-recommend="${item.course_id}">${t("enroll")}</button></article>`,
-      )
-      .join("");
-  container.querySelectorAll("[data-recommend]").forEach((button) => {
-    const item = recommendations.find(
-      (candidate) => candidate.course_id === button.dataset.recommend,
-    );
-    if (!item) return;
-    const level = document.createElement("small");
-    level.className = "recommendation-level";
-    level.textContent = `${t("recommendedLevel")}: ${humanLevel(item.level)}`;
-    button.before(level);
+  container.innerHTML = unique
+    .map(({ course_id, title, description, level, reasons }) => {
+      const id = escapeHtml(course_id);
+      return `<article class="recommendation-card">
+        <div class="recommendation-cover">
+          <span class="ui-icon icon-diamond" aria-hidden="true"></span>
+          <img src="/courses/${id}/banner" alt="" loading="lazy">
+        </div>
+        <div class="recommendation-body">
+          <h4>${escapeHtml(title)}</h4>
+          ${description ? `<p class="recommendation-description">${escapeHtml(description)}</p>` : ""}
+          ${reasons?.length ? `<p class="recommendation-reason"><span class="ui-icon icon-check" aria-hidden="true"></span>${escapeHtml(reasons.join(" · "))}</p>` : ""}
+          <div class="recommendation-actions">
+            <span class="recommendation-level">${escapeHtml(humanLevel(level))}</span>
+            <button type="button" class="button button-dark button-small" data-recommend="${id}">${escapeHtml(t("enroll"))}<span class="ui-icon icon-arrow" aria-hidden="true"></span></button>
+          </div>
+        </div>
+      </article>`;
+    })
+    .join("");
+  container.querySelectorAll(".recommendation-cover img").forEach((image) => {
+    const hideImage = () => {
+      image.hidden = true;
+    };
+    image.addEventListener("error", hideImage, { once: true });
+    if (image.complete && !image.naturalWidth) hideImage();
   });
   container.querySelectorAll("[data-recommend]").forEach((button) =>
     button.addEventListener("click", async () => {
@@ -4379,7 +4399,8 @@ $("#profilePhotoInput").addEventListener("change", async (event) => {
   const input = event.currentTarget;
   const file = input.files?.[0];
   if (!file) return;
-  const message = $("#profileMessage");
+  const message = $("#profilePhotoMessage");
+  message.textContent = "";
   try {
     if (file.size > 10 * 1024 * 1024) throw new Error(t("profilePhotoError"));
     const bitmap = await createImageBitmap(file);
