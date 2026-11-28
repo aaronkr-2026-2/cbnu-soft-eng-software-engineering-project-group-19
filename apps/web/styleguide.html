@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f8f4" />
+    <link rel="icon" href="/app/scholward-crest-sage.svg" type="image/svg+xml" />
+    <title>Style guide — SCHOLWARD Academy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./style.css?v=scholward-9" />
+    <link rel="stylesheet" href="./styleguide.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/app/" aria-label="SCHOLWARD Academy home">
+        <img class="brand-mark" src="/app/scholward-crest-sage.svg" width="32" height="32" alt="" />
+        <span class="brand-name">SCHOLWARD <span class="brand-academy">Academy</span></span>
+      </a>
+    </header>
+
+    <main class="styleguide">
+      <h1>SCHOLWARD Academy style guide</h1>
+      <p>Use these colors, typefaces, and components when designing SCHOLWARD Academy screens.</p>
+
+      <section aria-labelledby="colors">
+        <h2 id="colors">Colors</h2>
+        <ul class="styleguide-colors">
+          <li>
+            <span style="--swatch: var(--paper)" aria-hidden="true"></span>Paper
+            <code>#FAF7EF</code>
+          </li>
+          <li>
+            <span style="--swatch: var(--ink)" aria-hidden="true"></span>Ink <code>#30251f</code>
+          </li>
+          <li>
+            <span style="--swatch: var(--accent-soft)" aria-hidden="true"></span>Warm clay
+            <code>#EFD7C5</code>
+          </li>
+          <li>
+            <span style="--swatch: var(--accent-ink)" aria-hidden="true"></span>Terracotta
+            <code>#87432F</code>
+          </li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="type">
+        <h2 id="type">Typography</h2>
+        <p class="styleguide-heading-sample">Learn at your own pace</p>
+        <p>Manrope for headings. DM Sans for body copy, labels, and controls.</p>
+      </section>
+
+      <section aria-labelledby="actions">
+        <h2 id="actions">Actions</h2>
+        <p>Use one primary action per screen. Use an outlined button for secondary actions.</p>
+        <div class="styleguide-actions">
+          <a class="button button-dark" href="/app/learner-login.html">Sign in</a>
+          <a class="button button-outline" href="/app/#courses">Browse courses</a>
+        </div>
+      </section>
+
+      <section aria-labelledby="forms">
+        <h2 id="forms">Forms and feedback</h2>
+        <p>Keep the label visible and place a specific correction beside the affected field.</p>
+        <div class="studio-form styleguide-field">
+          <label>
+            Email
+            <input
+              type="email"
+              value="learner"
+              readonly
+              aria-invalid="true"
+              aria-describedby="email-feedback"
+            />
+          </label>
+          <p class="form-error" id="email-feedback">
+            Enter a complete email address, such as learner@example.com.
+          </p>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

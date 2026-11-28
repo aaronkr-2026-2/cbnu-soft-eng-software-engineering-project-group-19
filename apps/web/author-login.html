@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f8f4" />
+    <link rel="icon" href="/app/scholward-crest-sage.svg" type="image/svg+xml" />
+    <title>Mualliflar kirishi — SCHOLWARD Academy</title>
+    <link rel="stylesheet" href="/app/style.css?v=scholward-21" />
+    <link rel="stylesheet" href="/app/portal-auth.css?v=scholward-6" />
+  </head>
+  <body class="portal-page academy-theme" data-account-type="author">
+    <main class="portal-shell">
+      <div class="portal-card">
+        <div class="portal-heading">
+          <a class="brand" href="/app/"
+            ><img
+              class="brand-mark"
+              src="/app/scholward-crest-sage.svg"
+              width="32"
+              height="32"
+              alt=""
+            /><span class="brand-name"
+              >SCHOLWARD <span class="brand-academy">Academy</span></span
+            ></a
+          >
+          <label class="portal-language"
+            ><span class="sr-only" data-copy="language">Til</span
+            ><span class="portal-language-icon ui-icon icon-globe" aria-hidden="true"></span>
+            <select id="portalLanguage">
+              <option value="uz">O‘zbekcha</option>
+              <option value="en">English</option>
+              <option value="ru">Русский</option>
+              <option value="ko">한국어</option>
+            </select></label
+          >
+        </div>
+        <div class="portal-eyebrow" data-copy="authorEyebrow"></div>
+        <h1 data-copy="authorTitle"></h1>
+        <p class="portal-description" data-copy="authorDescription"></p>
+        <div class="auth-tabs" hidden>
+          <button class="active" id="loginTab" type="button" data-copy="login"></button
+          ><button id="registerTab" type="button" hidden data-copy="register"></button>
+        </div>
+        <p class="portal-description" id="authorInviteNote" data-copy="authorInviteNote"></p>
+        <form id="portalForm" class="auth-form" method="post" action="/auth/login">
+          <label id="fullNameField" hidden
+            ><span data-copy="fullName"></span
+            ><input name="full_name" autocomplete="name" minlength="2" maxlength="150"
+          /></label>
+          <label
+            ><span data-copy="email"></span
+            ><input name="email" type="email" autocomplete="email" required
+          /></label>
+          <div class="reset-password-field">
+            <label for="portalPassword" data-copy="password"></label>
+            <div class="reset-password-input">
+              <input
+                id="portalPassword"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                spellcheck="false"
+                autocapitalize="off"
+                required
+              />
+              <button
+                class="reset-password-toggle"
+                id="portalPasswordToggle"
+                type="button"
+                aria-controls="portalPassword"
+              >
+                Ko‘rsatish
+              </button>
+            </div>
+          </div>
+          <a id="forgotPasswordLink" class="portal-home" href="/app/reset-password.html"></a>
+          <p class="form-message" id="portalMessage" role="status"></p>
+          <button class="button button-dark auth-submit" type="submit" id="portalSubmit"></button>
+        </form>
+        <p class="portal-switch">
+          <span data-copy="otherRolePrompt"></span>
+          <a href="/app/learner-login.html" data-copy="learnerPortal"></a>
+        </p>
+        <a class="portal-home" href="/app/" data-copy="backHome"></a>
+      </div>
+      <div class="academy-panel-art" aria-hidden="true">
+        <img src="/app/academy-lesson.webp" width="1120" height="747" alt="" />
+      </div>
+    </main>
+    <script src="/app/preferences.js?v=1" defer></script>
+    <script src="/app/portal-auth.js?v=6" defer></script>
+  </body>
+</html>

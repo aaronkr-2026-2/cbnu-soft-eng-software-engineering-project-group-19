@@ -1,0 +1,57 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/styleguide",
+      "destination": "/styleguide.html"
+    },
+    {
+      "source": "/app",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/app/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/app/:file",
+      "destination": "/:file"
+    },
+    {
+      "source": "/auth/:path*",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/auth/:path*"
+    },
+    {
+      "source": "/courses",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/courses"
+    },
+    {
+      "source": "/courses/:path*",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/courses/:path*"
+    },
+    {
+      "source": "/certificates/:path*",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/certificates/:path*"
+    },
+    {
+      "source": "/enrollments/:path*",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/enrollments/:path*"
+    },
+    {
+      "source": "/learning-plans/:path*",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/learning-plans/:path*"
+    },
+    {
+      "source": "/payments/:path*",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/payments/:path*"
+    },
+    {
+      "source": "/recommendations/:path*",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/recommendations/:path*"
+    },
+    {
+      "source": "/health",
+      "destination": "https://studyflow-ai-mtlw.onrender.com/health"
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+name: Sync from Group 19
+
+on:
+  schedule:
+    - cron: "37 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: group19-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'mirzakhidovic-o2/SCHOLWARD-Academy'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the private main branch
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Merge reviewed Group 19 changes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git fetch --no-tags https://github.com/aaronkr-2026-2/cbnu-soft-eng-software-engineering-project-group-19.git main
+          upstream=$(git rev-parse FETCH_HEAD)
+          base=$(git merge-base HEAD "$upstream")
+
+          if ! git diff --quiet "$base" HEAD; then
+            echo "::error::Private main has changes that are not in Group 19. Reconcile both branches manually."
+            exit 1
+          fi
+
+          if ! git diff --quiet "$base" "$upstream" -- .github/workflows; then
+            echo "::error::Review and sync workflow changes manually."
+            exit 1
+          fi
+
+          if git merge-base --is-ancestor "$upstream" HEAD; then
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git merge --no-ff --no-edit "$upstream"
+          git diff --exit-code "$upstream" HEAD
+          git push origin HEAD:main

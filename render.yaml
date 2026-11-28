@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: studyflow-ai
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PORT
+        value: "10000"
+      - key: WEBAUTHN_RP_ID
+        value: studyflow-web-1hab.vercel.app
+      - key: WEBAUTHN_RP_NAME
+        value: SCHOLWARD Academy
+      - key: WEBAUTHN_ORIGIN
+        value: https://studyflow-web-1hab.vercel.app
+      - key: PUBLIC_APP_URL
+        value: https://studyflow-web-1hab.vercel.app
+      - key: FRONTEND_BASE_URL
+        value: https://studyflow-web-1hab.vercel.app
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+
+databases:
+  - name: studyflow-db
+    databaseName: studyflow_db
+    user: studyflow
+    plan: free
+    region: singapore
+    postgresMajorVersion: "17"

@@ -1,0 +1,20 @@
+# StudyFlow course content model
+
+## Recommended hierarchy
+
+```text
+Course
+└── Module (unit, week, or major topic)
+    └── Lesson
+        └── Learning Material (text, PDF, video, audio, or code)
+        ├── Quiz
+        └── Assignment
+```
+
+Keep course metadata such as title, owner, language, level, price, and publication status on `Course`. Modules and lessons should have their own IDs and ordering fields. Store each learning material, quiz, assignment, learner submission, and progress record separately and link it to its parent ID. A final exam stays course-level because it covers the whole course.
+
+## Current implementation
+
+StudyFlow stores `Course`, `CourseModule`, `Lesson`, `LessonMaterial`, lesson assignments and submissions, quizzes and attempts, final exams, enrollments, and lesson progress separately. Authors can add, rename, reorder, and remove course modules and assign lessons to them. Existing lessons keep working without a module, and deleting a module leaves its lessons in the course as unassigned lessons. Module and assignment text translations are cached when the AI translation service is configured. Learners can submit written work; course authors can review, score, and leave feedback. Each lesson may include several ordered PDF or audio supplements in addition to its main text, PDF, video, or audio resource. Lesson material links are short-lived and signed; authors manage materials from the course editor and enrolled learners can open them.
+
+The module migration adds nullable lesson links, so existing lesson IDs, quizzes, and progress records remain intact.
