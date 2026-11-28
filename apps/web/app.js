@@ -1470,10 +1470,9 @@ function materialTypeText(type) {
     type === "pdf" ? "pdf" : type === "video" ? "video" : type === "audio" ? "audio" : "text",
   );
 }
-function renderVideoPlayer(player, source, preview) {
-  const sourceLink = `<a class="button button-outline button-small" href="${escapeHtml(source)}" target="_blank" rel="noopener">${escapeHtml(t("videoOpenSource"))}</a>`;
+function renderVideoPlayer(player, preview) {
   if (preview) {
-    return `<div class="lesson-resource lesson-video">${player}<div class="lesson-video-actions">${sourceLink}</div></div>`;
+    return `<div class="lesson-resource lesson-video">${player}</div>`;
   }
   return `<div class="lesson-resource lesson-video">
     <div data-video-player>${player}</div>
@@ -1481,7 +1480,6 @@ function renderVideoPlayer(player, source, preview) {
       <p class="lesson-video-status" data-video-error role="status" hidden>${escapeHtml(t("videoPlaybackError"))}</p>
       <button class="button button-outline button-small" type="button" data-video-retry hidden>${escapeHtml(t("videoRetry"))}</button>
       <button class="button button-outline button-small" type="button" data-lesson-browser>${escapeHtml(t("openInBrowser"))}</button>
-      ${sourceLink}
       <p class="lesson-video-status">${escapeHtml(t("videoProgressNote"))}</p>
     </div>
   </div>`;
@@ -1533,17 +1531,12 @@ function renderLessonResource(lesson, { preview = false } = {}) {
           hl: language,
           cc_lang_pref: language,
         });
-        const watch = new URL(
-          video ? "https://www.youtube.com/watch" : "https://www.youtube.com/playlist",
-        );
-        if (video) watch.searchParams.set("v", video);
         if (playlist) {
           params.set("list", playlist);
           if (!video) params.set("listType", "playlist");
-          watch.searchParams.set("list", playlist);
         }
         const embedded = `<div class="youtube-watch"><iframe data-watch-youtube="${escapeHtml(lesson.id)}" src="https://www.youtube-nocookie.com/embed/${video || "videoseries"}?${params}" title="${escapeHtml(lesson.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
-        return renderVideoPlayer(embedded, watch.href, preview) + extraMaterials;
+        return renderVideoPlayer(embedded, preview) + extraMaterials;
       }
     }
   }
@@ -1551,7 +1544,7 @@ function renderLessonResource(lesson, { preview = false } = {}) {
   const url = escapeHtml(lesson.resource_url);
   if (lesson.resource_type === "video") {
     const embedded = `<video controls playsinline preload="metadata" controlsList="nodownload noplaybackrate" disablePictureInPicture data-watch-video="${escapeHtml(lesson.id)}" src="${url}"></video>`;
-    return renderVideoPlayer(embedded, lesson.resource_url, preview) + extraMaterials;
+    return renderVideoPlayer(embedded, preview) + extraMaterials;
   }
   if (lesson.resource_type === "audio")
     return `<div class="lesson-resource"><audio controls preload="metadata" src="${url}"></audio></div>${extraMaterials}`;
@@ -1951,7 +1944,6 @@ const browserCopy = {
     videoPlaybackError:
       "Video yuklanmadi. Qayta urinib ko‘ring yoki Safari yoki Chrome’da shu darsni oching.",
     videoRetry: "Videoni qayta yuklash",
-    videoOpenSource: "Videoni alohida ochish",
     videoProgressNote: "Kurs progressi dars ichida tomosha qilinganda saqlanadi.",
   },
   en: {
@@ -1962,7 +1954,6 @@ const browserCopy = {
     browserCopyManual: "Select and copy the link, then paste it into Safari or Chrome.",
     videoPlaybackError: "The video did not load. Retry or open this lesson in Safari or Chrome.",
     videoRetry: "Retry video",
-    videoOpenSource: "Open video separately",
     videoProgressNote: "Watch in the lesson to record your course progress.",
   },
   ru: {
@@ -1974,7 +1965,6 @@ const browserCopy = {
     videoPlaybackError:
       "Видео не загрузилось. Попробуйте снова или откройте урок в Safari или Chrome.",
     videoRetry: "Перезагрузить видео",
-    videoOpenSource: "Открыть видео отдельно",
     videoProgressNote: "Прогресс курса сохраняется при просмотре видео внутри урока.",
   },
   ko: {
@@ -1986,7 +1976,6 @@ const browserCopy = {
     videoPlaybackError:
       "영상을 불러오지 못했습니다. 다시 시도하거나 Safari 또는 Chrome에서 수업을 여세요.",
     videoRetry: "영상 다시 불러오기",
-    videoOpenSource: "영상 별도로 열기",
     videoProgressNote: "수업 화면에서 시청하면 학습 진도가 저장됩니다.",
   },
 };

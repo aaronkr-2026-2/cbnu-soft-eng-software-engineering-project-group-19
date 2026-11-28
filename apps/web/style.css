@@ -1149,12 +1149,18 @@ body[dir="rtl"] {
 }
 .enrolled-top h3 {
   margin: 10px 0 5px;
-  font: 700 17px var(--display);
+  font: 750 clamp(24px, 2.7vw, 32px) / 1.2 var(--display);
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+.enrolled-top > strong {
+  font: 750 clamp(20px, 2.4vw, 27px) var(--display);
+  color: var(--accent-ink);
 }
 .enrolled-top p {
   margin: 0;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 15px;
 }
 .progress-track.course-progress {
   height: 7px;
@@ -1168,7 +1174,7 @@ body[dir="rtl"] {
   justify-content: space-between;
   margin-top: 7px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 14px;
 }
 .lessons-list {
   margin-top: 16px;
@@ -1199,24 +1205,26 @@ body[dir="rtl"] {
 }
 .lesson-name {
   flex: 1;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: clamp(16px, 1.6vw, 19px);
+  font-weight: 700;
+  overflow-wrap: anywhere;
 }
 .lesson-item button {
-  padding: 7px 9px;
-  font-size: 10px;
+  min-height: 44px;
+  padding: 8px 11px;
+  font-size: 14px;
 }
 .lesson-content {
   display: none;
   flex: 0 0 100%;
   min-width: 0;
   margin: 2px 0;
-  padding: 12px;
-  border-radius: 8px;
-  background: #f7f8f4;
-  color: #60665d;
-  font-size: 11px;
-  line-height: 1.65;
+  padding: clamp(14px, 2.4vw, 26px);
+  border-radius: 12px;
+  background: #f6f8f3;
+  color: #374f43;
+  font-size: clamp(16px, 1.55vw, 18px);
+  line-height: 1.72;
 }
 .lesson-content.open {
   display: block;
@@ -1224,6 +1232,9 @@ body[dir="rtl"] {
 .lesson-entry {
   flex: 1 1 10rem;
   min-width: 0;
+}
+.lesson-content > .lesson-copy {
+  max-width: 78ch;
 }
 .lesson-copy {
   margin: 0;
@@ -3019,8 +3030,8 @@ body[dir="rtl"] {
 }
 .video-watch-meter {
   display: block;
-  color: #667249;
-  font-size: 12px;
+  color: #41604d;
+  font-size: 14px;
   font-weight: 700;
   margin: 5px 0;
 }
