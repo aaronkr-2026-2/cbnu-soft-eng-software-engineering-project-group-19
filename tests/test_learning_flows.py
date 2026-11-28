@@ -1183,8 +1183,11 @@ def test_uploaded_media_survives_empty_disk_and_invalid_video_replacement(
     sessions.close()
 
 
-def test_email_password_reset_accepts_new_password_and_rejects_reused_link(client, monkeypatch):
-    register(client, "reset-user@example.com")
+@pytest.mark.parametrize("account_type", ["learner", "author"])
+def test_email_password_reset_accepts_new_password_and_rejects_reused_link(
+    client, monkeypatch, account_type
+):
+    register(client, "reset-user@example.com", account_type)
     sent_messages = []
 
     class FakeSMTP:
@@ -1230,20 +1233,31 @@ def test_email_password_reset_accepts_new_password_and_rejects_reused_link(clien
     assert "SCHOLWARD Academy" in message.get_content()
     reset_url = re.search(r"https?://\S+", message.get_content()).group(0)
     assert urlparse(reset_url).hostname == "scholward-academy.vercel.app"
-    reset_token = parse_qs(urlparse(reset_url).query)["token"][0]
+    params = parse_qs(urlparse(reset_url).query)
+    assert params["account_type"] == [account_type]
+    reset_token = params["token"][0]
     reset = client.post(
         "/auth/password-reset/confirm",
         json={"token": reset_token, "new_password": "reset-password-43"},
     )
     assert reset.status_code == 200, reset.text
+    assert reset.json()["account_type"] == account_type
 
     old_password = client.post(
         "/auth/login",
-        json={"email": "reset-user@example.com", "password": "correct-horse-42"},
+        json={
+            "email": "reset-user@example.com",
+            "password": "correct-horse-42",
+            "account_type": account_type,
+        },
     )
     new_password = client.post(
         "/auth/login",
-        json={"email": "reset-user@example.com", "password": "reset-password-43"},
+        json={
+            "email": "reset-user@example.com",
+            "password": "reset-password-43",
+            "account_type": account_type,
+        },
     )
     assert old_password.status_code == 401
     assert new_password.status_code == 200

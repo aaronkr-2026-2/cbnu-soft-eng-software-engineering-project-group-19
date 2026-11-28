@@ -51,15 +51,28 @@
             ><span data-copy="email"></span
             ><input name="email" type="email" autocomplete="email" required
           /></label>
-          <label
-            ><span data-copy="password"></span
-            ><input
-              name="password"
-              type="password"
-              autocomplete="current-password"
-              minlength="8"
-              required
-          /></label>
+          <div class="reset-password-field">
+            <label for="portalPassword" data-copy="password"></label>
+            <div class="reset-password-input">
+              <input
+                id="portalPassword"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                spellcheck="false"
+                autocapitalize="off"
+                required
+              />
+              <button
+                class="reset-password-toggle"
+                id="portalPasswordToggle"
+                type="button"
+                aria-controls="portalPassword"
+              >
+                Ko‘rsatish
+              </button>
+            </div>
+          </div>
           <a id="forgotPasswordLink" class="portal-home" href="/app/reset-password.html"></a>
           <p class="form-message" id="portalMessage" role="status"></p>
           <button class="button button-dark auth-submit" type="submit" id="portalSubmit"></button>
@@ -75,6 +88,6 @@
       </div>
     </main>
     <script src="/app/preferences.js?v=1" defer></script>
-    <script src="/app/portal-auth.js?v=5" defer></script>
+    <script src="/app/portal-auth.js?v=6" defer></script>
   </body>
 </html>

@@ -13,6 +13,8 @@ const portalCopy = {
     fullName: "Ism-familiya",
     email: "Email",
     password: "Parol",
+    showPassword: "Ko‘rsatish",
+    hidePassword: "Yashirish",
     loginSubmit: "Kirish",
     authorLoginSubmit: "Muallif paneliga kirish",
     signingIn: "Kirilmoqda…",
@@ -41,6 +43,8 @@ const portalCopy = {
     fullName: "Full name",
     email: "Email",
     password: "Password",
+    showPassword: "Show",
+    hidePassword: "Hide",
     loginSubmit: "Sign in",
     authorLoginSubmit: "Sign in to author portal",
     signingIn: "Signing in…",
@@ -71,6 +75,8 @@ const portalCopy = {
     fullName: "Имя и фамилия",
     email: "Эл. почта",
     password: "Пароль",
+    showPassword: "Показать",
+    hidePassword: "Скрыть",
     loginSubmit: "Войти",
     authorLoginSubmit: "Войти в кабинет автора",
     signingIn: "Выполняется вход…",
@@ -99,6 +105,8 @@ const portalCopy = {
     fullName: "이름",
     email: "이메일",
     password: "비밀번호",
+    showPassword: "표시",
+    hidePassword: "숨기기",
     loginSubmit: "로그인",
     authorLoginSubmit: "강사 페이지 로그인",
     signingIn: "로그인 중…",
@@ -135,6 +143,8 @@ if (invite !== null) history.replaceState(history.state, "", location.pathname +
 const registerTab = document.querySelector("#registerTab");
 const loginTab = document.querySelector("#loginTab");
 const submit = document.querySelector("#portalSubmit");
+const password = form.elements.password;
+const passwordToggle = document.querySelector("#portalPasswordToggle");
 const inviteNote = document.querySelector("#authorInviteNote");
 let mode = authorInvite ? "register" : "login";
 let language = window.ScholwardPreferences.selectedLanguage() || "uz";
@@ -142,6 +152,16 @@ let language = window.ScholwardPreferences.selectedLanguage() || "uz";
 function translate(key) {
   return portalCopy[language]?.[key] || portalCopy.uz[key] || key;
 }
+function renderPasswordToggle() {
+  const action = translate(password.type === "password" ? "showPassword" : "hidePassword");
+  passwordToggle.textContent = action;
+  passwordToggle.setAttribute("aria-label", `${action} (${translate("password")})`);
+}
+passwordToggle.addEventListener("click", () => {
+  password.type = password.type === "password" ? "text" : "password";
+  renderPasswordToggle();
+});
+
 function renderText() {
   document.documentElement.lang = language;
   document.title = `${translate(role === "author" ? "authorPortal" : "learnerPortal")} — SCHOLWARD Academy`;
@@ -156,7 +176,7 @@ function renderText() {
   if (inviteNote) inviteNote.hidden = Boolean(authorInvite);
   nameField.hidden = mode === "login";
   nameField.querySelector("input").required = mode === "register";
-  const password = form.elements.password;
+  renderPasswordToggle();
   password.autocomplete = mode === "login" ? "current-password" : "new-password";
   if (mode === "register") password.minLength = 8;
   else password.removeAttribute("minlength");
@@ -261,11 +281,13 @@ async function setupPasskey(token) {
 loginTab.addEventListener("click", () => {
   if (submit.disabled) return;
   mode = "login";
+  password.type = "password";
   renderText();
 });
 registerTab.addEventListener("click", () => {
   if (submit.disabled || (role === "author" && !authorInvite)) return;
   mode = "register";
+  password.type = "password";
   renderText();
 });
 languagePicker.addEventListener("change", () => {

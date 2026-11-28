@@ -3,6 +3,8 @@ const resetCopy = {
     language: "Til",
     title: "Parolni tiklash",
     description: "Hisobingizga bog‘langan email manzilini kiriting.",
+    confirmDescription: "Hisobingiz uchun yangi parol kiriting.",
+    invalidLink: "Havola yaroqsiz yoki muddati tugagan. Yangi havola so‘rang.",
     email: "Email",
     request: "Tiklash havolasini yuborish",
     sent: "Agar bu email SCHOLWARD Academy hisobiga tegishli bo‘lsa, tiklash havolasi yuborildi.",
@@ -22,6 +24,8 @@ const resetCopy = {
     language: "Language",
     title: "Reset your password",
     description: "Enter the email address linked to your account.",
+    confirmDescription: "Choose a new password for your account.",
+    invalidLink: "This link is invalid or expired. Request a new link.",
     email: "Email",
     request: "Send reset link",
     sent: "If this email belongs to a SCHOLWARD Academy account, a reset link has been sent.",
@@ -41,6 +45,8 @@ const resetCopy = {
     language: "Язык",
     title: "Сброс пароля",
     description: "Введите email, связанный с аккаунтом.",
+    confirmDescription: "Введите новый пароль для аккаунта.",
+    invalidLink: "Ссылка недействительна или просрочена. Запросите новую.",
     email: "Эл. почта",
     request: "Отправить ссылку",
     sent: "Если этот адрес связан с аккаунтом SCHOLWARD Academy, ссылка для сброса отправлена.",
@@ -60,6 +66,8 @@ const resetCopy = {
     language: "언어",
     title: "비밀번호 재설정",
     description: "계정에 연결된 이메일을 입력하세요.",
+    confirmDescription: "계정의 새 비밀번호를 입력하세요.",
+    invalidLink: "링크가 유효하지 않거나 만료됐어요. 새 링크를 요청해 주세요.",
     email: "이메일",
     request: "재설정 링크 보내기",
     sent: "SCHOLWARD Academy 계정에 등록된 이메일이면 재설정 링크를 보냈습니다.",
@@ -81,8 +89,8 @@ const requestForm = document.querySelector("#resetRequestForm");
 const confirmForm = document.querySelector("#resetConfirmForm");
 const message = document.querySelector("#resetMessage");
 const query = new URLSearchParams(location.search);
-const token = query.get("token");
-const accountType = query.get("account_type") === "author" ? "author" : "learner";
+let token = query.get("token");
+let accountType = query.get("account_type") === "author" ? "author" : "learner";
 const passwordToggles = Array.from(
   confirmForm.querySelectorAll(".reset-password-toggle"),
   (button) => {
@@ -92,6 +100,23 @@ const passwordToggles = Array.from(
 );
 let language = window.ScholwardPreferences.selectedLanguage() || "uz";
 let passwordUpdated = false;
+let notice;
+
+function showNotice(key, success = false) {
+  notice = { key, success };
+  renderNotice();
+}
+function renderNotice() {
+  message.textContent = notice ? resetCopy[language][notice.key] : "";
+  message.classList.toggle("success", Boolean(notice?.success));
+}
+function clearResetToken() {
+  token = null;
+  const destination = new URL(location.href);
+  destination.searchParams.delete("token");
+  destination.searchParams.set("account_type", accountType);
+  history.replaceState(history.state, "", destination);
+}
 
 function renderPasswordToggle({ button, input, label }) {
   const c = resetCopy[language] || resetCopy.uz;
@@ -115,7 +140,7 @@ function render() {
   for (const [id, key] of [
     ["languageLabel", "language"],
     ["title", "title"],
-    ["description", "description"],
+    ["description", passwordUpdated ? null : token ? "confirmDescription" : "description"],
     ["emailLabel", "email"],
     ["requestButton", "request"],
     ["passwordLabel", "password"],
@@ -123,13 +148,13 @@ function render() {
     ["confirmButton", "save"],
     ["backLink", "back"],
   ])
-    document.getElementById(id).textContent = c[key];
+    document.getElementById(id).textContent = key ? c[key] : "";
   document.getElementById("backLink").href =
     accountType === "author" ? "/app/author-login.html" : "/app/learner-login.html";
-  requestForm.hidden = Boolean(token);
+  requestForm.hidden = Boolean(token) || passwordUpdated;
   confirmForm.hidden = !token || passwordUpdated;
   passwordToggles.forEach(renderPasswordToggle);
-  if (passwordUpdated) message.textContent = c.success;
+  renderNotice();
 }
 languageSelect.addEventListener("change", () => {
   language = languageSelect.value;
@@ -143,21 +168,24 @@ async function post(url, body) {
     body: JSON.stringify(body),
   });
   const result = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(result.detail || resetCopy[language].error);
+  if (!response.ok)
+    throw Object.assign(new Error(), { status: response.status, detail: result.detail });
   return result;
 }
 requestForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const button = document.querySelector("#requestButton");
+  if (button.disabled) return;
   button.disabled = true;
-  message.textContent = "";
+  notice = undefined;
+  renderNotice();
   try {
     await post("/auth/password-reset/request", { email: requestForm.elements.email.value });
-    message.textContent = resetCopy[language].sent;
+    showNotice("sent", true);
   } catch (error) {
-    message.textContent = /not configured|unable to send/i.test(error.message)
-      ? resetCopy[language].unavailable
-      : error.message || resetCopy[language].error;
+    showNotice(
+      error.status === 503 && /not configured/i.test(error.detail) ? "unavailable" : "error",
+    );
   } finally {
     button.disabled = false;
   }
@@ -165,23 +193,33 @@ requestForm.addEventListener("submit", async (event) => {
 confirmForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const button = document.querySelector("#confirmButton");
+  if (button.disabled) return;
   button.disabled = true;
-  message.textContent = "";
+  notice = undefined;
+  renderNotice();
   const password = confirmForm.elements.new_password.value;
   if (password !== confirmForm.elements.confirm_password.value) {
-    message.textContent = resetCopy[language].mismatch;
+    showNotice("mismatch");
     button.disabled = false;
     return;
   }
   try {
-    await post("/auth/password-reset/confirm", { token, new_password: password });
+    const result = await post("/auth/password-reset/confirm", { token, new_password: password });
+    if (result.account_type === "author" || result.account_type === "learner") {
+      accountType = result.account_type;
+    }
     passwordUpdated = true;
+    clearResetToken();
     confirmForm.reset();
     for (const { input } of passwordToggles) input.type = "password";
+    showNotice("success", true);
     render();
-    history.replaceState({}, "", location.pathname);
   } catch (error) {
-    message.textContent = error.message || resetCopy[language].error;
+    if (error.status === 400) {
+      clearResetToken();
+      showNotice("invalidLink");
+      render();
+    } else showNotice("error");
   } finally {
     button.disabled = false;
   }

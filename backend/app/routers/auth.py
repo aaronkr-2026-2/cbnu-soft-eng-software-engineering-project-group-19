@@ -8,6 +8,7 @@ from urllib.parse import urlencode
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import FileResponse
+from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -286,7 +287,9 @@ def request_password_reset(
     )
     if not frontend_url.endswith("/app"):
         frontend_url += "/app"
-    user = db.query(User).filter(User.email == reset_request.email).first()
+    user = (
+        db.query(User).filter(User.email == reset_request.email, User.is_active.is_(True)).first()
+    )
     if user is None:
         return {"message": "If that email belongs to an account, a reset link has been sent."}
 
@@ -322,10 +325,19 @@ def confirm_password_reset(
     except (jwt.InvalidTokenError, KeyError, TypeError, ValueError):
         raise HTTPException(status_code=400, detail="Reset link is invalid or expired") from None
 
-    user = db.query(User).filter(User.id == user_id).first()
-    if user is None or user.token_version != token_version:
+    account_type = db.scalar(
+        update(User)
+        .where(User.id == user_id, User.token_version == token_version, User.is_active.is_(True))
+        .values(
+            hashed_password=hash_password(reset_data.new_password),
+            token_version=User.token_version + 1,
+        )
+        .returning(User.account_type)
+    )
+    if account_type is None:
         raise HTTPException(status_code=400, detail="Reset link is invalid or expired")
-    user.hashed_password = hash_password(reset_data.new_password)
-    user.token_version += 1
     db.commit()
-    return {"message": "Password updated. You can now sign in with the new password."}
+    return {
+        "message": "Password updated. You can now sign in with the new password.",
+        "account_type": account_type,
+    }
