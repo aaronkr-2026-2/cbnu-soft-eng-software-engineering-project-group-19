@@ -35,8 +35,9 @@
         <p class="portal-description" data-copy="authorDescription"></p>
         <div class="auth-tabs">
           <button class="active" id="loginTab" type="button" data-copy="login"></button
-          ><button id="registerTab" type="button" data-copy="register"></button>
+          ><button id="registerTab" type="button" hidden data-copy="register"></button>
         </div>
+        <p class="portal-description" id="authorInviteNote" data-copy="authorInviteNote"></p>
         <form id="portalForm" class="auth-form">
           <label id="fullNameField" hidden
             ><span data-copy="fullName"></span
@@ -70,6 +71,6 @@
       </div>
     </main>
     <script src="/app/preferences.js?v=1" defer></script>
-    <script src="/app/portal-auth.js?v=3" defer></script>
+    <script src="/app/portal-auth.js?v=4" defer></script>
   </body>
 </html>

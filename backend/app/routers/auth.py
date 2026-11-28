@@ -1,22 +1,24 @@
 import base64
 import binascii
-import json
 import os
-import smtplib
 import uuid
-from contextlib import closing
-from email.message import EmailMessage
-from email.utils import formataddr, parseaddr
-from http.client import HTTPException as HTTPClientError, HTTPSConnection
 from pathlib import Path
 from urllib.parse import urlencode
 
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import FileResponse
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.author_invitations import consume_author_invitation
 from app.core.dependencies import get_current_user
+from app.core.email_delivery import (
+    SENDER_NAME,
+    EmailConfigurationError,
+    EmailDeliveryError,
+    configured_email_sender,
+)
 from app.core.rate_limit import enforce_rate_limit
 from app.core.schemes.user import (
     AvatarUpload,
@@ -45,7 +47,6 @@ from app.models import User
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 AVATAR_DIR = Path(__file__).resolve().parents[2] / "storage" / "avatars"
 MAX_AVATAR_BYTES = 2 * 1024 * 1024
-PASSWORD_RESET_SENDER_NAME = "SCHOLWARD Academy"
 
 
 def to_user_response(user: User) -> UserResponse:
@@ -72,6 +73,14 @@ def register(
     db: Session = Depends(get_db),
 ) -> UserResponse:
     enforce_rate_limit(request, scope="register", max_attempts=10, window_seconds=900)
+    if user_data.account_type == "author" and (
+        not user_data.author_invite
+        or not consume_author_invitation(db, user_data.email, user_data.author_invite)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="A valid author invitation is required",
+        )
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
         raise HTTPException(
@@ -87,7 +96,13 @@ def register(
         preferred_language=user_data.preferred_language,
     )
     db.add(new_user)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        if db.query(User.id).filter_by(email=user_data.email).first():
+            raise HTTPException(status_code=409, detail="Email already registered") from None
+        raise
     db.refresh(new_user)
 
     return to_user_response(new_user)
@@ -249,23 +264,6 @@ def change_password(
     return {"message": "Password changed successfully"}
 
 
-def send_reset_email_over_https(
-    host: str, path: str, headers: dict[str, str], payload: dict
-) -> None:
-    with closing(HTTPSConnection(host, timeout=10)) as connection:
-        connection.request(
-            "POST",
-            path,
-            body=json.dumps(payload),
-            headers={**headers, "Content-Type": "application/json"},
-        )
-        with connection.getresponse() as response:
-            if not 200 <= response.status < 300:
-                raise HTTPException(
-                    status_code=503, detail="Unable to send the reset email right now"
-                )
-
-
 @router.post("/password-reset/request")
 def request_password_reset(
     reset_request: PasswordResetRequest,
@@ -274,15 +272,12 @@ def request_password_reset(
 ) -> dict[str, str]:
     enforce_rate_limit(request, scope="password-reset", max_attempts=5, window_seconds=900)
 
-    brevo_api_key = (os.getenv("BREVO_API_KEY") or "").strip()
-    brevo_from = (os.getenv("BREVO_FROM") or "").strip()
-    resend_api_key = (os.getenv("RESEND_API_KEY") or "").strip()
-    resend_from = (os.getenv("RESEND_FROM") or "").strip()
-    smtp_host = os.getenv("SMTP_HOST")
-    smtp_from = os.getenv("SMTP_FROM")
-    smtp_username = (os.getenv("SMTP_USERNAME") or "").strip()
-    # Google displays App Passwords in groups; remove copy/pasted whitespace.
-    smtp_password = "".join((os.getenv("SMTP_PASSWORD") or "").split())
+    try:
+        send_email = configured_email_sender()
+    except EmailConfigurationError:
+        raise HTTPException(
+            status_code=503, detail="Password reset email is not configured on this server"
+        ) from None
     render_url = os.getenv("RENDER_EXTERNAL_URL")
     default_frontend_url = f"{render_url}/app" if render_url else "http://127.0.0.1:8000/app"
     frontend_url = frontend_url_for_origin(
@@ -291,17 +286,6 @@ def request_password_reset(
     )
     if not frontend_url.endswith("/app"):
         frontend_url += "/app"
-    if brevo_api_key or brevo_from:
-        email_configured = bool(brevo_api_key and brevo_from)
-    elif resend_api_key or resend_from:
-        email_configured = bool(resend_api_key and resend_from)
-    else:
-        email_configured = bool(smtp_host and smtp_from and smtp_username and smtp_password)
-    if not email_configured:
-        raise HTTPException(
-            status_code=503, detail="Password reset email is not configured on this server"
-        )
-
     user = db.query(User).filter(User.email == reset_request.email).first()
     if user is None:
         return {"message": "If that email belongs to an account, a reset link has been sent."}
@@ -309,53 +293,15 @@ def request_password_reset(
     token = create_password_reset_token(str(user.id), user.token_version)
     reset_query = urlencode({"token": token, "account_type": user.account_type})
     reset_url = f"{frontend_url}/reset-password.html?{reset_query}"
-    message = EmailMessage()
-    message["Subject"] = f"Reset your {PASSWORD_RESET_SENDER_NAME} password"
-    message["To"] = user.email
-    message.set_content(
-        f"We received a request to reset your {PASSWORD_RESET_SENDER_NAME} password. "
-        f"Open this link within 30 minutes: {reset_url}\n\n"
-        "If you did not request this, ignore this email."
-    )
     try:
-        _, sender_email = parseaddr(brevo_from or resend_from or smtp_from)
-        if not sender_email:
-            raise ValueError("Invalid password reset sender")
-        sender_header = formataddr((PASSWORD_RESET_SENDER_NAME, sender_email))
-        message["From"] = sender_header
-        if brevo_api_key:
-            send_reset_email_over_https(
-                "api.brevo.com",
-                "/v3/smtp/email",
-                {"api-key": brevo_api_key},
-                {
-                    "sender": {"name": PASSWORD_RESET_SENDER_NAME, "email": sender_email},
-                    "to": [{"email": user.email}],
-                    "subject": message["Subject"],
-                    "textContent": message.get_content(),
-                },
-            )
-        elif resend_api_key:
-            send_reset_email_over_https(
-                "api.resend.com",
-                "/emails",
-                {"Authorization": f"Bearer {resend_api_key}"},
-                {
-                    "from": sender_header,
-                    "to": [user.email],
-                    "subject": message["Subject"],
-                    "text": message.get_content(),
-                },
-            )
-        else:
-            smtp_port = int(os.getenv("SMTP_PORT", "587"))
-            smtp_client = smtplib.SMTP_SSL if smtp_port == 465 else smtplib.SMTP
-            with smtp_client(smtp_host, smtp_port, timeout=10) as smtp:
-                if smtp_port != 465:
-                    smtp.starttls()
-                smtp.login(smtp_username, smtp_password)
-                smtp.send_message(message)
-    except (OSError, HTTPClientError, ValueError):
+        send_email(
+            user.email,
+            f"Reset your {SENDER_NAME} password",
+            f"We received a request to reset your {SENDER_NAME} password. "
+            f"Open this link within 30 minutes: {reset_url}\n\n"
+            "If you did not request this, ignore this email.",
+        )
+    except EmailDeliveryError:
         raise HTTPException(
             status_code=503, detail="Unable to send the reset email right now"
         ) from None

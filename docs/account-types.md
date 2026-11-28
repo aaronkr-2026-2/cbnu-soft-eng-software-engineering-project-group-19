@@ -1,10 +1,19 @@
 # Learner and author accounts
 
-StudyFlow AI has two account types with separate sign-in portals:
+SCHOLWARD Academy supports two separate accounts.
 
-- Learners: `/app/learner-login.html`. Their menu contains courses and lessons, completed courses, certificates, profile, and the course catalog.
-- Authors: `/app/author-login.html`. Their menu contains owned courses, course creation, and the catalog. They see course management and analytics for courses they own.
+- Learners sign up and sign in at `/app/learner-login.html`.
+- Authors sign in at `/app/author-login.html`. A new author must use an invitation sent to their email address. An invitation expires after 24 hours, can be used once, and works only for the recipient's address.
 
-The selected account type is stored in the `users.account_type` database column. The API checks it at login and on author-only endpoints; hiding a menu in the browser is not the security boundary. A login attempt on the wrong portal is rejected. Course owners that existed before this change are migrated as authors; other existing accounts become learners.
+The same email cannot be used for both accounts. The server checks the account role at sign-in and on author-only actions. It also verifies course ownership before granting author access to private course data.
 
-The same email cannot create a second account because email addresses remain unique. Use a different email for the separate author account. Authors who want to study should use a learner account.
+## Managing invitations
+
+After applying the database migrations, run these commands from `backend` on a trusted host configured with the academy database and email provider.
+
+```sh
+python -m app.author_invites list-authors
+python -m app.author_invites issue approved-author@example.com
+```
+
+The invitation command emails the link to the approved recipient. Review existing author accounts with `list-authors`. Accounts created before invitations were introduced retain their current access until the operator reviews them.

@@ -59,6 +59,15 @@ class User(Base):
     )
 
 
+class AuthorInvitation(Base):
+    __tablename__ = "author_invitations"
+
+    token_digest: Mapped[str] = mapped_column(String(64), primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class CourseModule(Base):
     __tablename__ = "course_modules"
 

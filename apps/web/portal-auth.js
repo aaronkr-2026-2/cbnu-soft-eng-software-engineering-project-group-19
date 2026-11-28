@@ -20,6 +20,8 @@ const portalCopy = {
     learnerPortal: "O‘quvchilar kirishi",
     backHome: "Bosh sahifaga qaytish",
     mismatch: "Bu hisob boshqa turdagi kirish sahifasiga tegishli.",
+    authorInviteNote: "Muallif hisobi faqat taklif orqali ochiladi.",
+    authorInviteInvalid: "Taklif yaroqsiz, muddati tugagan yoki boshqa emailga yuborilgan.",
     genericError: "Xatolik yuz berdi. Ma’lumotlarni tekshirib qayta urinib ko‘ring.",
     passkeyLater: "Hisob yaratildi. Passkey’ni Profilim bo‘limida sozlashingiz mumkin.",
   },
@@ -43,6 +45,9 @@ const portalCopy = {
     learnerPortal: "Learner sign in",
     backHome: "Back to home",
     mismatch: "This account belongs to the other sign-in portal.",
+    authorInviteNote: "Author accounts are available by invitation.",
+    authorInviteInvalid:
+      "This invitation is invalid, expired, or was sent to another email address.",
     genericError: "Something went wrong. Check your details and try again.",
     passkeyLater: "Account created. You can set up a passkey from your profile.",
   },
@@ -67,6 +72,8 @@ const portalCopy = {
     learnerPortal: "Вход для учеников",
     backHome: "На главную",
     mismatch: "Этот аккаунт относится к другому разделу входа.",
+    authorInviteNote: "Аккаунт автора создаётся по приглашению.",
+    authorInviteInvalid: "Приглашение недействительно, просрочено или отправлено на другой адрес.",
     genericError: "Произошла ошибка. Проверьте данные и попробуйте снова.",
     passkeyLater: "Аккаунт создан. Настроить ключ доступа можно в профиле.",
   },
@@ -90,6 +97,8 @@ const portalCopy = {
     learnerPortal: "학습자 로그인",
     backHome: "홈으로 돌아가기",
     mismatch: "이 계정은 다른 로그인 페이지에 등록되어 있어요.",
+    authorInviteNote: "강사 계정은 초대를 받은 경우 만들 수 있어요.",
+    authorInviteInvalid: "초대가 유효하지 않거나 만료되었거나 다른 이메일 주소로 발송됐어요.",
     genericError: "오류가 발생했어요. 정보를 확인하고 다시 시도해 주세요.",
     passkeyLater: "계정이 만들어졌어요. 프로필에서 패스키를 설정할 수 있어요.",
   },
@@ -107,7 +116,13 @@ const form = document.querySelector("#portalForm");
 const message = document.querySelector("#portalMessage");
 const nameField = document.querySelector("#fullNameField");
 const languagePicker = document.querySelector("#portalLanguage");
-let mode = "login";
+const fragment = new URLSearchParams(location.hash.slice(1));
+const invite = role === "author" ? fragment.get("invite") : null;
+const authorInvite = invite && /^[A-Za-z0-9_-]{43}$/.test(invite) ? invite : null;
+if (invite !== null) history.replaceState(history.state, "", location.pathname + location.search);
+const registerTab = document.querySelector("#registerTab");
+const inviteNote = document.querySelector("#authorInviteNote");
+let mode = authorInvite ? "register" : "login";
 let language = window.ScholwardPreferences.selectedLanguage() || "uz";
 
 function translate(key) {
@@ -121,7 +136,9 @@ function renderText() {
     element.textContent = translate(element.dataset.copy);
   });
   document.querySelector("#loginTab").classList.toggle("active", mode === "login");
-  document.querySelector("#registerTab").classList.toggle("active", mode === "register");
+  registerTab.classList.toggle("active", mode === "register");
+  registerTab.hidden = role === "author" && !authorInvite;
+  if (inviteNote) inviteNote.hidden = Boolean(authorInvite);
   nameField.hidden = mode === "login";
   nameField.querySelector("input").required = mode === "register";
   form.elements.password.autocomplete = mode === "login" ? "current-password" : "new-password";
@@ -146,8 +163,9 @@ async function request(path, body) {
     const detail = Array.isArray(result?.detail)
       ? result.detail.map(({ loc, msg }) => `${loc.at(-1)}: ${msg}`).join(" ")
       : result?.detail;
+    const forbidden = path === "/auth/register" ? "authorInviteInvalid" : "mismatch";
     const error = new Error(
-      response.status === 403 ? translate("mismatch") : detail || translate("genericError"),
+      response.status === 403 ? translate(forbidden) : detail || translate("genericError"),
     );
     error.status = response.status;
     throw error;
@@ -219,7 +237,8 @@ document.querySelector("#loginTab").addEventListener("click", () => {
   mode = "login";
   renderText();
 });
-document.querySelector("#registerTab").addEventListener("click", () => {
+registerTab.addEventListener("click", () => {
+  if (role === "author" && !authorInvite) return;
   mode = "register";
   renderText();
 });
@@ -243,6 +262,7 @@ form.addEventListener("submit", async (event) => {
         password: values.password,
         preferred_language: language,
         account_type: role,
+        ...(authorInvite && { author_invite: authorInvite }),
       });
     }
     const token = await request("/auth/login", {
@@ -283,3 +303,4 @@ form.addEventListener("submit", async (event) => {
 });
 
 renderText();
+if (invite !== null && !authorInvite) message.textContent = translate("authorInviteInvalid");

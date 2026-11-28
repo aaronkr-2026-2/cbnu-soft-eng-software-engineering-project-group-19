@@ -23,6 +23,7 @@ class UserRegister(BaseModel):
     password: Password
     preferred_language: Literal["uz", "en", "ru", "ko"] = "uz"
     account_type: Literal["learner", "author"] = "learner"
+    author_invite: str | None = Field(default=None, min_length=43, max_length=43)
 
 
 class UserResponse(BaseModel):

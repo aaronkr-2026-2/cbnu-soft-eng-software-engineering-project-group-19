@@ -18,7 +18,7 @@ from starlette.requests import Request
 from webauthn.helpers import bytes_to_base64url
 from webauthn.helpers.structs import AuthenticatorTransport
 
-from app.routers import auth as auth_router
+from app.core import email_delivery
 from app.routers import courses as courses_router
 from app.routers import lessons as lessons_router
 from app.routers import passkeys as passkeys_router
@@ -1212,7 +1212,7 @@ def test_email_password_reset_accepts_new_password_and_rejects_reused_link(clien
     monkeypatch.setenv("SMTP_PASSWORD", "test-app-password")
     monkeypatch.setenv("SMTP_FROM", "Old Sender <studyflow@example.com>")
     monkeypatch.setenv("FRONTEND_BASE_URL", "https://studyflow-web-1hab.vercel.app")
-    monkeypatch.setattr(auth_router.smtplib, "SMTP", FakeSMTP)
+    monkeypatch.setattr(email_delivery.smtplib, "SMTP", FakeSMTP)
 
     request = client.post(
         "/auth/password-reset/request",
