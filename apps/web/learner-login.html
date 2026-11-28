@@ -42,7 +42,7 @@
           <button class="active" id="loginTab" type="button" data-copy="login"></button
           ><button id="registerTab" type="button" data-copy="register"></button>
         </div>
-        <form id="portalForm" class="auth-form">
+        <form id="portalForm" class="auth-form" method="post" action="/auth/login">
           <label id="fullNameField" hidden
             ><span data-copy="fullName"></span
             ><input name="full_name" autocomplete="name" minlength="2" maxlength="150"
@@ -75,6 +75,6 @@
       </div>
     </main>
     <script src="/app/preferences.js?v=1" defer></script>
-    <script src="/app/portal-auth.js?v=4" defer></script>
+    <script src="/app/portal-auth.js?v=5" defer></script>
   </body>
 </html>

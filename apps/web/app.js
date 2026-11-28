@@ -3773,6 +3773,9 @@ async function loadDashboard() {
     } else updateAuthUI();
     const catalog = loadCourses();
     if (user.account_type === "author") {
+      if (location.hash === "#myCourses") {
+        $("#myCourses").scrollIntoView({ block: "start" });
+      }
       await Promise.allSettled([
         catalog,
         loadInstructorCourses(),

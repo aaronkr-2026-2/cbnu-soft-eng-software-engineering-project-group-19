@@ -14,6 +14,9 @@ const portalCopy = {
     email: "Email",
     password: "Parol",
     loginSubmit: "Kirish",
+    authorLoginSubmit: "Muallif paneliga kirish",
+    signingIn: "Kirilmoqda…",
+    invalidCredentials: "Email yoki parol noto‘g‘ri.",
     registerSubmit: "Hisob yaratish",
     otherRolePrompt: "Boshqa portal kerakmi?",
     authorPortal: "Mualliflar kirishi",
@@ -39,6 +42,9 @@ const portalCopy = {
     email: "Email",
     password: "Password",
     loginSubmit: "Sign in",
+    authorLoginSubmit: "Sign in to author portal",
+    signingIn: "Signing in…",
+    invalidCredentials: "The email or password is incorrect.",
     registerSubmit: "Create account",
     otherRolePrompt: "Need the other portal?",
     authorPortal: "Author sign in",
@@ -66,6 +72,9 @@ const portalCopy = {
     email: "Эл. почта",
     password: "Пароль",
     loginSubmit: "Войти",
+    authorLoginSubmit: "Войти в кабинет автора",
+    signingIn: "Выполняется вход…",
+    invalidCredentials: "Неверный адрес почты или пароль.",
     registerSubmit: "Создать аккаунт",
     otherRolePrompt: "Нужен другой раздел?",
     authorPortal: "Вход для авторов",
@@ -91,6 +100,9 @@ const portalCopy = {
     email: "이메일",
     password: "비밀번호",
     loginSubmit: "로그인",
+    authorLoginSubmit: "강사 페이지 로그인",
+    signingIn: "로그인 중…",
+    invalidCredentials: "이메일 또는 비밀번호가 올바르지 않아요.",
     registerSubmit: "계정 만들기",
     otherRolePrompt: "다른 페이지가 필요하신가요?",
     authorPortal: "강사 로그인",
@@ -121,6 +133,8 @@ const invite = role === "author" ? fragment.get("invite") : null;
 const authorInvite = invite && /^[A-Za-z0-9_-]{43}$/.test(invite) ? invite : null;
 if (invite !== null) history.replaceState(history.state, "", location.pathname + location.search);
 const registerTab = document.querySelector("#registerTab");
+const loginTab = document.querySelector("#loginTab");
+const submit = document.querySelector("#portalSubmit");
 const inviteNote = document.querySelector("#authorInviteNote");
 let mode = authorInvite ? "register" : "login";
 let language = window.ScholwardPreferences.selectedLanguage() || "uz";
@@ -135,15 +149,23 @@ function renderText() {
   document.querySelectorAll("[data-copy]").forEach((element) => {
     element.textContent = translate(element.dataset.copy);
   });
-  document.querySelector("#loginTab").classList.toggle("active", mode === "login");
+  loginTab.classList.toggle("active", mode === "login");
+  loginTab.parentElement.hidden = role === "author" && !authorInvite;
   registerTab.classList.toggle("active", mode === "register");
   registerTab.hidden = role === "author" && !authorInvite;
   if (inviteNote) inviteNote.hidden = Boolean(authorInvite);
   nameField.hidden = mode === "login";
   nameField.querySelector("input").required = mode === "register";
-  form.elements.password.autocomplete = mode === "login" ? "current-password" : "new-password";
+  const password = form.elements.password;
+  password.autocomplete = mode === "login" ? "current-password" : "new-password";
+  if (mode === "register") password.minLength = 8;
+  else password.removeAttribute("minlength");
   document.querySelector("#portalSubmit").textContent = translate(
-    mode === "login" ? "loginSubmit" : "registerSubmit",
+    mode === "register"
+      ? "registerSubmit"
+      : role === "author"
+        ? "authorLoginSubmit"
+        : "loginSubmit",
   );
   const forgotLink = document.querySelector("#forgotPasswordLink");
   forgotLink.hidden = mode !== "login";
@@ -164,9 +186,12 @@ async function request(path, body) {
       ? result.detail.map(({ loc, msg }) => `${loc.at(-1)}: ${msg}`).join(" ")
       : result?.detail;
     const forbidden = path === "/auth/register" ? "authorInviteInvalid" : "mismatch";
-    const error = new Error(
-      response.status === 403 ? translate(forbidden) : detail || translate("genericError"),
-    );
+    let errorText = detail || translate("genericError");
+    if (response.status === 403) errorText = translate(forbidden);
+    if (path === "/auth/login" && response.status === 401) {
+      errorText = translate("invalidCredentials");
+    }
+    const error = new Error(errorText);
     error.status = response.status;
     throw error;
   }
@@ -233,12 +258,13 @@ async function setupPasskey(token) {
   if (!verified.ok) throw new Error("Passkey verification failed");
 }
 
-document.querySelector("#loginTab").addEventListener("click", () => {
+loginTab.addEventListener("click", () => {
+  if (submit.disabled) return;
   mode = "login";
   renderText();
 });
 registerTab.addEventListener("click", () => {
-  if (role === "author" && !authorInvite) return;
+  if (submit.disabled || (role === "author" && !authorInvite)) return;
   mode = "register";
   renderText();
 });
@@ -250,12 +276,15 @@ languagePicker.addEventListener("change", () => {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (submit.disabled) return;
   const values = Object.fromEntries(new FormData(form));
-  const submit = document.querySelector("#portalSubmit");
+  const registering = mode === "register";
   submit.disabled = true;
+  form.setAttribute("aria-busy", "true");
   message.className = "form-message";
+  message.textContent = translate("signingIn");
   try {
-    if (mode === "register") {
+    if (registering) {
       await request("/auth/register", {
         email: values.email,
         full_name: values.full_name,
@@ -280,7 +309,7 @@ form.addEventListener("submit", async (event) => {
         }[language],
       );
     }
-    if (mode === "register") {
+    if (registering) {
       try {
         await setupPasskey(token.access_token);
       } catch {
@@ -293,12 +322,14 @@ form.addEventListener("submit", async (event) => {
       if (previous.has(key))
         next.searchParams.set(key, key === "lang" ? language : previous.get(key));
     }
+    if (role === "author") next.hash = "myCourses";
     window.location.replace(next);
   } catch (error) {
     message.textContent = error.message || translate("genericError");
     message.className = "form-message";
   } finally {
     submit.disabled = false;
+    form.removeAttribute("aria-busy");
   }
 });
 
