@@ -23,7 +23,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./style.css?v=scholward-29" />
+    <link rel="stylesheet" href="./style.css?v=scholward-31" />
     <link rel="stylesheet" href="./media-content.css?v=5" />
     <link rel="stylesheet" href="/app/certificate.css?v=4" />
   </head>
@@ -273,12 +273,25 @@
           </div>
         </div>
         <nav class="learner-menu author-menu" aria-label="Author menu">
-          <a href="#ownedCourses" id="authorCoursesMenu" data-i18n="authorCoursesMenu"></a>
+          <a href="#ownedCoursesTitle" data-i18n="authorCoursesMenu"></a>
           <a href="#courseCreateForm" data-i18n="createCourseButton"></a>
           <a href="#myProfile" data-i18n="profileMenu"></a>
-          <a href="#courses" data-i18n="navCourses"></a>
+          <a href="#courses" data-i18n="exploreTitle"></a>
         </nav>
-        <form id="courseCreateForm" class="studio-form course-create-form">
+        <form
+          id="courseCreateForm"
+          class="studio-form course-create-form"
+          aria-labelledby="courseCreateTitle"
+        >
+          <div class="course-create-heading">
+            <h3 id="courseCreateTitle" data-i18n="newCourseTitle"></h3>
+            <ol class="course-create-steps" role="list">
+              <li aria-current="step" data-i18n="courseDetailsStep"></li>
+              <li data-i18n="courseLessonsStep"></li>
+              <li data-i18n="finalExamTitle"></li>
+              <li data-i18n="coursePublishStep"></li>
+            </ol>
+          </div>
           <label
             ><span data-i18n="courseTitleLabel"></span
             ><input name="title" minlength="3" maxlength="200" required /></label
@@ -286,19 +299,24 @@
             ><span data-i18n="courseCategoryLabel"></span
             ><input name="category" maxlength="100" required
           /></label>
-          <label
+          <label class="course-create-description"
             ><span data-i18n="courseDescriptionLabel"></span
             ><textarea name="description" rows="3"></textarea>
           </label>
           <div class="studio-form-row">
             <label
-              ><span data-i18n="courseLanguageLabel"></span
-              ><select name="language">
+              ><span id="courseLanguageLabel" data-i18n="courseLanguageLabel"></span
+              ><select
+                name="language"
+                aria-labelledby="courseLanguageLabel"
+                aria-describedby="courseLanguageHelp"
+              >
                 <option value="uz">O‘zbekcha</option>
                 <option value="en">English</option>
                 <option value="ru">Русский</option>
                 <option value="ko">한국어</option>
-              </select></label
+              </select>
+              <small id="courseLanguageHelp" data-i18n="courseLanguageHelp"></small></label
             ><label
               ><span data-i18n="courseLevelLabel"></span
               ><select name="level">
@@ -307,11 +325,16 @@
                 <option value="advanced" data-i18n="levelAdvanced"></option></select
             ></label>
           </div>
-          <button class="button button-dark" type="submit" data-i18n="createCourseButton"></button>
-          <p class="studio-message" id="courseCreateMessage" role="status"></p>
+          <div class="course-create-footer">
+            <button class="button button-dark" type="submit" data-i18n="createDraftButton"></button>
+            <p class="studio-message" id="courseCreateMessage" role="status"></p>
+          </div>
         </form>
         <div id="authorProfileSlot"></div>
-        <div id="ownedCourses" class="owned-course-list"></div>
+        <section aria-labelledby="ownedCoursesTitle">
+          <h3 id="ownedCoursesTitle" data-i18n="authorCoursesMenu"></h3>
+          <div id="ownedCourses" class="owned-course-list"></div>
+        </section>
       </section>
       <section class="learner-dashboard" id="myLearning" hidden>
         <div class="section-heading dashboard-heading">
@@ -511,6 +534,6 @@
     </dialog>
     <script src="/app/preferences.js?v=1" defer></script>
     <script src="/app/certificate.js?v=6" defer></script>
-    <script src="/app/app.js?v=scholward-31" defer></script>
+    <script src="/app/app.js?v=scholward-33" defer></script>
   </body>
 </html>

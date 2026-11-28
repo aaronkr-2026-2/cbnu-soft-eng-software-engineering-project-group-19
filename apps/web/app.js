@@ -506,6 +506,14 @@ const dashboardCopy = {
     instructorEyebrow: "Muallif paneli",
     instructorTitle: "Kurslaringiz",
     createCourseButton: "Kurs yaratish",
+    authorCoursesMenu: "Kurslarim",
+    newCourseTitle: "Yangi kurs",
+    courseDetailsStep: "Kurs ma’lumotlari",
+    courseLessonsStep: "Darslar",
+    coursePublishStep: "Nashr",
+    courseLanguageHelp: "Darslar qaysi tilda o‘tiladi?",
+    createDraftButton: "Qoralama yaratish",
+    draftCreated: "Qoralama yaratildi. Endi dars qo‘shishingiz mumkin.",
     courseTitleLabel: "Kurs nomi",
     courseDescriptionLabel: "Tavsif",
     courseLanguageLabel: "Kurs tili",
@@ -679,6 +687,14 @@ const dashboardCopy = {
     instructorEyebrow: "INSTRUCTOR STUDIO",
     instructorTitle: "Your courses",
     createCourseButton: "Create course",
+    authorCoursesMenu: "My courses",
+    newCourseTitle: "New course",
+    courseDetailsStep: "Course details",
+    courseLessonsStep: "Lessons",
+    coursePublishStep: "Publish",
+    courseLanguageHelp: "Which language will you teach in?",
+    createDraftButton: "Create draft",
+    draftCreated: "Draft created. You can now add a lesson.",
     courseTitleLabel: "Course title",
     courseDescriptionLabel: "Description",
     courseLanguageLabel: "Course language",
@@ -852,6 +868,14 @@ const dashboardCopy = {
     instructorEyebrow: "КАБИНЕТ АВТОРА",
     instructorTitle: "Ваши курсы",
     createCourseButton: "Создать курс",
+    authorCoursesMenu: "Мои курсы",
+    newCourseTitle: "Новый курс",
+    courseDetailsStep: "Информация о курсе",
+    courseLessonsStep: "Уроки",
+    coursePublishStep: "Публикация",
+    courseLanguageHelp: "На каком языке будут проходить уроки?",
+    createDraftButton: "Создать черновик",
+    draftCreated: "Черновик создан. Теперь можно добавить урок.",
     courseTitleLabel: "Название курса",
     courseDescriptionLabel: "Описание",
     courseLanguageLabel: "Язык курса",
@@ -1024,6 +1048,14 @@ const dashboardCopy = {
     instructorEyebrow: "강의 제작자 공간",
     instructorTitle: "내 강의",
     createCourseButton: "강의 만들기",
+    authorCoursesMenu: "내 강의",
+    newCourseTitle: "새 강의",
+    courseDetailsStep: "강의 정보",
+    courseLessonsStep: "수업",
+    coursePublishStep: "게시",
+    courseLanguageHelp: "어떤 언어로 수업을 진행하나요?",
+    createDraftButton: "초안 만들기",
+    draftCreated: "초안을 만들었습니다. 이제 수업을 추가할 수 있습니다.",
     courseTitleLabel: "강의 제목",
     courseDescriptionLabel: "설명",
     courseLanguageLabel: "강의 언어",
@@ -2036,12 +2068,6 @@ function setLanguage(code, refresh = true) {
     ru: "Авторам",
     ko: "강사용",
   }[language];
-  $("#authorCoursesMenu").textContent = {
-    uz: "Kurslarim",
-    en: "My courses",
-    ru: "Мои курсы",
-    ko: "내 강의",
-  }[language];
   updateAuthDialog();
   updateAuthUI();
   if (refresh) {
@@ -2931,6 +2957,16 @@ function renderLessonAnalytics(analytics) {
   return `<details class="lesson-analytics"><summary><strong>${escapeHtml(t("analyticsLessons"))}</strong>${most}</summary><p>${escapeHtml(t("analyticsStarted"))} · ${format.format(analytics.started_learners)}</p><p>${escapeHtml(t(analytics.started_learners ? "analyticsNextHelp" : "analyticsNoActivity"))}</p><table><thead><tr><th scope="col">${escapeHtml(t("lessonTitleLabel"))}</th><th scope="col">${escapeHtml(t("analyticsCompleted"))}</th><th scope="col">${escapeHtml(t("analyticsNextLesson"))}</th></tr></thead><tbody>${rows.join("")}</tbody></table></details>`;
 }
 
+function formatAuthorLessonCount(count) {
+  const plural = new Intl.PluralRules(language).select(count);
+  const unit =
+    {
+      en: { one: "lesson" },
+      ru: { one: "урок", few: "урока" },
+    }[language]?.[plural] || t("lessonCount");
+  return `${new Intl.NumberFormat(language).format(count)} ${unit}`;
+}
+
 async function loadInstructorCourses() {
   const container = $("#ownedCourses");
   container.innerHTML = `<div class="panel-empty">${escapeHtml(t("instructorTitle"))}…</div>`;
@@ -2977,8 +3013,28 @@ async function loadInstructorCourses() {
           analytics,
           modules,
         }) => `<article class="owned-course-card" data-owned-course="${course.id}">
-      <div class="owned-course-head"><div class="owned-course-overview">${course.banner_url ? `<img class="owned-course-banner" src="${escapeHtml(course.banner_url)}" alt="${escapeHtml(course.title)}">` : ""}<div><span class="studio-status ${course.is_published ? "is-published" : "is-draft"}">${escapeHtml(t(course.is_published ? "publishedLabel" : "draftLabel"))}</span><h3>${escapeHtml(course.title)}</h3><p>${escapeHtml(course.description || "")}</p></div></div><div class="owned-course-actions"><button class="button button-outline" data-edit-course="${course.id}">${escapeHtml(t("editCourseButton"))}</button><button class="button button-outline" type="button" data-author-preview>${escapeHtml(t("authorPreviewButton"))}</button><button class="button button-outline" data-select-course-banner="${course.id}">${escapeHtml(bannerUiCopy[language].upload)}</button><input type="file" data-course-banner-file="${course.id}" accept="image/png,image/jpeg,image/webp" hidden><button class="button button-outline" data-delete-course="${course.id}">${escapeHtml(t("deleteCourseButton"))}</button><button class="button button-outline" data-publish-course="${course.id}" data-published="${course.is_published}">${escapeHtml(t(course.is_published ? "unpublishButton" : "publishButton"))}</button></div></div>
-      <form class="studio-form course-edit-form" data-course-edit="${course.id}" hidden><label><span>${escapeHtml(t("courseTitleLabel"))}</span><input name="title" minlength="3" maxlength="200" value="${escapeHtml(course.title)}" required /></label><label><span>${escapeHtml(t("courseDescriptionLabel"))}</span><textarea name="description" rows="2">${escapeHtml(course.description || "")}</textarea></label><div class="studio-form-row"><label><span>${escapeHtml(t("courseLanguageLabel"))}</span><select name="language" ${lessonData.length || modules.length ? "disabled" : ""}>${[
+      <div class="owned-course-head">
+        <div class="owned-course-overview">
+          ${course.banner_url ? `<img class="owned-course-banner" src="${escapeHtml(course.banner_url)}" alt="">` : ""}
+          <div>
+            <div class="owned-course-meta">
+              <span class="studio-status ${course.is_published ? "is-published" : "is-draft"}">${escapeHtml(t(course.is_published ? "publishedLabel" : "draftLabel"))}</span>
+              <span class="owned-course-count">${escapeHtml(formatAuthorLessonCount(lessonData.length))}</span>
+            </div>
+            <h3>${escapeHtml(course.title)}</h3>
+            <p>${escapeHtml(course.description || "")}</p>
+          </div>
+        </div>
+        <div class="owned-course-actions">
+          <button class="button button-dark" type="button" data-edit-course="${course.id}" aria-expanded="false" aria-controls="course-edit-${course.id}">${escapeHtml(t("editCourseButton"))}</button>
+          <button class="button button-outline" type="button" data-author-preview>${escapeHtml(t("authorPreviewButton"))}</button>
+          <button class="button button-outline" type="button" data-select-course-banner="${course.id}">${escapeHtml(bannerUiCopy[language].upload)}</button>
+          <input type="file" data-course-banner-file="${course.id}" accept="image/png,image/jpeg,image/webp" hidden>
+          <button class="button button-outline" type="button" data-delete-course="${course.id}">${escapeHtml(t("deleteCourseButton"))}</button>
+          <button class="button button-outline" type="button" data-publish-course="${course.id}" data-published="${course.is_published}">${escapeHtml(t(course.is_published ? "unpublishButton" : "publishButton"))}</button>
+        </div>
+      </div>
+      <form class="studio-form course-edit-form" id="course-edit-${course.id}" data-course-edit="${course.id}" hidden><label><span>${escapeHtml(t("courseTitleLabel"))}</span><input name="title" minlength="3" maxlength="200" value="${escapeHtml(course.title)}" required /></label><label><span>${escapeHtml(t("courseDescriptionLabel"))}</span><textarea name="description" rows="2">${escapeHtml(course.description || "")}</textarea></label><div class="studio-form-row"><label><span>${escapeHtml(t("courseLanguageLabel"))}</span><select name="language" ${lessonData.length || modules.length ? "disabled" : ""}>${[
         ["uz", "O‘zbekcha"],
         ["en", "English"],
         ["ru", "Русский"],
@@ -3005,7 +3061,32 @@ async function loadInstructorCourses() {
       <div class="course-analytics"><div><b>${analytics.enrollment_count}</b><small>${escapeHtml(t("analyticsEnrolled"))}</small></div><div><b>${analytics.completed_learners}/${analytics.enrollment_count}</b><small>${escapeHtml(t("analyticsCompleted"))} · ${analytics.completion_rate}%</small></div><div><b>${analytics.average_rating !== null ? `${analytics.average_rating} ★` : "—"}</b><small>${escapeHtml(t("analyticsRating"))} · ${analytics.review_count}</small></div><div><b>${analytics.final_exam_attempts ? `${analytics.final_exam_pass_rate}%` : "—"}</b><small>${escapeHtml(t("analyticsExamPass"))} · ${analytics.final_exam_passes}/${analytics.final_exam_attempts}</small></div></div>
       ${renderLessonAnalytics(analytics)}
       <div class="owned-modules"><div class="section-label">${escapeHtml(t("moduleLabel"))}</div>${modules.length ? modules.map((module) => `<form class="studio-form module-edit-form" data-module-edit="${course.id}" data-module-id="${module.id}"><label><span>${escapeHtml(t("moduleTitleLabel"))}</span><input name="title" minlength="2" maxlength="200" value="${escapeHtml(module.title)}" required /></label><label><span>${escapeHtml(t("modulePositionLabel"))}</span><input name="position" type="number" min="1" value="${module.position}" required /></label><button class="button button-dark" type="submit">${escapeHtml(t("saveModuleButton"))}</button><button class="button button-outline" type="button" data-delete-module="${module.id}" data-course-id="${course.id}">${escapeHtml(t("deleteModuleButton"))}</button></form>`).join("") : `<p class="panel-empty">${escapeHtml(t("noCourseModules"))}</p>`}<form class="studio-form module-create-form" data-module-course="${course.id}"><label><span>${escapeHtml(t("moduleTitleLabel"))}</span><input name="title" minlength="2" maxlength="200" required /></label><label><span>${escapeHtml(t("modulePositionLabel"))}</span><input name="position" type="number" min="1" value="${modules.length + 1}" required /></label><button class="button button-dark" type="submit">${escapeHtml(t("addModuleButton"))}</button><p class="studio-form-message" role="status"></p></form></div>
-      <form class="studio-form lesson-create-form" data-lesson-course="${course.id}"><div class="section-label">${escapeHtml(t("lessonTitleLabel"))}</div><label><span>${escapeHtml(t("lessonTitleLabel"))}</span><input name="title" minlength="3" maxlength="200" required /></label><label><span>${escapeHtml(t("lessonContentLabel"))}</span><textarea name="content" rows="3" required></textarea></label><label><span>${escapeHtml(t("moduleLabel"))}</span><select name="module_id"><option value="">${escapeHtml(t("unassignedLessonsLabel"))}</option>${modules.map((module) => `<option value="${module.id}">${escapeHtml(module.position)}. ${escapeHtml(module.title)}</option>`).join("")}</select></label><label><span>${escapeHtml(t("lessonPositionLabel"))}</span><input name="position" type="number" min="1" value="${lessonData.length + 1}" required /></label><button class="button button-dark" type="submit">${escapeHtml(t("addLessonButton"))}</button><p class="studio-form-message" role="status"></p></form>
+      <form class="studio-form lesson-create-form" data-lesson-course="${course.id}" tabindex="-1" aria-labelledby="lesson-create-${course.id}">
+        <h4 class="lesson-create-title" id="lesson-create-${course.id}">${escapeHtml(t("addLessonButton"))}</h4>
+        <label>
+          <span>${escapeHtml(t("lessonTitleLabel"))}</span>
+          <input name="title" minlength="3" maxlength="200" required />
+        </label>
+        <label>
+          <span>${escapeHtml(t("lessonContentLabel"))}</span>
+          <textarea name="content" rows="4" required></textarea>
+        </label>
+        <div class="studio-form-row">
+          <label>
+            <span>${escapeHtml(t("moduleLabel"))}</span>
+            <select name="module_id">
+              <option value="">${escapeHtml(t("unassignedLessonsLabel"))}</option>
+              ${modules.map((module) => `<option value="${module.id}">${escapeHtml(module.position)}. ${escapeHtml(module.title)}</option>`).join("")}
+            </select>
+          </label>
+          <label>
+            <span>${escapeHtml(t("lessonPositionLabel"))}</span>
+            <input name="position" type="number" min="1" value="${lessonData.length + 1}" required />
+          </label>
+        </div>
+        <button class="button button-dark" type="submit">${escapeHtml(t("addLessonButton"))}</button>
+        <p class="studio-form-message" role="status"></p>
+      </form>
       <div class="owned-lessons"><div class="section-label">${escapeHtml(t("quizForLesson"))}</div><p class="quiz-per-lesson-note">${escapeHtml(t("quizPerLessonNote"))}</p>${lessonData.length ? lessonData.map(({ lesson, quiz, assignment, submissions }) => `<div class="owned-lesson"><div class="owned-lesson-head"><div><b>${escapeHtml(lesson.position)}. ${escapeHtml(lesson.title)}</b><small>${quiz ? `${escapeHtml(t("quizReady"))} · ${quiz.questions.length}` : escapeHtml(t("noQuiz"))}</small></div><div class="owned-course-actions">${quiz ? `<button type="button" class="button button-outline" data-edit-quiz="${lesson.id}">${escapeHtml(t("editQuizButton"))}</button><button type="button" class="button button-outline" data-delete-quiz="${quiz.id}" data-course-id="${course.id}" data-lesson-id="${lesson.id}">${escapeHtml(t("deleteQuizButton"))}</button>` : ""}<button type="button" class="button button-outline" data-generate-banner="${lesson.id}" data-course-id="${course.id}">${escapeHtml(bannerUiCopy[language].generate)}</button><button type="button" class="button button-outline" data-select-lesson-banner="${lesson.id}" data-course-id="${course.id}">${escapeHtml(bannerUiCopy[language].upload)}</button><input type="file" data-lesson-banner-file="${lesson.id}" accept="image/png,image/jpeg,image/webp" hidden>${lesson.banner_url ? `<img class="owned-lesson-banner" src="${escapeHtml(lesson.banner_url)}" alt="${escapeHtml(lesson.title)}">` : ""}<button type="button" class="button button-outline" data-edit-lesson="${lesson.id}">${escapeHtml(t("editLessonButton"))}</button><button type="button" class="button button-outline" data-delete-lesson="${lesson.id}" data-course-id="${course.id}">${escapeHtml(t("deleteLessonButton"))}</button></div></div><form class="studio-form lesson-edit-form" data-lesson-edit="${course.id}" data-lesson-id="${lesson.id}" hidden><label><span>${escapeHtml(t("lessonTitleLabel"))}</span><input name="title" minlength="3" maxlength="200" value="${escapeHtml(lesson.title)}" required /></label><label><span>${escapeHtml(t("lessonContentLabel"))}</span><textarea name="content" rows="3" required>${escapeHtml(lesson.content)}</textarea></label><label><span>${escapeHtml(t("moduleLabel"))}</span><select name="module_id"><option value="">${escapeHtml(t("unassignedLessonsLabel"))}</option>${modules.map((module) => `<option value="${module.id}" ${lesson.module_id === module.id ? "selected" : ""}>${escapeHtml(module.position)}. ${escapeHtml(module.title)}</option>`).join("")}</select></label><label><span>${escapeHtml(t("lessonPositionLabel"))}</span><input name="position" type="number" min="1" value="${lesson.position}" required /></label><div class="studio-form-actions"><button class="button button-dark" type="submit">${escapeHtml(t("saveEditsButton"))}</button><button class="button button-outline" type="button" data-cancel-edit>${escapeHtml(t("cancelEditButton"))}</button></div><p class="studio-form-message" role="status"></p></form>${renderQuizEditor(course, lesson, quiz)}${renderAssignmentEditor(course, lesson, assignment, submissions)}${renderLessonMaterialsEditor(course, lesson)}</div>`).join("") : `<p class="panel-empty">${escapeHtml(t("emptyLessons"))}</p>`}</div>
     </article>`,
       )
@@ -3092,6 +3173,8 @@ async function loadInstructorCourses() {
       button.addEventListener("click", () => {
         const form = container.querySelector(`[data-course-edit="${button.dataset.editCourse}"]`);
         form.hidden = !form.hidden;
+        button.setAttribute("aria-expanded", String(!form.hidden));
+        if (!form.hidden) form.elements.title.focus();
       }),
     );
     container.querySelectorAll("[data-edit-lesson]").forEach((button) =>
@@ -3278,7 +3361,13 @@ async function loadInstructorCourses() {
     );
     container.querySelectorAll("[data-cancel-edit]").forEach((button) =>
       button.addEventListener("click", () => {
-        button.closest("form").hidden = true;
+        const form = button.closest("form");
+        form.hidden = true;
+        if (form.dataset.courseEdit) {
+          const editButton = form.closest(".owned-course-card").querySelector("[data-edit-course]");
+          editButton.setAttribute("aria-expanded", "false");
+          editButton.focus();
+        }
       }),
     );
     container.querySelectorAll("[data-course-edit]").forEach((form) =>
@@ -4587,15 +4676,29 @@ $("#courseCreateForm").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = event.currentTarget;
   const message = $("#courseCreateMessage");
+  const submit = form.querySelector('button[type="submit"]');
+  submit.disabled = true;
   message.textContent = "";
+  message.classList.remove("is-success");
   const values = Object.fromEntries(new FormData(form));
   try {
-    await api("/courses", { method: "POST", body: JSON.stringify(values) });
+    const course = await api("/courses", { method: "POST", body: JSON.stringify(values) });
     form.reset();
+    form.elements.language.value = language;
+    message.classList.add("is-success");
+    message.textContent = t("draftCreated");
     await loadInstructorCourses();
+    const lessonForm = $("#ownedCourses").querySelector(`[data-lesson-course="${course.id}"]`);
+    if (lessonForm) {
+      lessonForm.focus({ preventScroll: true });
+      lessonForm.scrollIntoView({ block: "start" });
+    }
     await loadCourses();
   } catch (error) {
+    message.classList.remove("is-success");
     message.textContent = error.message || t("studioError");
+  } finally {
+    submit.disabled = false;
   }
 });
 form.addEventListener("submit", async (event) => {
